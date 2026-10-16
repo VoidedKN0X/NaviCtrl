@@ -11,6 +11,7 @@ import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.appDataStore
 import com.vknxworks.navictrl.data.auth.SessionManager
 import com.vknxworks.navictrl.data.download.DownloadRepository
+import com.vknxworks.navictrl.data.net.CleartextPolicy
 import com.vknxworks.navictrl.data.library.StarStore
 import com.vknxworks.navictrl.data.settings.SettingsRepository
 import com.vknxworks.navictrl.music.MusicController
@@ -39,6 +40,9 @@ class AppContainer(val context: Context) {
                     .build()
             )
         }
+        // Plain HTTP only to the user's own server (after they chose it) or a radio stream they started,
+        // and never via a redirect from an HTTPS request.
+        .addNetworkInterceptor(CleartextPolicy.interceptor)
         .build()
 
     val sessions = SessionManager(context, http, appScope)

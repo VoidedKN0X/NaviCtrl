@@ -16,10 +16,10 @@ import com.vknxworks.navictrl.data.api.ApiJson
 import com.vknxworks.navictrl.data.api.RadioStation
 import com.vknxworks.navictrl.data.api.Song
 import com.vknxworks.navictrl.data.api.SongSort
-import com.vknxworks.navictrl.data.api.coverArtUrl
 import com.vknxworks.navictrl.data.api.randomSongs
 import com.vknxworks.navictrl.data.api.similarSongs
 import com.vknxworks.navictrl.data.api.streamUrl
+import com.vknxworks.navictrl.data.net.CleartextPolicy
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -190,7 +191,9 @@ class MusicController(private val context: Context, private val c: AppContainer)
                     .setDiscNumber(song.discNumber)
                     .setReleaseYear(song.year)
                     .setGenre(song.genre)
-                    .setArtworkUri(client.coverArtUrl(song.coverArt, 600)?.let(Uri::parse))
+                    // A credential-free placeholder URI; MusicService's bitmap loader turns it into the
+                    // authenticated request in-process, so other apps never see the auth token.
+                    .setArtworkUri(ArtworkUris.forCover(song.coverArt, 600))
                     .setIsPlayable(true)
                     .setIsBrowsable(false)
                     .setExtras(extras)
@@ -291,11 +294,15 @@ class MusicController(private val context: Context, private val c: AppContainer)
     }
 
     fun playRadio(station: RadioStation) = launch {
+        // The stream address comes from the server: only ever hand plain web streams to the player.
+        val streamUrl = station.streamUrl.trim().toHttpUrlOrNull()
+            ?: throw IllegalStateException("This station's stream address isn't a web (http/https) address")
+        if (!streamUrl.isHttps) CleartextPolicy.allowStream(streamUrl)
         continuation = null
         unshuffled = null
         val item = MediaItem.Builder()
             .setMediaId(MusicService.RADIO_PREFIX + station.id)
-            .setUri(station.streamUrl)
+            .setUri(streamUrl.toString())
             .setMediaMetadata(
                 MediaMetadata.Builder().setTitle(station.name).setArtist("Internet radio").setIsPlayable(true).setIsBrowsable(false).build()
             )

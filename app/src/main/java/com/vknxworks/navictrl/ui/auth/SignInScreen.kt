@@ -51,6 +51,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vknxworks.navictrl.container
+import com.vknxworks.navictrl.data.auth.HttpFallbackNeeded
+import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.PillButton
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import kotlinx.coroutines.launch
@@ -65,22 +67,47 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
     var showPassword by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var offerHttp by remember { mutableStateOf<String?>(null) }
     val canSubmit = address.isNotBlank() && username.isNotBlank() && password.isNotEmpty() && !busy
 
-    fun submit() {
-        if (!canSubmit) return
+    fun attempt(target: String) {
         busy = true
         error = null
         scope.launch {
             try {
-                c.sessions.signIn(address, username, password)
+                c.sessions.signIn(target, username, password)
                 onDone()
+            } catch (e: HttpFallbackNeeded) {
+                offerHttp = e.httpUrl
             } catch (e: Throwable) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 error = e.friendlyMessage()
             } finally {
                 busy = false
             }
+        }
+    }
+
+    fun submit() {
+        if (!canSubmit) return
+        attempt(address)
+    }
+
+    offerHttp?.let { httpUrl ->
+        ConfirmDialog(
+            "Use an unencrypted connection?",
+            "NaviCtrl couldn't connect to this server over HTTPS. It can try plain HTTP instead, " +
+                "but then your password and music are sent unencrypted and anyone on the network can read them. " +
+                "Only do this on a network you trust.",
+            "Use HTTP",
+            onDismiss = {
+                offerHttp = null
+                error = "Couldn't connect securely (HTTPS)"
+            },
+        ) {
+            offerHttp = null
+            address = httpUrl
+            attempt(httpUrl)
         }
     }
 
@@ -123,7 +150,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                     Icon(Icons.Outlined.LockOpen, null, tint = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        "Not encrypted. Fine on your home network, risky anywhere else.",
+                        "Not encrypted (HTTP). Your password and music are sent in the clear. Fine on your home network, risky anywhere else.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

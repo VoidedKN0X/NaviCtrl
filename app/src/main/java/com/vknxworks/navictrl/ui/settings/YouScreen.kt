@@ -106,7 +106,10 @@ fun YouScreen() {
         Group("Server", footer = status?.lastScan?.let { "Last scanned ${com.vknxworks.navictrl.ui.components.formatDate(it).orEmpty()}" }) {
             GroupRow(
                 acc.serverUrl,
-                status?.let { "${NumberFormat.getIntegerInstance().format(it.count)} files in the library" },
+                listOfNotNull(
+                    if (acc.isEncrypted) null else "Not encrypted (HTTP)",
+                    status?.let { "${NumberFormat.getIntegerInstance().format(it.count)} files in the library" },
+                ).joinToString("  ·  ").ifEmpty { null },
                 icon = Icons.Filled.Dns,
             )
             if (acc.isAdmin) {

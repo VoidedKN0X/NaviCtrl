@@ -2,6 +2,8 @@ package com.vknxworks.navictrl.music
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.IBinder
+import android.os.Process
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -12,6 +14,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.vknxworks.navictrl.MainActivity
@@ -63,7 +66,11 @@ class MusicService : MediaSessionService() {
             Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        session = MediaSession.Builder(this, player).setSessionActivity(openApp).build()
+        session = MediaSession.Builder(this, player)
+            .setSessionActivity(openApp)
+            // Artwork is resolved in-process so authenticated cover URLs never reach other apps.
+            .setBitmapLoader(CacheBitmapLoader(ArtworkBitmapLoader(this, c.http) { container.sessions.active.value?.client }))
+            .build()
 
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -104,7 +111,36 @@ class MusicService : MediaSessionService() {
         c.appScope.launch { runCatching { client.scrobble(id, submission) } }
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+    /**
+     * Only this app and the system's own media surfaces (notification, lock screen, Bluetooth,
+     * Android Auto, apps holding MEDIA_CONTENT_CONTROL) may control playback. Other apps get nothing.
+     */
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        val s = session ?: return null
+        val pkg = controllerInfo.packageName
+        val uid = controllerInfo.uid
+        // The package name is reported by the caller itself, so check it against the binder UID.
+        val pkgVerified = uid >= 0 && packageManager.getPackagesForUid(uid)?.contains(pkg) == true
+        val allowed = uid == Process.myUid() ||
+            controllerInfo.isTrusted ||
+            (pkgVerified && pkg in SYSTEM_CONTROLLERS) ||
+            // Media button intents delivered to the service by the platform (no binder caller).
+            (uid < 0 && pkg == MediaSession.ControllerInfo.LEGACY_CONTROLLER_PACKAGE_NAME &&
+                controllerInfo.controllerVersion == MediaSession.ControllerInfo.LEGACY_CONTROLLER_VERSION) ||
+            (pkgVerified && (
+                s.isMediaNotificationController(controllerInfo) ||
+                    s.isAutomotiveController(controllerInfo) ||
+                    s.isAutoCompanionController(controllerInfo)
+                ))
+        return if (allowed) s else null
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        // The legacy MediaBrowserService interface isn't declared in the manifest; don't hand out
+        // the session's legacy binder to anyone who binds with that action explicitly.
+        if (intent?.action == LEGACY_BROWSER_ACTION) return null
+        return super.onBind(intent)
+    }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = session?.player
@@ -125,5 +161,12 @@ class MusicService : MediaSessionService() {
 
     companion object {
         const val RADIO_PREFIX = "radio:"
+        private const val LEGACY_BROWSER_ACTION = "android.media.browse.MediaBrowserService"
+        private val SYSTEM_CONTROLLERS = setOf(
+            "com.android.systemui",
+            "com.android.bluetooth",
+            "com.google.android.bluetooth",
+            "com.google.android.projection.gearhead",
+        )
     }
 }

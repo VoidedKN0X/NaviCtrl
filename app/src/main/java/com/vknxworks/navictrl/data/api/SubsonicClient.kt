@@ -17,30 +17,39 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.security.MessageDigest
+import java.security.SecureRandom
 
 /**
  * Talks to a Navidrome server. Almost everything goes through the Subsonic API with token auth
- * (md5 of password + salt). The salt is fixed per account so artwork and stream URLs stay stable
- * and caches keep working. The all-songs list uses Navidrome's own API, which can sort.
+ * (md5 of password + salt). API calls get a fresh salt every time. Artwork and stream URLs use a
+ * salt that lives only as long as this client (one app session), so they stay stable on screen;
+ * the image and playback caches key them without the auth parameters (see [authFreeKey]).
+ * The all-songs list uses Navidrome's own API, which can sort.
  */
 class SubsonicClient(
     baseUrl: String,
     val username: String,
     private val password: String,
-    private val salt: String,
     private val http: OkHttpClient,
 ) {
     val baseUrl: String = normalizeBaseUrl(baseUrl)
-    private val token = md5(password + salt)
+    private val mediaSalt = newSalt()
+    private val mediaToken = md5(password + mediaSalt)
     private val base: HttpUrl = this.baseUrl.toHttpUrl()
 
-    /** Builds a /rest URL with auth. Used for API calls, artwork and streams. */
-    fun restUrl(endpoint: String, params: List<Pair<String, Any?>> = emptyList()): String {
+    /**
+     * Builds a /rest URL with auth. Used for API calls, artwork and streams.
+     * [freshAuth] signs it with a new one-off salt; otherwise the per-session media salt is used.
+     */
+    fun restUrl(endpoint: String, params: List<Pair<String, Any?>> = emptyList(), freshAuth: Boolean = false): String {
+        val salt = if (freshAuth) newSalt() else mediaSalt
+        val token = if (freshAuth) md5(password + salt) else mediaToken
         val b = base.newBuilder()
             .addPathSegment("rest")
             .addPathSegment(endpoint)
@@ -56,7 +65,7 @@ class SubsonicClient(
 
     /** Calls an endpoint and returns the inner subsonic-response object. */
     suspend fun call(endpoint: String, params: List<Pair<String, Any?>> = emptyList()): JsonObject = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url(restUrl(endpoint, params)).get().build()
+        val req = Request.Builder().url(restUrl(endpoint, params, freshAuth = true)).get().build()
         http.newCall(req).execute().use { resp ->
             val body = resp.body?.string().orEmpty()
             if (!resp.isSuccessful && body.isBlank()) {
@@ -165,6 +174,27 @@ class SubsonicClient(
 
         fun md5(s: String): String =
             MessageDigest.getInstance("MD5").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
+
+        fun sha256(s: String): String =
+            MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
+
+        private val random = SecureRandom()
+
+        fun newSalt(): String {
+            val bytes = ByteArray(12).also { random.nextBytes(it) }
+            return bytes.joinToString("") { "%02x".format(it) }
+        }
+
+        /** Auth parameters that change between sessions; left out of cache keys. */
+        private val AUTH_PARAMS = listOf("u", "t", "s", "p")
+
+        /** A stable cache key for an artwork or stream URL: the URL without its auth parameters. */
+        fun authFreeKey(url: String): String {
+            val parsed = url.toHttpUrlOrNull() ?: return url
+            val b = parsed.newBuilder()
+            AUTH_PARAMS.forEach { b.removeAllQueryParameters(it) }
+            return b.build().toString()
+        }
     }
 }
 

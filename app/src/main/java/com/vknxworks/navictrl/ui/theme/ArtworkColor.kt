@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.palette.graphics.Palette
 import coil3.BitmapImage
 import coil3.SingletonImageLoader
-import coil3.request.ImageRequest
+import com.vknxworks.navictrl.ui.components.artRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +28,7 @@ fun rememberArtworkColor(url: String?): Color? {
     LaunchedEffect(url) {
         if (url == null || color != null) return@LaunchedEffect
         val result = runCatching {
-            val request = ImageRequest.Builder(context)
-                .data(url)
+            val request = artRequest(context, url)
                 .size(160)
                 .allowHardware(false)
                 .build()
