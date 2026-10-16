@@ -18,14 +18,14 @@
     <!-- Beamed eighth notes -->
     <path
         android:fillColor="#FF8BD8C6"
-        android:pathData="M49,39 L63,36.5 L63,40 L49,42.5 Z" />
+        android:pathData="M49.00,39.50 L63.00,37.00 L63.00,40.50 L49.00,43.00 Z" />
     <path
         android:strokeColor="#FF8BD8C6"
         android:strokeWidth="2.6"
-        android:pathData="M50.3,40.5 V56 M61.7,38 V53.5" />
+        android:pathData="M50.30,40.00 V58.60 M61.70,37.50 V56.10" />
     <path
         android:fillColor="#FF8BD8C6"
-        android:pathData="M47.3,58.6 m-4,0 a4,3.2 -20 1,0 8,0 a4,3.2 -20 1,0 -8,0 Z M58.7,56.1 m-4,0 a4,3.2 -20 1,0 8,0 a4,3.2 -20 1,0 -8,0 Z" />
+        android:pathData="M51.38,56.83 C52.10,58.38 50.99,60.43 48.88,61.41 C46.78,62.39 44.49,61.93 43.77,60.37 C43.04,58.82 44.16,56.77 46.26,55.79 C48.37,54.81 50.66,55.27 51.38,56.83 Z M62.78,54.33 C63.50,55.88 62.39,57.93 60.28,58.91 C58.18,59.89 55.89,59.43 55.17,57.87 C54.44,56.32 55.56,54.27 57.66,53.29 C59.77,52.31 62.06,52.77 62.78,54.33 Z" />
     <!-- Bar on the front of the key -->
     <path
         android:strokeColor="#FF5A616C"
