@@ -1,0 +1,209 @@
+package com.vknxworks.navictrl.data.api
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+/** Lenient JSON: servers add fields over time and leave others out. */
+val ApiJson = Json {
+    ignoreUnknownKeys = true
+    coerceInputValues = true
+    explicitNulls = false
+    isLenient = true
+}
+
+class ApiException(message: String, val code: Int = 0) : Exception(message)
+
+/** A track. Shared by the Subsonic API, the queue, downloads and the saved queue. */
+@Serializable
+data class Song(
+    val id: String,
+    val title: String = "",
+    val album: String? = null,
+    val albumId: String? = null,
+    val artist: String? = null,
+    val artistId: String? = null,
+    val track: Int? = null,
+    val discNumber: Int? = null,
+    val year: Int? = null,
+    val genre: String? = null,
+    val coverArt: String? = null,
+    /** Seconds. */
+    val duration: Int? = null,
+    val bitRate: Int? = null,
+    val suffix: String? = null,
+    val contentType: String? = null,
+    val size: Long? = null,
+    val created: String? = null,
+    val starred: String? = null,
+    val userRating: Int? = null,
+    val playCount: Long? = null,
+    val isDir: Boolean = false,
+)
+
+@Serializable
+data class Album(
+    val id: String,
+    val name: String = "",
+    val artist: String? = null,
+    val artistId: String? = null,
+    val coverArt: String? = null,
+    val songCount: Int = 0,
+    val duration: Int = 0,
+    val year: Int? = null,
+    val genre: String? = null,
+    val created: String? = null,
+    val starred: String? = null,
+    val playCount: Long? = null,
+    val userRating: Int? = null,
+    val song: List<Song> = emptyList(),
+)
+
+@Serializable
+data class Artist(
+    val id: String,
+    val name: String = "",
+    val coverArt: String? = null,
+    val albumCount: Int = 0,
+    val starred: String? = null,
+    val artistImageUrl: String? = null,
+    val album: List<Album> = emptyList(),
+)
+
+@Serializable
+data class ArtistInfo(
+    val biography: String? = null,
+    val largeImageUrl: String? = null,
+    val mediumImageUrl: String? = null,
+    val similarArtist: List<Artist> = emptyList(),
+)
+
+@Serializable
+data class ArtistIndex(val name: String = "", val artist: List<Artist> = emptyList())
+
+@Serializable
+data class ArtistsResult(val index: List<ArtistIndex> = emptyList())
+
+@Serializable
+data class Playlist(
+    val id: String,
+    val name: String = "",
+    val comment: String? = null,
+    val owner: String? = null,
+    val public: Boolean = false,
+    val songCount: Int = 0,
+    val duration: Int = 0,
+    val created: String? = null,
+    val changed: String? = null,
+    val coverArt: String? = null,
+    val entry: List<Song> = emptyList(),
+)
+
+@Serializable
+data class Genre(val value: String = "", val songCount: Int = 0, val albumCount: Int = 0)
+
+@Serializable
+data class SearchResult(
+    val artist: List<Artist> = emptyList(),
+    val album: List<Album> = emptyList(),
+    val song: List<Song> = emptyList(),
+)
+
+@Serializable
+data class Starred(
+    val artist: List<Artist> = emptyList(),
+    val album: List<Album> = emptyList(),
+    val song: List<Song> = emptyList(),
+)
+
+@Serializable
+data class LyricLine(val start: Long? = null, val value: String = "")
+
+@Serializable
+data class StructuredLyrics(
+    val lang: String? = null,
+    val synced: Boolean = false,
+    val offset: Long = 0,
+    val line: List<LyricLine> = emptyList(),
+)
+
+/** Lyrics ready to show: lines with an optional start time in ms. */
+data class Lyrics(val synced: Boolean, val lines: List<LyricLine>)
+
+@Serializable
+data class RadioStation(val id: String, val name: String = "", val streamUrl: String = "", val homePageUrl: String? = null)
+
+@Serializable
+data class ScanStatus(val scanning: Boolean = false, val count: Long = 0, val folderCount: Long = 0, val lastScan: String? = null)
+
+@Serializable
+data class SubsonicUser(val username: String = "", val adminRole: Boolean = false, val email: String? = null)
+
+/** Server facts gathered while signing in. */
+data class ServerInfo(val url: String, val type: String?, val serverVersion: String?, val apiVersion: String?, val openSubsonic: Boolean)
+
+/** A song as Navidrome's own (non-Subsonic) API returns it; used for the sortable all-songs list. */
+@Serializable
+data class NativeSong(
+    val id: String,
+    val title: String = "",
+    val album: String? = null,
+    val albumId: String? = null,
+    val artist: String? = null,
+    val artistId: String? = null,
+    val trackNumber: Int? = null,
+    val discNumber: Int? = null,
+    val year: Int? = null,
+    val genre: String? = null,
+    val duration: Double? = null,
+    val bitRate: Int? = null,
+    val suffix: String? = null,
+    val size: Long? = null,
+    val createdAt: String? = null,
+    val starred: Boolean = false,
+    val starredAt: String? = null,
+    val rating: Int? = null,
+    val playCount: Long? = null,
+) {
+    fun toSong() = Song(
+        id = id,
+        title = title,
+        album = album,
+        albumId = albumId,
+        artist = artist,
+        artistId = artistId,
+        track = trackNumber,
+        discNumber = discNumber,
+        year = year?.takeIf { it > 0 },
+        genre = genre,
+        coverArt = "mf-$id",
+        duration = duration?.toInt(),
+        bitRate = bitRate,
+        suffix = suffix,
+        size = size,
+        created = createdAt,
+        starred = if (starred) (starredAt ?: "1") else null,
+        userRating = rating,
+        playCount = playCount,
+    )
+}
+
+@Serializable
+data class NativeLogin(val token: String? = null, val isAdmin: Boolean = false, val name: String? = null)
+
+enum class SongSort(val field: String, val label: String) {
+    TITLE("title", "Title"),
+    DATE_ADDED("createdAt", "Date added"),
+    ARTIST("artist", "Artist"),
+    ALBUM("album", "Album"),
+}
+
+/** getAlbumList2 types, in the order the sort menu shows them. */
+enum class AlbumSort(val type: String, val label: String) {
+    NAME("alphabeticalByName", "Name"),
+    ARTIST("alphabeticalByArtist", "Artist"),
+    NEWEST("newest", "Recently added"),
+    RECENT("recent", "Recently played"),
+    FREQUENT("frequent", "Most played"),
+    RANDOM("random", "Random"),
+    STARRED("starred", "Favourites"),
+}

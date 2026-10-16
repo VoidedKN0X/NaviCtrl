@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Many Navidrome servers run on plain HTTP on the home network, so cleartext is allowed.
+     The sign-in screen warns when a non-HTTPS address is used. User-installed CAs are trusted
+     so servers behind a self-signed reverse proxy work. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
