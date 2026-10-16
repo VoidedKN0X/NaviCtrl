@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -18,7 +19,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.PlatformContext
+import coil3.compose.LocalPlatformContext
 import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.api.Song
 import java.time.Instant
 import java.time.ZoneId
@@ -56,8 +61,10 @@ fun ArtImage(
     if (url == null) {
         Box(modifier) { fallback() }
     } else {
+        val context = LocalPlatformContext.current
+        val request = remember(url) { artRequest(context, url).build() }
         SubcomposeAsyncImage(
-            model = url,
+            model = request,
             contentDescription = null,
             modifier = modifier,
             contentScale = contentScale,
@@ -65,6 +72,18 @@ fun ArtImage(
             loading = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer)) },
         )
     }
+}
+
+/**
+ * An image request for a server artwork URL. The URL carries auth parameters that change every
+ * session, so the memory and disk caches are keyed on the URL without them.
+ */
+fun artRequest(context: PlatformContext, url: String): ImageRequest.Builder {
+    val key = SubsonicClient.authFreeKey(url)
+    return ImageRequest.Builder(context)
+        .data(url)
+        .memoryCacheKey(key)
+        .diskCacheKey(key)
 }
 
 fun formatClock(ms: Long): String {

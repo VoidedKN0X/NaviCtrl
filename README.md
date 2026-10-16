@@ -51,13 +51,13 @@ Release signing uses the same setup as the other Ctrl apps:
 | `KEY_PASSWORD` | Secret |
 | `KEY_ALIAS` | Variable (or secret) |
 
-Without them, the APK is signed with a debug key so it still installs.
+Without them, CI fails instead of publishing a debug-signed release (local builds still fall back to the debug key).
 
 Locally: `./gradlew assembleRelease` (JDK 17, Android SDK 36).
 
 ## Notes
 
-- Sign-in uses Subsonic token auth with a per-account salt, plus Navidrome's own API for the sortable all-songs list. The password is encrypted with an Android Keystore key and only sent to your server.
-- Plain HTTP servers work (the sign-in screen warns about it), and user-installed certificates are trusted for self-signed reverse proxies.
+- Sign-in uses Subsonic token auth with a fresh salt per request (artwork and stream URLs use a per-session salt; caches ignore the auth parameters), plus Navidrome's own API for the sortable all-songs list. The password is encrypted with an Android Keystore key and only sent to your server.
+- Plain HTTP servers work, but only when you type http:// or confirm the switch after HTTPS fails (the app warns that the password is sent unencrypted and marks the account "Not encrypted"), and user-installed certificates are trusted for self-signed reverse proxies.
 
 Manrope font: SIL Open Font License, see `FONT-LICENSE-Manrope.txt`.

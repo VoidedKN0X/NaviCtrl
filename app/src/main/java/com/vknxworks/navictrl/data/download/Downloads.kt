@@ -91,7 +91,9 @@ class DownloadRepository(
     fun completedFile(id: String): File? {
         val key = activeKey() ?: return null
         val e = _entries.value.firstOrNull { it.song.id == id && it.accountKey == key && it.status == DownloadStatus.DONE } ?: return null
-        return e.file?.let(::File)?.takeIf { it.exists() }
+        // The stored path is used as-is (older downloads keep their original names), but only if it
+        // is inside the app's music folder.
+        return e.file?.let(::File)?.takeIf { it.exists() && isInside(root, it) }
     }
 
     fun statusOf(list: List<DownloadEntry>, id: String): DownloadEntry? {
@@ -123,7 +125,7 @@ class DownloadRepository(
         val wm = WorkManager.getInstance(context)
         ids.forEach { wm.cancelUniqueWork(workName(key, it)) }
         val gone = _entries.value.filter { it.accountKey == key && it.song.id in ids }
-        gone.forEach { e -> e.file?.let { File(it).delete() } }
+        gone.forEach { e -> e.file?.let(::File)?.takeIf { isInside(root, it) }?.delete() }
         update { list -> list.filterNot { it.accountKey == key && it.song.id in ids } }
     }
 
@@ -158,11 +160,14 @@ class DownloadRepository(
     private suspend fun fetch(client: SubsonicClient, accountKey: String, song: Song, onProgress: suspend (Float) -> Unit): File = withContext(Dispatchers.IO) {
         val s = settings.settings.value
         val kbps = s.downloadBitrate
-        val ext = if (kbps > 0) s.format.param else (song.suffix ?: "audio")
+        val ext = safeExtension(if (kbps > 0) s.format.param else song.suffix)
         val url = if (kbps > 0) client.streamUrl(song.id, kbps, s.format.param) else client.downloadUrl(song.id)
         val dir = File(root, SubsonicClient.md5(accountKey).take(12)).apply { mkdirs() }
-        val target = File(dir, "${song.id}.$ext")
-        val tmp = File(dir, "${song.id}.part")
+        // Song ids and suffixes come from the server: never use them as file names directly.
+        val name = SubsonicClient.sha256(song.id).take(32)
+        val target = File(dir, "$name.$ext")
+        val tmp = File(dir, "$name.part")
+        if (!isInside(dir, target) || !isInside(dir, tmp)) throw java.io.IOException("Invalid file name")
         http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
             if (!resp.isSuccessful) throw java.io.IOException("Server error ${resp.code}")
             val body = resp.body ?: throw java.io.IOException("Empty response")
@@ -210,6 +215,16 @@ class DownloadRepository(
     private fun workName(accountKey: String, id: String) = "dl:$accountKey:$id"
 
     companion object {
+        private val EXTENSION = Regex("^[a-z0-9]{1,5}$")
+
+        /** A file extension safe to use locally; anything unexpected becomes "audio". */
+        fun safeExtension(raw: String?): String =
+            raw?.trim()?.lowercase()?.takeIf { EXTENSION.matches(it) } ?: "audio"
+
+        /** True when [file] resolves to a path strictly inside [dir]. */
+        fun isInside(dir: File, file: File): Boolean =
+            runCatching { file.canonicalPath.startsWith(dir.canonicalPath + File.separator) }.getOrDefault(false)
+
         const val KEY_ID = "id"
         const val KEY_ACCOUNT = "account"
         const val TAG = "downloads"

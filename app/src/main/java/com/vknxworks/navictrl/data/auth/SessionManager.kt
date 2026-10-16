@@ -11,6 +11,7 @@ import com.vknxworks.navictrl.data.api.ping
 import com.vknxworks.navictrl.data.api.serverInfo
 import com.vknxworks.navictrl.data.api.user
 import com.vknxworks.navictrl.data.appDataStore
+import com.vknxworks.navictrl.data.net.CleartextPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import okhttp3.OkHttpClient
-import java.security.SecureRandom
 
 @Serializable
 data class Account(
@@ -28,14 +28,22 @@ data class Account(
     val username: String,
     /** Password encrypted with the Keystore. Needed to sign Subsonic requests and Navidrome sessions. */
     val passwordEnc: String,
-    /** Fixed per account so artwork and stream URLs stay cacheable. */
-    val salt: String,
+    /** No longer used: auth salts are now fresh per request / per session. Kept so old saved accounts still load. */
+    val salt: String = "",
     val serverVersion: String? = null,
     val isAdmin: Boolean = false,
 ) {
     val key: String get() = "$serverUrl|$username"
     val serverName: String get() = Uri.parse(serverUrl).host ?: serverUrl
+    val isEncrypted: Boolean get() = serverUrl.startsWith("https://", ignoreCase = true)
 }
+
+/**
+ * Thrown when HTTPS couldn't be reached for an address typed without a scheme. The UI asks the user
+ * whether to try plain HTTP (which sends the password unencrypted) and calls signIn again with [httpUrl].
+ */
+class HttpFallbackNeeded(val httpUrl: String, cause: Throwable) :
+    Exception("Couldn't connect securely (HTTPS). The server may only support plain HTTP.", cause)
 
 data class ActiveSession(val account: Account, val client: SubsonicClient)
 
@@ -74,45 +82,69 @@ class SessionManager(
 
     /**
      * Checks the address and credentials, then saves and switches to the account.
-     * An address without a scheme tries HTTPS first, then plain HTTP.
+     * An address without a scheme is tried over HTTPS only. If that fails with a connection error
+     * (not a TLS/certificate error), [HttpFallbackNeeded] is thrown so the UI can ask before using
+     * plain HTTP. An explicit http:// address is used as typed (the sign-in screen warns about it).
      */
     suspend fun signIn(address: String, username: String, password: String): Account {
         val raw = address.trim()
-        val candidates = if (raw.startsWith("http://", true) || raw.startsWith("https://", true)) listOf(raw)
-        else listOf("https://$raw", "http://$raw")
-        val salt = newSalt()
-        var lastError: Throwable? = null
-        for (url in candidates) {
-            val client = SubsonicClient(url, username.trim(), password, salt, http)
-            try {
-                val info = client.ping().serverInfo(client.baseUrl)
-                if (info.type != null && !info.type.equals("navidrome", ignoreCase = true)) {
-                    throw ApiException("This is a ${info.type} server. NaviCtrl works with Navidrome.")
-                }
-                // Navidrome's own API powers the sortable song list; signing in to it also confirms admin rights.
-                val isAdmin = runCatching { client.nativeLogin().isAdmin }
-                    .recoverCatching { client.user().adminRole }
-                    .getOrDefault(false)
-                val account = Account(
-                    serverUrl = client.baseUrl,
-                    username = username.trim(),
-                    passwordEnc = KeystoreCrypto.encrypt(password),
-                    salt = salt,
-                    serverVersion = info.serverVersion,
-                    isAdmin = isAdmin,
-                )
-                val updated = _accounts.value.filterNot { it.key == account.key } + account
-                persist(updated, account.key)
-                activate(account, client)
-                return account
-            } catch (e: ApiException) {
-                // A real answer from the server (wrong password, not Navidrome): don't try other schemes.
-                throw e
-            } catch (e: Throwable) {
-                lastError = e
+        val explicit = raw.startsWith("http://", true) || raw.startsWith("https://", true)
+        val url = if (explicit) raw else "https://$raw"
+        val client = SubsonicClient(url, username.trim(), password, http)
+        // Only reached for an http:// address the user typed or confirmed in the "unencrypted" dialog.
+        CleartextPolicy.allowServer(client.baseUrl)
+        try {
+            val info = client.ping().serverInfo(client.baseUrl)
+            if (info.type != null && !info.type.equals("navidrome", ignoreCase = true)) {
+                throw ApiException("This is a ${info.type} server. NaviCtrl works with Navidrome.")
             }
+            // Navidrome's own API powers the sortable song list; signing in to it also confirms admin rights.
+            val isAdmin = runCatching { client.nativeLogin().isAdmin }
+                .recoverCatching { client.user().adminRole }
+                .getOrDefault(false)
+            val account = Account(
+                serverUrl = client.baseUrl,
+                username = username.trim(),
+                passwordEnc = KeystoreCrypto.encrypt(password),
+                serverVersion = info.serverVersion,
+                isAdmin = isAdmin,
+            )
+            val updated = _accounts.value.filterNot { it.key == account.key } + account
+            persist(updated, account.key)
+            activate(account, client)
+            return account
+        } catch (e: ApiException) {
+            // A real answer from the server (wrong password, not Navidrome).
+            throw e
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: java.net.UnknownHostException) {
+            throw e
+        } catch (e: java.io.IOException) {
+            // TLS and certificate failures never lead to HTTP: the server (or someone in between)
+            // answered on the HTTPS port. Plain connection failures may offer HTTP, but only behind
+            // the explicit "unencrypted" confirmation.
+            if (explicit) throw e
+            if (e.isTlsProblem()) {
+                throw ApiException(
+                    "Secure connection failed: ${e.message ?: "TLS error"}. " +
+                        "If your server only supports plain HTTP, type http:// in front of the address.",
+                )
+            }
+            throw HttpFallbackNeeded("http://$raw", e)
         }
-        throw lastError ?: ApiException("Couldn't reach the server")
+    }
+
+    private fun Throwable.isTlsProblem(): Boolean {
+        var t: Throwable? = this
+        while (t != null) {
+            if (t is javax.net.ssl.SSLException ||
+                t is java.security.cert.CertificateException ||
+                t is java.security.cert.CertPathValidatorException
+            ) return true
+            t = t.cause
+        }
+        return false
     }
 
     suspend fun switchTo(key: String) {
@@ -138,7 +170,9 @@ class SessionManager(
 
     private fun clientFor(acc: Account): SubsonicClient? {
         val password = KeystoreCrypto.decrypt(acc.passwordEnc) ?: return null
-        return SubsonicClient(acc.serverUrl, acc.username, password, acc.salt, http)
+        // Reconnects always use the saved address and scheme; never switch an https account to http.
+        CleartextPolicy.allowServer(acc.serverUrl)
+        return SubsonicClient(acc.serverUrl, acc.username, password, http)
     }
 
     private fun activate(acc: Account, client: SubsonicClient? = null) {
@@ -152,10 +186,5 @@ class SessionManager(
             prefs[accountsKey] = ApiJson.encodeToString(ListSerializer(Account.serializer()), list)
             if (activeKeyValue != null) prefs[activeKey] = activeKeyValue else prefs.remove(activeKey)
         }
-    }
-
-    private fun newSalt(): String {
-        val bytes = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        return bytes.joinToString("") { "%02x".format(it) }
     }
 }

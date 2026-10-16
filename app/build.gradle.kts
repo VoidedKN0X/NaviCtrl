@@ -6,8 +6,12 @@ plugins {
 }
 
 // Release signing comes from environment variables (set by GitHub Actions).
-// When no keystore is provided, release builds fall back to the debug key so CI still produces an installable APK.
+// Local builds without a keystore fall back to the debug key; on CI a missing key fails the build
+// so a debug-signed APK is never published as a release.
 val releaseKeystorePath: String? = System.getenv("SIGNING_KEYSTORE_PATH")?.takeIf { it.isNotBlank() && file(it).exists() }
+val isCi: Boolean = System.getenv("CI") == "true" || System.getenv("GITHUB_ACTIONS") == "true"
+val releaseSigningComplete: Boolean = releaseKeystorePath != null &&
+    listOf("KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD").all { !System.getenv(it).isNullOrBlank() }
 val ciRunNumber: Int = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 
 android {
@@ -38,10 +42,13 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = if (releaseKeystorePath != null) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            signingConfig = when {
+                releaseSigningComplete -> signingConfigs.getByName("release")
+                isCi -> throw GradleException(
+                    "Release signing is not configured on CI (keystore, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD). " +
+                        "Refusing to sign the release with the debug key.",
+                )
+                else -> signingConfigs.getByName("debug")
             }
         }
         debug {
