@@ -12,7 +12,6 @@ val releaseKeystorePath: String? = System.getenv("SIGNING_KEYSTORE_PATH")?.takeI
 val isCi: Boolean = System.getenv("CI") == "true" || System.getenv("GITHUB_ACTIONS") == "true"
 val releaseSigningComplete: Boolean = releaseKeystorePath != null &&
     listOf("KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD").all { !System.getenv(it).isNullOrBlank() }
-val ciRunNumber: Int = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 
 android {
     namespace = "com.vknxworks.navictrl"
@@ -22,8 +21,9 @@ android {
         applicationId = "com.vknxworks.navictrl"
         minSdk = 33
         targetSdk = 36
-        versionCode = ciRunNumber
-        versionName = "0.1.$ciRunNumber"
+        // Bump both to publish a new release (see CHANGELOG.md).
+        versionCode = 7
+        versionName = "0.1.7"
     }
 
     signingConfigs {

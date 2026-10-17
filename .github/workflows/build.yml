@@ -22,7 +22,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A release is published only when versionName (and versionCode) in
+  # app/build.gradle.kts are bumped. Other pushes just build to check the code.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      release: ${{ steps.v.outputs.release }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # tags, to see whether this version is already released
+
+      - name: Check for a version bump
+        id: v
+        run: bash .github/scripts/check-version.sh
+
   build:
+    needs: version
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -82,22 +101,22 @@ jobs:
 
       - name: Rename APKs
         env:
-          RUN_NUMBER: ${{ github.run_number }}
+          TAG: ${{ needs.version.outputs.tag }}
         run: |
           mkdir -p out
           for f in app/build/outputs/apk/release/*.apk; do
-            cp "$f" "out/NaviCtrl-v0.1.${RUN_NUMBER}.apk"
+            cp "$f" "out/NaviCtrl-${TAG}.apk"
           done
           ls -la out
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: NaviCtrl-v0.1.${{ github.run_number }}
+          name: NaviCtrl-apk
           path: out/*.apk
 
   release:
-    needs: build
-    if: needs.build.outputs.release_signed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [version, build]
+    if: needs.version.outputs.release == 'true' && needs.build.outputs.release_signed == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -109,21 +128,21 @@ jobs:
 
       - name: Write release notes
         env:
-          TAG: v0.1.${{ github.run_number }}
+          TAG: ${{ needs.version.outputs.tag }}
         run: |
           bash .github/scripts/release-notes.sh "$TAG" "$GITHUB_SHA" > "$RUNNER_TEMP/notes.md"
           cat "$RUNNER_TEMP/notes.md"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: NaviCtrl-v0.1.${{ github.run_number }}
+          name: NaviCtrl-apk
           path: out
 
       - name: Publish release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          tag_name: v0.1.${{ github.run_number }}
+          tag_name: ${{ needs.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: NaviCtrl v0.1.${{ github.run_number }}
+          name: NaviCtrl ${{ needs.version.outputs.version }}
           files: out/*.apk
           body_path: ${{ runner.temp }}/notes.md
