@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 // Tabs
 @Serializable data object SongsRoute
-@Serializable data object LibraryRoute
 @Serializable data object SearchRoute
 @Serializable data object YouRoute
 

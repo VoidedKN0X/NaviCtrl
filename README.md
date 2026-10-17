@@ -11,9 +11,8 @@ A full music player for self-hosted [Navidrome](https://www.navidrome.org/) serv
 - Play from any song: the queue continues through the list in the chosen order, fetched a page at a time
 - Fast-scroll thumb with a letter (or month, for date added) bubble; pages load as they come into view, so huge libraries open instantly
 
-**Library**
-- Albums (grid or list; sort by name, artist, recently added, recently played, most played, random, favourites)
-- Artists (A to Z with sticky letter headers), Playlists, Genres, Internet radio
+**Favourites tab**
+- Favourite songs (with play and shuffle), albums and artists
 
 **Playback**
 - Background playback with the media notification, lock screen and Bluetooth controls
