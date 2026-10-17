@@ -3,7 +3,6 @@ package com.vknxworks.navictrl.ui.nav
 import kotlinx.serialization.Serializable
 
 // Tabs
-@Serializable data object HomeRoute
 @Serializable data object SongsRoute
 @Serializable data object LibraryRoute
 @Serializable data object SearchRoute
@@ -14,8 +13,6 @@ import kotlinx.serialization.Serializable
 @Serializable data class PlaylistRoute(val id: String)
 @Serializable data class GenreRoute(val name: String)
 
-/** Full album list behind a Home row; [sort] is an AlbumSort name. */
-@Serializable data class AlbumListRoute(val sort: String, val title: String)
 
 @Serializable data object FavouritesRoute
 @Serializable data object NowPlayingRoute
