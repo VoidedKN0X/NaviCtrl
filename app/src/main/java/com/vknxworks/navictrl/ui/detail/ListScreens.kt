@@ -73,6 +73,8 @@ import com.vknxworks.navictrl.ui.components.PlayShuffleRow
 import com.vknxworks.navictrl.ui.components.ScreenTopBar
 import com.vknxworks.navictrl.ui.components.SongAction
 import com.vknxworks.navictrl.ui.components.SongRow
+import com.vknxworks.navictrl.ui.components.TabTitle
+import androidx.compose.foundation.layout.statusBarsPadding
 import com.vknxworks.navictrl.ui.components.TextInputDialog
 import com.vknxworks.navictrl.ui.components.countLabel
 import com.vknxworks.navictrl.ui.components.formatLength
@@ -266,12 +268,10 @@ fun FavouritesScreen() {
     // Hearts changed anywhere (including here) refresh the list.
     val overrides by c.stars.overrides.collectAsStateWithLifecycle()
     LaunchedEffect(overrides) { if (overrides.isNotEmpty()) { delay(800); loader.reload(silent = true) } }
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = { ScreenTopBar("Favourites") },
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
+    // A main tab: big title, no back arrow, content scrolls under the glass island.
+    run {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            TabTitle("Favourites")
             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(FavTab.entries) { t -> FilterChip(selected = t == tab, onClick = { tab = t }, label = { Text(t.label) }) }
             }

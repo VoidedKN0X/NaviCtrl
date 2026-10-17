@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
@@ -69,7 +69,6 @@ import com.vknxworks.navictrl.ui.detail.ArtistScreen
 import com.vknxworks.navictrl.ui.detail.FavouritesScreen
 import com.vknxworks.navictrl.ui.detail.GenreScreen
 import com.vknxworks.navictrl.ui.detail.PlaylistScreen
-import com.vknxworks.navictrl.ui.library.LibraryScreen
 import com.vknxworks.navictrl.ui.search.SearchScreen
 import com.vknxworks.navictrl.ui.settings.AccountsScreen
 import com.vknxworks.navictrl.ui.settings.DownloadsScreen
@@ -101,7 +100,7 @@ private data class TopDest(val route: Any, val item: TabItem)
 
 private val topDestinations = listOf(
     TopDest(SongsRoute, TabItem("Songs", Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
-    TopDest(LibraryRoute, TabItem("Library", Icons.Outlined.LibraryMusic, Icons.Filled.LibraryMusic)),
+    TopDest(FavouritesRoute, TabItem("Favourites", Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
     TopDest(SearchRoute, TabItem("Search", Icons.Outlined.Search, Icons.Filled.Search)),
     TopDest(YouRoute, TabItem("You", Icons.Outlined.AccountCircle, Icons.Filled.AccountCircle)),
 )
@@ -226,7 +225,6 @@ private fun PhoneLayout(
 private fun AppNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = SongsRoute) {
         composable<SongsRoute> { SongsScreen() }
-        composable<LibraryRoute> { LibraryScreen() }
         composable<SearchRoute> { SearchScreen() }
         composable<YouRoute> { YouScreen() }
 

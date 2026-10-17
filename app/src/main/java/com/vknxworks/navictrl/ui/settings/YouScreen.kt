@@ -52,7 +52,6 @@ import com.vknxworks.navictrl.ui.components.friendlyMessage
 import com.vknxworks.navictrl.ui.components.rememberLoader
 import com.vknxworks.navictrl.ui.nav.AccountsRoute
 import com.vknxworks.navictrl.ui.nav.DownloadsRoute
-import com.vknxworks.navictrl.ui.nav.FavouritesRoute
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.nav.SettingsRoute
 import com.vknxworks.navictrl.ui.theme.Gutter
@@ -92,7 +91,6 @@ fun YouScreen() {
         }
 
         Group {
-            GroupRow("Favourites", icon = Icons.Filled.Favorite, showChevron = true, onClick = { nav.navigate(FavouritesRoute) })
             GroupRow(
                 "Downloads",
                 if (ready == 0) "Keep music on this phone for offline listening" else "$ready songs, ${formatBytes(c.downloads.usedBytes(downloads))}",
