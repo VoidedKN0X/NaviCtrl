@@ -1,61 +1,96 @@
 # NaviCtrl
 
-A full music player for self-hosted [Navidrome](https://www.navidrome.org/) servers, part of the VKNXWorks Ctrl series (CraftyCtrl, FrigateCtrl, SeerrCtrl, JellyCtrl, FilesCtrl). Android 13+.
+**A full music player for your Navidrome server.**
+
+[![Latest release](https://img.shields.io/github/v/release/VoidedKN0X/NaviCtrl?label=download)](https://github.com/VoidedKN0X/NaviCtrl/releases/latest) ![Android 13+](https://img.shields.io/badge/Android-13%2B-3DDC84?logo=android&logoColor=white) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) [![Sponsor](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/VoidedKN0X)
+
+NaviCtrl is an Android music player for self-hosted [Navidrome](https://www.navidrome.org/) servers.
+
+Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
+
+<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/VoidedKN0X/NaviCtrl"><img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="48"></a>
 
 ## Features
 
-**Songs tab**
-- Every song in your library in one list, A to Z by default
-- Sort by title, date added, artist or album, either direction (date added defaults to newest first)
-- Shuffle all: an endless random queue that tops itself up as it plays
-- Play from any song: the queue continues through the list in the chosen order, fetched a page at a time
-- Fast-scroll thumb with a letter (or month, for date added) bubble; pages load as they come into view, so huge libraries open instantly
+- **Songs tab** with your whole library, A to Z or by date added, that opens instantly
+- **Shuffle all**: an endless random queue
+- **Favourites tab** for songs, albums and artists
+- **Background playback** with lock screen and Bluetooth controls
+- **Synced lyrics**, sleep timer and song mixes
+- **Up next queue** you can reorder; your last queue comes back after a restart
+- **Downloads** for offline listening, and a cache of played songs
+- **Scrobbling** to Last.fm and ListenBrainz through Navidrome
+- **Playlists**, album, artist and genre pages, search
+- **Several servers and accounts**; streaming quality for Wi-Fi and mobile data
 
-**Favourites tab**
-- Favourite songs (with play and shuffle), albums and artists
+## Requirements
 
-**Playback**
-- Background playback with the media notification, lock screen and Bluetooth controls
-- Now playing tinted from the artwork, seek bar, shuffle, repeat one/all, favourite
-- Up next: drag to reorder, remove, clear
-- Synced lyrics (OpenSubsonic) with tap-to-seek, falling back to plain lyrics
-- Sleep timer (minutes or end of song)
-- Song mixes from similar songs (needs Last.fm configured in Navidrome)
-- Scrobbling: play counts, recently played, and Last.fm / ListenBrainz through Navidrome
-- Your last queue comes back after the app restarts
-- Streaming quality for Wi-Fi and mobile data (original or transcoded MP3/Opus/AAC)
-- On-disk cache of played music (off to 8 GB)
+- Android 13 or newer
+- A Navidrome server
 
-**Everything else**
-- Album, artist (popular songs, albums, similar artists, biography), playlist and genre pages
-- Favourites for songs, albums and artists
-- Playlists: create, rename, delete, add songs, remove songs
-- Downloads for offline listening (songs, albums, playlists), with their own quality and Wi-Fi-only option
-- Search across artists, albums and songs
-- Several servers and accounts, switch between them
-- Admins can start a library scan
-- Phone layout with the floating glass tab island; tablet and unfolded foldable layout with a side rail
+## Install
 
-## Building
+1. Download the latest `.apk` file from the [Releases page](https://github.com/VoidedKN0X/NaviCtrl/releases/latest).
+2. Open it on your phone. Android may ask you to allow installing apps from your browser or file manager.
+3. Updates install over the old version. Your settings and login are kept.
 
-GitHub Actions builds a release APK on every push to `main` and publishes it on the Releases page.
+**Automatic updates with Obtainium:** install [Obtainium](https://github.com/ImranR98/Obtainium), then tap the button below on your phone. Obtainium adds NaviCtrl and installs every new release for you.
 
-Release signing uses the same setup as the other Ctrl apps:
+<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/VoidedKN0X/NaviCtrl"><img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="48"></a>
 
-| Name | Where |
+If the button doesn't open Obtainium, add `https://github.com/VoidedKN0X/NaviCtrl` in Obtainium by hand.
+
+## Getting started
+
+1. Enter your Navidrome address, e.g. `https://music.example.com`.
+2. Sign in with your Navidrome username and password.
+3. Tap **Shuffle all** or pick a song to start listening.
+
+## Tips and troubleshooting
+
+- **Plain HTTP** works, but the app warns you first because your password would be sent unencrypted.
+- Song mixes need Last.fm set up in Navidrome.
+
+## Build from source
+
+You need [Android Studio](https://developer.android.com/studio), or JDK 17 and the Android SDK.
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/VoidedKN0X/NaviCtrl.git
+   cd NaviCtrl
+   ```
+2. Build the app:
+   ```bash
+   ./gradlew assembleDebug
+   ```
+   On Windows, use `gradlew.bat assembleDebug`.
+3. The APK is in `app/build/outputs/apk/debug/`. Copy it to your phone and install it.
+
+Or open the folder in Android Studio and press **Run** with your phone connected.
+
+## Support the project
+
+NaviCtrl is free and open source. If it's useful to you, you can support development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Starring the repo and [reporting bugs](https://github.com/VoidedKN0X/NaviCtrl/issues) helps too.
+
+## The Ctrl series
+
+Native Android apps for self-hosted services and everyday tools, all with the same Material You design.
+
+| App | What it's for |
 | --- | --- |
-| `KEYSTORE_BASE64` | Secret: the keystore, base64 encoded |
-| `KEYSTORE_PASSWORD` | Secret |
-| `KEY_PASSWORD` | Secret |
-| `KEY_ALIAS` | Variable (or secret) |
+| [BeamCtrl](https://github.com/VoidedKN0X/BeamCtrl) | TV remote for phones with an IR blaster |
+| [CraftyCtrl](https://github.com/VoidedKN0X/CraftyCtrl) | Manage Minecraft servers on Crafty Controller |
+| [ElementCtrl](https://github.com/VoidedKN0X/ElementCtrl) | Matrix chat client for matrix.org and self-hosted Synapse |
+| [FilesCtrl](https://github.com/VoidedKN0X/FilesCtrl) | File manager with NFS, SMB, SFTP, FTP and WebDAV |
+| [FrigateCtrl](https://github.com/VoidedKN0X/FrigateCtrl) | Watch and review your Frigate NVR cameras |
+| [ImmichCtrl](https://github.com/VoidedKN0X/ImmichCtrl) | Photos and backup for your Immich server |
+| [JellyCtrl](https://github.com/VoidedKN0X/JellyCtrl) | Movies, shows, music and Live TV from Jellyfin |
+| **NaviCtrl** (this app) | Music player for Navidrome servers |
+| [SeerrCtrl](https://github.com/VoidedKN0X/SeerrCtrl) | Request movies and shows on Seerr / Jellyseerr |
 
-Without them, CI fails instead of publishing a debug-signed release (local builds still fall back to the debug key).
+## License
 
-Locally: `./gradlew assembleRelease` (JDK 17, Android SDK 36).
+NaviCtrl is licensed under the [GNU General Public License v3.0](LICENSE). © VKNXWorks
 
-## Notes
-
-- Sign-in uses Subsonic token auth with a fresh salt per request (artwork and stream URLs use a per-session salt; caches ignore the auth parameters), plus Navidrome's own API for the sortable all-songs list. The password is encrypted with an Android Keystore key and only sent to your server.
-- Plain HTTP servers work, but only when you type http:// or confirm the switch after HTTPS fails (the app warns that the password is sent unencrypted and marks the account "Not encrypted"), and user-installed certificates are trusted for self-signed reverse proxies.
-
-Manrope font: SIL Open Font License, see `FONT-LICENSE-Manrope.txt`.
+The Manrope font is licensed under the SIL Open Font License; see `FONT-LICENSE-Manrope.txt`.
