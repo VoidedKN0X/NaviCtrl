@@ -83,6 +83,7 @@ import com.vknxworks.navictrl.ui.components.rememberPagedLoader
 import com.vknxworks.navictrl.ui.components.runTask
 import com.vknxworks.navictrl.ui.library.AlbumsSection
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
+import com.vknxworks.navictrl.ui.nav.PlaylistRoute
 import com.vknxworks.navictrl.ui.theme.ArtworkTint
 import com.vknxworks.navictrl.ui.theme.Gutter
 import com.vknxworks.navictrl.ui.theme.rememberArtworkColor
@@ -183,7 +184,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
             c.runTask {
                 c.api.deletePlaylist(p.id)
                 Toast.makeText(context, "Deleted ${p.name}", Toast.LENGTH_SHORT).show()
-                nav.back()
+                nav.close(PlaylistRoute::class)
             }
         }
     }

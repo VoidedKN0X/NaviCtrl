@@ -53,7 +53,12 @@ fun Throwable.friendlyMessage(): String = when (this) {
     is javax.net.ssl.SSLException -> "Secure connection failed: ${message ?: "certificate problem"}"
     is IOException -> message ?: "Network error"
     else -> message ?: this::class.simpleName ?: "Something went wrong"
-}
+}.redactAuth()
+
+/** Subsonic sign-in parameters (user, token, salt, password) never show up in a message on screen. */
+private val AUTH_QUERY = Regex("""([?&](?:u|t|s|p|jwt)=)[^&#\s]*""", RegexOption.IGNORE_CASE)
+
+private fun String.redactAuth(): String = replace(AUTH_QUERY, "$1…")
 
 /** Loads a value once and keeps it for the life of the screen's back stack entry. */
 class Loader<T>(private val scope: CoroutineScope, private val block: suspend () -> T) {
