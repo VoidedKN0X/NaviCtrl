@@ -238,7 +238,8 @@ private fun AppNavHost(navController: NavHostController) {
         composable<SettingsRoute> { SettingsScreen() }
         composable<AccountsRoute> { AccountsScreen() }
         composable<AddAccountRoute> {
-            SignInScreen(onDone = { navController.popBackStack(SongsRoute, false) }, onCancel = { navController.popBackStack() })
+            val navigator = LocalNavigator.current
+            SignInScreen(onDone = { navController.popBackStack(SongsRoute, false) }, onCancel = navigator::back)
         }
     }
 }

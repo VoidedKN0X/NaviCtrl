@@ -4,6 +4,26 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.9 (2026-10-18)
+
+Security hardening and a fix for a black screen.
+
+### Fixed
+
+- Fixed a black screen that could appear when tapping Back twice quickly, or going back while a screen was still sliding in, until the app was restarted. Extra taps during a screen change are now ignored and the first screen is never closed
+- Deleting a playlist now only closes that playlist's page, even if you've already moved to another screen
+
+### Security
+
+- Your Navidrome session and your password are never passed on if your server redirects the app to a different server
+- Album art now follows the same connection rules as the rest of the app: no plain HTTP except to a server you chose, and no quiet switch from HTTPS to HTTP
+- Signing out of an account now also clears that account's songs from the playback cache, the cached album art and its saved queue (downloads still stay until you remove them)
+- Each account keeps its own cached songs, so one server's music is never played back for another
+- Signing in to a different server now stops the previous server's queue, so its songs aren't reported as played on the new server
+- Only NaviCtrl itself can add songs to the queue. The notification, lock screen, Bluetooth and Android Auto can still play, pause and skip, but can't make the player open other addresses or files
+- Error messages never show the sign-in details that are part of server addresses
+- The sign-in screen, where the password can be shown, is left out of the recent-apps preview
+
 ## v0.1.8 (2026-10-18)
 
 - Version numbers are now plain, with no build number on the end, and a new version only comes out when something in the app actually changes. Nothing else in the app has changed.

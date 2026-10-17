@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.vknxworks.navictrl.AppContainer
+import com.vknxworks.navictrl.cacheTag
 import com.vknxworks.navictrl.data.api.ApiJson
 import com.vknxworks.navictrl.data.api.RadioStation
 import com.vknxworks.navictrl.data.api.Song
@@ -29,6 +30,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -90,7 +93,21 @@ class MusicController(private val context: Context, private val c: AppContainer)
     private var pauseAfterTrack = false
     private var sleepAtMs: Long? = null
 
-    private val savedQueueFile = File(context.filesDir, "queue.json")
+    private val savedQueueFile = File(context.filesDir, QUEUE_FILE)
+
+    init {
+        // Songs from one account can't play (or be scrobbled) on another: whenever the signed-in
+        // account changes, including signing in to a new server, the old queue is cleared.
+        scope.launch {
+            var last = c.sessions.active.value?.account?.key
+            c.sessions.active.map { it?.account?.key }.distinctUntilChanged().collect { key ->
+                if (key != last) {
+                    last = key
+                    reset()
+                }
+            }
+        }
+    }
 
     // ---------- Connection ----------
 
@@ -181,7 +198,8 @@ class MusicController(private val context: Context, private val c: AppContainer)
         return MediaItem.Builder()
             .setMediaId(song.id)
             .setUri(uri)
-            .setCustomCacheKey("${song.id}:${if (kbps > 0) "$kbps${s.format.param}" else "raw"}")
+            // Keyed per account, so one account's cached songs never play for another and are removed on sign-out.
+            .setCustomCacheKey("${c.sessions.active.value?.account?.key?.let(::cacheTag) ?: "none"}:${song.id}:${if (kbps > 0) "$kbps${s.format.param}" else "raw"}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(song.title)
@@ -524,6 +542,18 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val mc = controller()
         restoreQueue(mc, autoplay = false)
         refresh()
+    }
+
+    companion object {
+        private const val QUEUE_FILE = "queue.json"
+
+        /** Deletes the saved queue if it belongs to [accountKey] (called on sign-out). */
+        fun forgetSavedQueue(context: Context, accountKey: String) {
+            val file = File(context.filesDir, QUEUE_FILE)
+            if (!file.exists()) return
+            val owner = runCatching { ApiJson.decodeFromString(SavedQueue.serializer(), file.readText()).accountKey }.getOrNull()
+            if (owner == null || owner == accountKey) file.delete()
+        }
     }
 
     /** Called when switching accounts: the old account's queue can't play on the new one. */

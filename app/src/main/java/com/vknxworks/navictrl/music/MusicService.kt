@@ -17,6 +17,8 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.vknxworks.navictrl.MainActivity
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.api.scrobble
@@ -70,6 +72,7 @@ class MusicService : MediaSessionService() {
             .setSessionActivity(openApp)
             // Artwork is resolved in-process so authenticated cover URLs never reach other apps.
             .setBitmapLoader(CacheBitmapLoader(ArtworkBitmapLoader(this, c.http) { container.sessions.active.value?.client }))
+            .setCallback(QueueGuard)
             .build()
 
         player.addListener(object : Player.Listener {
@@ -133,6 +136,24 @@ class MusicService : MediaSessionService() {
                     s.isAutoCompanionController(controllerInfo)
                 ))
         return if (allowed) s else null
+    }
+
+    /**
+     * Only the app itself puts songs in the queue. Other allowed controllers (system UI, Bluetooth,
+     * Android Auto) can play, pause and skip, but can't make the player open their own addresses or
+     * files from the app's private storage.
+     */
+    private object QueueGuard : MediaSession.Callback {
+        override fun onAddMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+        ): ListenableFuture<MutableList<MediaItem>> {
+            if (controller.uid != Process.myUid() || mediaItems.any { it.localConfiguration == null }) {
+                return Futures.immediateFailedFuture(UnsupportedOperationException("Not allowed"))
+            }
+            return Futures.immediateFuture(mediaItems)
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? {

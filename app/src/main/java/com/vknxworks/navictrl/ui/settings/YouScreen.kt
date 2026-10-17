@@ -161,7 +161,7 @@ fun YouScreen() {
         ) {
             confirmSignOut = false
             c.music.reset()
-            scope.launch { c.sessions.signOut(acc.key) }
+            c.appScope.launch { c.signOut(acc.key) }
         }
     }
 }

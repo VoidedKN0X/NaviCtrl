@@ -170,7 +170,7 @@ fun AccountsScreen() {
         ) {
             removing = null
             if (key == active?.account?.key) c.music.reset()
-            scope.launch { c.sessions.signOut(key) }
+            c.appScope.launch { c.signOut(key) }
         }
     }
 }

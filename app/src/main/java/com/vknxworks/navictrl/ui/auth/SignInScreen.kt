@@ -1,5 +1,8 @@
 package com.vknxworks.navictrl.ui.auth
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +63,14 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
-    val c = LocalContext.current.container
+    val context = LocalContext.current
+    val c = context.container
+    // The password can be shown in clear text here: keep this screen out of the recent-apps preview.
+    DisposableEffect(Unit) {
+        val activity = context.findActivity()
+        activity?.setRecentsScreenshotEnabled(false)
+        onDispose { activity?.setRecentsScreenshotEnabled(true) }
+    }
     val scope = rememberCoroutineScope()
     var address by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
@@ -188,6 +199,12 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             )
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable
