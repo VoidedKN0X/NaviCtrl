@@ -22,11 +22,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.outlined.LibraryMusic
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
@@ -60,20 +58,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.vknxworks.navictrl.container
-import com.vknxworks.navictrl.data.api.AlbumSort
 import com.vknxworks.navictrl.music.MiniPlayer
 import com.vknxworks.navictrl.music.NowPlayingScreen
 import com.vknxworks.navictrl.ui.auth.SignInScreen
 import com.vknxworks.navictrl.ui.components.LoadingView
 import com.vknxworks.navictrl.ui.components.LocalBottomClearance
 import com.vknxworks.navictrl.ui.components.LocalHazeState
-import com.vknxworks.navictrl.ui.detail.AlbumListScreen
 import com.vknxworks.navictrl.ui.detail.AlbumScreen
 import com.vknxworks.navictrl.ui.detail.ArtistScreen
 import com.vknxworks.navictrl.ui.detail.FavouritesScreen
 import com.vknxworks.navictrl.ui.detail.GenreScreen
 import com.vknxworks.navictrl.ui.detail.PlaylistScreen
-import com.vknxworks.navictrl.ui.home.HomeScreen
 import com.vknxworks.navictrl.ui.library.LibraryScreen
 import com.vknxworks.navictrl.ui.search.SearchScreen
 import com.vknxworks.navictrl.ui.settings.AccountsScreen
@@ -105,7 +100,6 @@ fun AppRoot() {
 private data class TopDest(val route: Any, val item: TabItem)
 
 private val topDestinations = listOf(
-    TopDest(HomeRoute, TabItem("Home", Icons.Outlined.Home, Icons.Filled.Home)),
     TopDest(SongsRoute, TabItem("Songs", Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
     TopDest(LibraryRoute, TabItem("Library", Icons.Outlined.LibraryMusic, Icons.Filled.LibraryMusic)),
     TopDest(SearchRoute, TabItem("Search", Icons.Outlined.Search, Icons.Filled.Search)),
@@ -230,8 +224,7 @@ private fun PhoneLayout(
 
 @Composable
 private fun AppNavHost(navController: NavHostController) {
-    NavHost(navController, startDestination = HomeRoute) {
-        composable<HomeRoute> { HomeScreen() }
+    NavHost(navController, startDestination = SongsRoute) {
         composable<SongsRoute> { SongsScreen() }
         composable<LibraryRoute> { LibraryScreen() }
         composable<SearchRoute> { SearchScreen() }
@@ -241,17 +234,13 @@ private fun AppNavHost(navController: NavHostController) {
         composable<ArtistRoute> { ArtistScreen(it.toRoute<ArtistRoute>().id) }
         composable<PlaylistRoute> { PlaylistScreen(it.toRoute<PlaylistRoute>().id) }
         composable<GenreRoute> { GenreScreen(it.toRoute<GenreRoute>().name) }
-        composable<AlbumListRoute> {
-            val r = it.toRoute<AlbumListRoute>()
-            AlbumListScreen(AlbumSort.entries.firstOrNull { s -> s.name == r.sort } ?: AlbumSort.NEWEST, r.title)
-        }
         composable<FavouritesRoute> { FavouritesScreen() }
         composable<NowPlayingRoute> { NowPlayingScreen() }
         composable<DownloadsRoute> { DownloadsScreen() }
         composable<SettingsRoute> { SettingsScreen() }
         composable<AccountsRoute> { AccountsScreen() }
         composable<AddAccountRoute> {
-            SignInScreen(onDone = { navController.popBackStack(HomeRoute, false) }, onCancel = { navController.popBackStack() })
+            SignInScreen(onDone = { navController.popBackStack(SongsRoute, false) }, onCancel = { navController.popBackStack() })
         }
     }
 }

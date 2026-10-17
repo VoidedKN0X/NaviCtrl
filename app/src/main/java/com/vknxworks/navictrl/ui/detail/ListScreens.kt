@@ -254,21 +254,6 @@ private fun GenreSongs(name: String) {
     }
 }
 
-// ---------- Album list behind a Home row ----------
-
-@Composable
-fun AlbumListScreen(sort: AlbumSort, title: String) {
-    val c = LocalContext.current.container
-    val settings by c.settings.settings.collectAsStateWithLifecycle()
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = { ScreenTopBar(title) },
-    ) { padding ->
-        Box(Modifier.padding(padding).fillMaxSize()) { AlbumsSection(sort, settings.albumGrid) }
-    }
-}
-
 // ---------- Favourites ----------
 
 private enum class FavTab(val label: String) { SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists") }

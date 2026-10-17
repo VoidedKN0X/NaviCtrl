@@ -28,7 +28,6 @@ A full music player for self-hosted [Navidrome](https://www.navidrome.org/) serv
 - On-disk cache of played music (off to 8 GB)
 
 **Everything else**
-- Home: recently added, recently played, most played, rediscover, favourite albums, playlists
 - Album, artist (popular songs, albums, similar artists, biography), playlist and genre pages
 - Favourites for songs, albums and artists
 - Playlists: create, rename, delete, add songs, remove songs
