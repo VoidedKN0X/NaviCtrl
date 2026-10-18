@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +46,7 @@ import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.Group
 import com.vknxworks.navictrl.ui.components.GroupRow
 import com.vknxworks.navictrl.ui.components.LocalBottomClearance
+import com.vknxworks.navictrl.ui.components.ScreenTopBar
 import com.vknxworks.navictrl.ui.components.formatBytes
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import com.vknxworks.navictrl.ui.components.rememberLoader
@@ -58,7 +58,7 @@ import com.vknxworks.navictrl.ui.theme.Gutter
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 
-/** The You tab: who you're signed in as, your stuff, and where the settings live. */
+/** The You page, opened from your profile picture: who you're signed in as, your stuff, and where the settings live. */
 @Composable
 fun YouScreen() {
     val context = LocalContext.current
@@ -76,80 +76,83 @@ fun YouScreen() {
     val mine = c.downloads.forActive(downloads)
     val ready = mine.count { it.status == DownloadStatus.DONE }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(bottom = 24.dp + LocalBottomClearance.current)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(96.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-                Text(acc.username.take(1).uppercase(), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
-            }
-            Spacer(Modifier.height(14.dp))
-            Text(acc.username, style = MaterialTheme.typography.headlineMedium)
-            Text(
-                listOfNotNull(acc.serverName, acc.serverVersion?.let { "Navidrome ${it.substringBefore(' ')}" }).joinToString("  ·  "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        Group {
-            GroupRow(
-                "Downloads",
-                if (ready == 0) "Keep music on this phone for offline listening" else "$ready songs, ${formatBytes(c.downloads.usedBytes(downloads))}",
-                icon = Icons.Filled.Download,
-                showChevron = true,
-                onClick = { nav.navigate(DownloadsRoute) },
-            )
-        }
-
-        val status = scan.value
-        Group("Server", footer = status?.lastScan?.let { "Last scanned ${com.vknxworks.navictrl.ui.components.formatDate(it).orEmpty()}" }) {
-            GroupRow(
-                acc.serverUrl,
-                listOfNotNull(
-                    if (acc.isEncrypted) null else "Not encrypted (HTTP)",
-                    status?.let { "${NumberFormat.getIntegerInstance().format(it.count)} files in the library" },
-                ).joinToString("  ·  ").ifEmpty { null },
-                icon = Icons.Filled.Dns,
-            )
-            if (acc.isAdmin) {
-                GroupRow(
-                    "Scan for new music",
-                    if (status?.scanning == true || scanning) "Scanning…" else "Picks up files added since the last scan",
-                    icon = Icons.Filled.Refresh,
-                    onClick = {
-                        scanning = true
-                        scope.launch {
-                            runCatching { c.api.startScan() }
-                                .onSuccess { Toast.makeText(context, "Scan started", Toast.LENGTH_SHORT).show() }
-                                .onFailure { Toast.makeText(context, it.friendlyMessage(), Toast.LENGTH_SHORT).show() }
-                            scanning = false
-                            scan.reload(silent = true)
-                        }
-                    },
-                    trailing = {
-                        if (status?.scanning == true || scanning) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    },
+    Column(Modifier.fillMaxSize()) {
+        ScreenTopBar("You")
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp + LocalBottomClearance.current)) {
+            Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(96.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                    Text(acc.username.take(1).uppercase(), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(acc.username, style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    listOfNotNull(acc.serverName, acc.serverVersion?.let { "Navidrome ${it.substringBefore(' ')}" }).joinToString("  ·  "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
 
-        Group {
-            GroupRow("Settings", icon = Icons.Filled.Settings, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
-            GroupRow("Servers and accounts", icon = Icons.Filled.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
-            GroupRow(
-                "Sign out",
-                icon = Icons.AutoMirrored.Filled.Logout,
-                iconTint = MaterialTheme.colorScheme.error,
-                titleColor = MaterialTheme.colorScheme.error,
-                onClick = { confirmSignOut = true },
+            Group {
+                GroupRow(
+                    "Downloads",
+                    if (ready == 0) "Keep music on this phone for offline listening" else "$ready songs, ${formatBytes(c.downloads.usedBytes(downloads))}",
+                    icon = Icons.Filled.Download,
+                    showChevron = true,
+                    onClick = { nav.navigate(DownloadsRoute) },
+                )
+            }
+
+            val status = scan.value
+            Group("Server", footer = status?.lastScan?.let { "Last scanned ${com.vknxworks.navictrl.ui.components.formatDate(it).orEmpty()}" }) {
+                GroupRow(
+                    acc.serverUrl,
+                    listOfNotNull(
+                        if (acc.isEncrypted) null else "Not encrypted (HTTP)",
+                        status?.let { "${NumberFormat.getIntegerInstance().format(it.count)} files in the library" },
+                    ).joinToString("  ·  ").ifEmpty { null },
+                    icon = Icons.Filled.Dns,
+                )
+                if (acc.isAdmin) {
+                    GroupRow(
+                        "Scan for new music",
+                        if (status?.scanning == true || scanning) "Scanning…" else "Picks up files added since the last scan",
+                        icon = Icons.Filled.Refresh,
+                        onClick = {
+                            scanning = true
+                            scope.launch {
+                                runCatching { c.api.startScan() }
+                                    .onSuccess { Toast.makeText(context, "Scan started", Toast.LENGTH_SHORT).show() }
+                                    .onFailure { Toast.makeText(context, it.friendlyMessage(), Toast.LENGTH_SHORT).show() }
+                                scanning = false
+                                scan.reload(silent = true)
+                            }
+                        },
+                        trailing = {
+                            if (status?.scanning == true || scanning) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        },
+                    )
+                }
+            }
+
+            Group {
+                GroupRow("Settings", icon = Icons.Filled.Settings, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
+                GroupRow("Servers and accounts", icon = Icons.Filled.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
+                GroupRow(
+                    "Sign out",
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    iconTint = MaterialTheme.colorScheme.error,
+                    titleColor = MaterialTheme.colorScheme.error,
+                    onClick = { confirmSignOut = true },
+                )
+            }
+            Text(
+                "NaviCtrl ${BuildConfig.VERSION_NAME}  ·  VKNXWorks",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
-        Text(
-            "NaviCtrl ${BuildConfig.VERSION_NAME}  ·  VKNXWorks",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
     }
 
     if (confirmSignOut) {

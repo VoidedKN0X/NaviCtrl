@@ -4,6 +4,13 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.10 (2026-10-18)
+
+### Changed
+
+- The **You** tab is gone from the bar at the bottom. Tap your profile picture at the top right of Songs, Favourites or Search to open it instead. Everything that was there (downloads, server info, library scan, settings, accounts and sign out) is still on that page
+- The bottom bar now has three tabs: Songs, Favourites and Search. On tablets and unfolded foldables the side rail matches
+
 ## v0.1.9 (2026-10-18)
 
 Security hardening and a fix for a black screen.
