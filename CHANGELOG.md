@@ -4,6 +4,15 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.11 (2026-10-18)
+
+A security follow-up to 0.1.9.
+
+### Security
+
+- **Your sign-in details no longer follow a redirect to another server in the address.** Navidrome requests carry your user name and a signed token with its salt in the address itself. When the server, or something in front of it, redirected a request to another site and copied the address along (a common way to move a server to a new domain), that site received them and could use them to sign in as you or try to work out your password. They are now removed from the address before the request goes anywhere else, along with the session headers 0.1.9 already removed. Redirects that stay on your server, and internet radio streams, work as before
+- Error messages also hide an OpenSubsonic API key ("apiKey") if one ever appears in an address
+
 ## v0.1.10 (2026-10-18)
 
 ### Changed
