@@ -21,10 +21,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
@@ -102,7 +100,6 @@ private val topDestinations = listOf(
     TopDest(SongsRoute, TabItem("Songs", Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
     TopDest(FavouritesRoute, TabItem("Favourites", Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
     TopDest(SearchRoute, TabItem("Search", Icons.Outlined.Search, Icons.Filled.Search)),
-    TopDest(YouRoute, TabItem("You", Icons.Outlined.AccountCircle, Icons.Filled.AccountCircle)),
 )
 
 @Composable
