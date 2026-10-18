@@ -56,7 +56,7 @@ fun Throwable.friendlyMessage(): String = when (this) {
 }.redactAuth()
 
 /** Subsonic sign-in parameters (user, token, salt, password) never show up in a message on screen. */
-private val AUTH_QUERY = Regex("""([?&](?:u|t|s|p|jwt)=)[^&#\s]*""", RegexOption.IGNORE_CASE)
+private val AUTH_QUERY = Regex("""([?&](?:u|t|s|p|jwt|apikey)=)[^&#\s]*""", RegexOption.IGNORE_CASE)
 
 private fun String.redactAuth(): String = replace(AUTH_QUERY, "$1…")
 
