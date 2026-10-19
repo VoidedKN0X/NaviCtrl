@@ -9,6 +9,7 @@ To publish a new version: bump `versionCode` and `versionName` in `app/build.gra
 ### Changed
 
 - **README brought up to date with 0.1.13.** Playlists, genre pages and internet radio can't currently be opened in the app (they were on the old Library tab, which became Favourites), so the README now lists them under a new **Planned** section instead of as features. The feature list now also mentions starting a mix of similar songs from any song, **Add to playlist**, and **Scan for new music** for admin accounts. **Getting started** explains that downloads, settings and accounts are behind your profile picture now that the You tab is gone, and the tips now name the **Start a mix from this song** menu item and the **Report what I play** setting for scrobbling. Nothing in the app has changed.
+- Tidied the changelog: removed a doubled bullet marker in the previous version's notes.
 
 ## v0.1.13 (2026-10-19)
 
@@ -21,7 +22,7 @@ Fourth security and privacy review of the new usage stats.
 ### Changed
 
 - The README's **Usage stats** section now lists everything the app's release notes and Settings already said is shared: when you start music it also says whether it was shuffled. It also says that, apart from those opt-in stats, NaviCtrl only talks to your own Navidrome server, plus a radio station's stream address when you play it
-- - **All Ctrl apps in the README.** The README's Ctrl series table now lists all 14 apps. New in the table: [ArrCtrl](https://github.com/VoidedKN0X/ArrCtrl) (Radarr, Sonarr, Prowlarr, Bazarr, qBittorrent, autobrr and Cleanuparr in one app), [PaperCtrl](https://github.com/VoidedKN0X/PaperCtrl) (scan and browse documents on Paperless-ngx), [ProxCtrl](https://github.com/VoidedKN0X/ProxCtrl) (manage your Proxmox VE server) and [TrueCtrl](https://github.com/VoidedKN0X/TrueCtrl) (monitor and manage your TrueNAS server). Every app in the table is also in the [CtrlF-Droid repo](https://voidedkn0x.github.io/CtrlF-Droid/) for automatic updates.
+- **All Ctrl apps in the README.** The README's Ctrl series table now lists all 14 apps. New in the table: [ArrCtrl](https://github.com/VoidedKN0X/ArrCtrl) (Radarr, Sonarr, Prowlarr, Bazarr, qBittorrent, autobrr and Cleanuparr in one app), [PaperCtrl](https://github.com/VoidedKN0X/PaperCtrl) (scan and browse documents on Paperless-ngx), [ProxCtrl](https://github.com/VoidedKN0X/ProxCtrl) (manage your Proxmox VE server) and [TrueCtrl](https://github.com/VoidedKN0X/TrueCtrl) (monitor and manage your TrueNAS server). Every app in the table is also in the [CtrlF-Droid repo](https://voidedkn0x.github.io/CtrlF-Droid/) for automatic updates.
 
 ## v0.1.12 (2026-10-19)
 
