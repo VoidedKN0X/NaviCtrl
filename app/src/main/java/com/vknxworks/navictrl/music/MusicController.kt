@@ -251,8 +251,25 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     // ---------- Starting playback ----------
 
+    /**
+     * Replaces the queue and plays from [startIndex]. [shuffle] mixes the songs first. [source] is the kind of
+     * place playback was started from ("album", "playlist", ...), for the opt-in usage stats only.
+     */
+    fun play(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false, source: String = "other") {
+        if (songs.isEmpty()) return
+        trackPlayback(source, shuffle, songs.getOrNull(startIndex) ?: songs.first())
+        startQueue(songs, startIndex, shuffle)
+    }
+
+    /** Usage stats (only if the user opted in): how playback was started, never which songs. */
+    private fun trackPlayback(source: String, shuffle: Boolean, first: Song? = null) {
+        val props = mutableMapOf<String, Any>("source" to source, "shuffle" to shuffle.toString())
+        if (first != null) props["offline"] = (c.downloads.completedFile(first.id) != null).toString()
+        c.telemetry.track("playback_started", props)
+    }
+
     /** Replaces the queue and plays from [startIndex]. [shuffle] mixes the songs first. [more] keeps the queue topped up. */
-    fun play(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false, more: (suspend () -> List<Song>)? = null) = launch {
+    private fun startQueue(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false, more: (suspend () -> List<Song>)? = null) = launch {
         if (songs.isEmpty()) return@launch
         var list = songs
         var start = startIndex.coerceIn(0, songs.lastIndex)
@@ -270,13 +287,14 @@ class MusicController(private val context: Context, private val c: AppContainer)
         refresh()
     }
 
-    fun shuffle(songs: List<Song>) = play(songs, shuffle = true)
+    fun shuffle(songs: List<Song>, source: String = "other") = play(songs, shuffle = true, source = source)
 
     /** Plays the whole library in random order, topping up as it goes. */
     fun shuffleAll() = launch {
         val first = c.api.randomSongs(200)
         if (first.isEmpty()) throw IllegalStateException("Your library has no songs yet")
-        play(first, more = randomMore())
+        trackPlayback("shuffle_all", shuffle = true, first = first.first())
+        startQueue(first, more = randomMore())
     }
 
     private fun randomMore(genre: String? = null): suspend () -> List<Song> = {
@@ -287,7 +305,8 @@ class MusicController(private val context: Context, private val c: AppContainer)
     fun shuffleGenre(genre: String) = launch {
         val first = c.api.randomSongs(200, genre)
         if (first.isEmpty()) throw IllegalStateException("No songs in $genre")
-        play(first, more = randomMore(genre))
+        trackPlayback("genre", shuffle = true, first = first.first())
+        startQueue(first, more = randomMore(genre))
     }
 
     /**
@@ -298,7 +317,8 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val (page, total) = c.api.songsPage(index, pageSize, sort, ascending)
         if (page.isEmpty()) return@launch
         var next = index + page.size
-        play(page, more = {
+        trackPlayback("songs", shuffle = false, first = page.first())
+        startQueue(page, more = {
             if (next >= total) emptyList()
             else c.api.songsPage(next, pageSize, sort, ascending).first.also { next += it.size }
         })
@@ -308,7 +328,8 @@ class MusicController(private val context: Context, private val c: AppContainer)
     fun startMix(song: Song) = launch {
         val similar = runCatching { c.api.similarSongs(song.id, 80) }.getOrDefault(emptyList())
         if (similar.isEmpty()) throw IllegalStateException("No similar songs found. The server needs Last.fm for mixes.")
-        play(listOf(song) + similar.filterNot { it.id == song.id })
+        trackPlayback("mix", shuffle = false, first = song)
+        startQueue(listOf(song) + similar.filterNot { it.id == song.id })
     }
 
     fun playRadio(station: RadioStation) = launch {
@@ -316,6 +337,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val streamUrl = station.streamUrl.trim().toHttpUrlOrNull()
             ?: throw IllegalStateException("This station's stream address isn't a web (http/https) address")
         if (!streamUrl.isHttps) CleartextPolicy.allowStream(streamUrl)
+        trackPlayback("radio", shuffle = false)
         continuation = null
         unshuffled = null
         val item = MediaItem.Builder()

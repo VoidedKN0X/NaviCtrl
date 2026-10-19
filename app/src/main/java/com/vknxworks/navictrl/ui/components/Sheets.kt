@@ -147,7 +147,7 @@ fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> 
             if (song.id in offline) {
                 ActionItem(Icons.Outlined.Delete, "Remove download") { act { c.downloads.remove(listOf(song.id)) } }
             } else {
-                ActionItem(Icons.Filled.Download, "Download") { act { c.downloads.enqueue(listOf(song)) } }
+                ActionItem(Icons.Filled.Download, "Download") { act { c.downloads.enqueue(listOf(song)); c.telemetry.track("download_started", mapOf("kind" to "song")) } }
             }
             if (!song.albumId.isNullOrBlank()) ActionItem(Icons.Filled.Album, "Go to album") { act { nav.album(song.albumId) } }
             if (!song.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, "Go to artist") { act { nav.artist(song.artistId) } }
@@ -180,8 +180,8 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(c.api.coverArtUrl(album.coverArt, 160), album.name, listOfNotNull(album.artist, album.year?.toString()).joinToString("  ·  "))
-            ActionItem(Icons.Filled.PlayArrow, "Play") { withSongs { c.music.play(it) } }
-            ActionItem(Icons.Filled.Shuffle, "Shuffle") { withSongs { c.music.shuffle(it) } }
+            ActionItem(Icons.Filled.PlayArrow, "Play") { withSongs { c.music.play(it, source = "album") } }
+            ActionItem(Icons.Filled.Shuffle, "Shuffle") { withSongs { c.music.shuffle(it, source = "album") } }
             ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { withSongs { c.music.playNext(it) } }
             ActionItem(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { withSongs { c.music.enqueue(it) } }
             ActionItem(Icons.AutoMirrored.Filled.PlaylistAdd, "Add to playlist") {
@@ -191,7 +191,7 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
                 if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                 if (starred) "Remove from favourites" else "Add to favourites",
             ) { c.stars.set(StarKind.ALBUM, album.id, !starred); onDismiss() }
-            ActionItem(Icons.Filled.Download, "Download album") { withSongs { c.downloads.enqueue(it) } }
+            ActionItem(Icons.Filled.Download, "Download album") { withSongs { c.downloads.enqueue(it); c.telemetry.track("download_started", mapOf("kind" to "album")) } }
             if (!album.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, "Go to artist") { onDismiss(); nav.artist(album.artistId) }
         }
     }

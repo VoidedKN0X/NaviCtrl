@@ -4,13 +4,19 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v0.1.12 (2026-10-19)
 
-README only; the app itself hasn't changed, so this doesn't make a new release.
+### New
+
+- **Optional anonymous usage stats.** After you sign in, NaviCtrl asks once whether you'd like to share anonymous usage stats. Nothing is sent unless you tap **Share stats**, and you can switch it on or off any time in **Settings > Usage stats**
+- **What's shared:** which screens you open (for example "Album", "Playlist" or "Settings", never which album, artist, playlist or genre), how you start music (from an album, playlist, artist, genre, favourites, search, downloads, the songs list, shuffle all, a song mix or internet radio, with or without shuffle, and whether the first song was downloaded), whether you download a song, an album or a playlist, the app version, Android version, phone model, language, phone or tablet, your theme, and whether you stream original files on Wi-Fi
+- **What's never shared:** your server address, username, passwords, what you listen to or search for (no song, album, artist, playlist or radio station names or IDs), or any ID that follows you between sessions. Each session gets a new random ID, and stats from before and after you switch them off and on again aren't linked
+- **Where it goes:** to VKNXWorks' own self-hosted server (Aptabase), not to Google or any analytics company. Builds you make from source can't send stats at all, and the setting doesn't appear in them
 
 ### Changed
 
 - **PrintCtrl in the Ctrl series list.** The README's table of Ctrl apps now includes [PrintCtrl](https://github.com/VoidedKN0X/PrintCtrl), the app for Bambu Lab printers through a self-hosted Bambuddy server, and Spoolman spools.
+- The README has a new **Usage stats** section listing exactly what's collected
 
 ## v0.1.11 (2026-10-18)
 

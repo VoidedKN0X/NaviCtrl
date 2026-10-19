@@ -71,6 +71,7 @@ import com.vknxworks.navictrl.ui.search.SearchScreen
 import com.vknxworks.navictrl.ui.settings.AccountsScreen
 import com.vknxworks.navictrl.ui.settings.DownloadsScreen
 import com.vknxworks.navictrl.ui.settings.SettingsScreen
+import com.vknxworks.navictrl.ui.settings.UsageStatsPrompt
 import com.vknxworks.navictrl.ui.settings.YouScreen
 import com.vknxworks.navictrl.ui.songs.SongsScreen
 import dev.chrisbanes.haze.hazeSource
@@ -110,6 +111,15 @@ private fun MainScaffold() {
     val dest = backStack?.destination
     val selectedIndex = topDestinations.indexOfFirst { top -> dest?.hierarchy?.any { it.hasRoute(top.route::class) } == true }
     val onNowPlaying = dest?.hasRoute(NowPlayingRoute::class) == true
+
+    // Usage stats (only if the user opted in): the kind of screen, never its contents or the album, artist or playlist it shows.
+    val context = LocalContext.current
+    val entryId = backStack?.id
+    val screen = dest?.route?.let(::screenName)
+    LaunchedEffect(entryId) {
+        if (screen != null) context.container.telemetry.track("screen_viewed", mapOf("screen" to screen))
+    }
+    UsageStatsPrompt()
 
     fun selectTab(i: Int) {
         navController.navigate(topDestinations[i].route) {
@@ -160,6 +170,13 @@ private fun MainScaffold() {
         }
     }
 }
+
+/**
+ * "com.vknxworks.navictrl.ui.nav.AlbumRoute/{id}" -> "Album". Only the route's class name: arguments (album, artist
+ * and playlist IDs, genre names) are dropped.
+ */
+private fun screenName(route: String): String =
+    route.substringBefore('/').substringBefore('?').substringAfterLast('.').removeSuffix("Route")
 
 /**
  * Phones: content runs edge to edge and scrolls under a floating glass island.
