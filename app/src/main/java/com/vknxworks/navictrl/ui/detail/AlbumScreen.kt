@@ -105,7 +105,10 @@ private fun AlbumContent(album: Album) {
                     CircleIconButton(
                         if (allOffline) Icons.Filled.DownloadDone else Icons.Filled.Download,
                         if (allOffline) "Remove download" else "Download",
-                        onClick = { if (allOffline) c.downloads.remove(songs.map { it.id }) else c.downloads.enqueue(songs) },
+                        onClick = {
+                            if (allOffline) c.downloads.remove(songs.map { it.id })
+                            else { c.downloads.enqueue(songs); c.telemetry.track("download_started", mapOf("kind" to "album")) }
+                        },
                         active = allOffline,
                     )
                     CircleIconButton(Icons.Filled.MoreHoriz, "More", onClick = { menu = true })
@@ -113,8 +116,8 @@ private fun AlbumContent(album: Album) {
             }
             item(key = "buttons") {
                 com.vknxworks.navictrl.ui.components.PlayShuffleRow(
-                    onPlay = { c.music.play(songs) },
-                    onShuffle = { c.music.shuffle(songs) },
+                    onPlay = { c.music.play(songs, source = "album") },
+                    onShuffle = { c.music.shuffle(songs, source = "album") },
                 )
             }
             var lastDisc: Int? = null
@@ -125,7 +128,7 @@ private fun AlbumContent(album: Album) {
                     item(key = "disc-$d-$i") { DiscHeader(d) }
                 }
                 item(key = "song-$i-${s.id}") {
-                    SongRow(s, onClick = { c.music.play(songs, i) }, number = s.track ?: (i + 1), showAlbum = false)
+                    SongRow(s, onClick = { c.music.play(songs, i, source = "album") }, number = s.track ?: (i + 1), showAlbum = false)
                 }
             }
             album.created?.let { created ->
@@ -192,14 +195,14 @@ fun ArtistScreen(id: String) {
                                 "Play",
                                 onClick = {
                                     val t = top.value.orEmpty()
-                                    if (t.isNotEmpty()) c.music.play(t) else c.runTask { c.music.play(allSongs()) }
+                                    if (t.isNotEmpty()) c.music.play(t, source = "artist") else c.runTask { c.music.play(allSongs(), source = "artist") }
                                 },
                                 icon = Icons.Filled.PlayArrow,
                                 modifier = Modifier.weight(1f),
                             )
                             PillButton(
                                 "Shuffle",
-                                onClick = { c.runTask { c.music.shuffle(allSongs()) } },
+                                onClick = { c.runTask { c.music.shuffle(allSongs(), source = "artist") } },
                                 icon = Icons.Filled.Shuffle,
                                 modifier = Modifier.weight(1f),
                                 container = MaterialTheme.colorScheme.secondaryContainer,
@@ -212,7 +215,7 @@ fun ArtistScreen(id: String) {
                         item(key = "top-h") { SectionHeader("Popular") }
                         val shown = if (showAllTop) topSongs else topSongs.take(5)
                         shown.forEachIndexed { i, s ->
-                            item(key = "top-$i-${s.id}") { SongRow(s, onClick = { c.music.play(topSongs, i) }) }
+                            item(key = "top-$i-${s.id}") { SongRow(s, onClick = { c.music.play(topSongs, i, source = "artist") }) }
                         }
                         if (topSongs.size > 5) {
                             item(key = "top-more") {
