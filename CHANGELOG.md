@@ -4,6 +4,12 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Changed
+
+- **README brought up to date with 0.1.13.** Playlists, genre pages and internet radio can't currently be opened in the app (they were on the old Library tab, which became Favourites), so the README now lists them under a new **Planned** section instead of as features. The feature list now also mentions starting a mix of similar songs from any song, **Add to playlist**, and **Scan for new music** for admin accounts. **Getting started** explains that downloads, settings and accounts are behind your profile picture now that the You tab is gone, and the tips now name the **Start a mix from this song** menu item and the **Report what I play** setting for scrobbling. Nothing in the app has changed.
+
 ## v0.1.13 (2026-10-19)
 
 Fourth security and privacy review of the new usage stats.
