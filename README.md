@@ -58,11 +58,13 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 
 NaviCtrl can share anonymous usage stats, **only if you say yes**. It asks once after you sign in, and you can change it any time in **Settings > Usage stats**.
 
-- **Shared:** which screens you open (the kind of screen, never which album, artist, playlist or genre), how you start music (from an album, playlist, artist, genre, favourites, search, downloads, the songs list, shuffle all, a mix or internet radio, and whether the song was downloaded), whether you download a song, album or playlist, the app version, Android version, phone model, language, phone or tablet, your theme, and whether you stream original files on Wi-Fi.
+- **Shared:** which screens you open (the kind of screen, never which album, artist, playlist or genre), how you start music (from an album, playlist, artist, genre, favourites, search, downloads, the songs list, shuffle all, a mix or internet radio, with or without shuffle, and whether the song was downloaded), whether you download a song, album or playlist, the app version, Android version, phone model, language, phone or tablet, your theme, and whether you stream original files on Wi-Fi.
 - **Never shared:** your server address, username or passwords, what you listen to or search for (no song, album, artist, playlist or station names or IDs), or any ID that stays the same between sessions.
 - **Where:** VKNXWorks' own self-hosted [Aptabase](https://aptabase.com) server. Nothing goes to Google or analytics companies. Like any website, the server sees your IP address; Aptabase uses it only to work out the country and doesn't store it.
 
 Builds from source don't include the stats key, so they can't send anything and the setting is hidden. The code is in [`Telemetry.kt`](app/src/main/java/com/vknxworks/navictrl/data/telemetry/Telemetry.kt).
+
+Apart from these opt-in stats, NaviCtrl only talks to your own Navidrome server, plus the stream address of an internet radio station when you play it.
 
 ## Build from source
 
