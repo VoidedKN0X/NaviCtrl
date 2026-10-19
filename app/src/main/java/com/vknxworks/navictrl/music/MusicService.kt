@@ -99,7 +99,7 @@ class MusicService : MediaSessionService() {
     }
 
     private fun startTrack(item: MediaItem?) {
-        val id = item?.mediaId?.takeIf { it.isNotBlank() && !it.startsWith(RADIO_PREFIX) }
+        val id = item?.mediaId?.takeIf { it.isNotBlank() }
         trackId = id
         listenedMs = 0
         submitted = false
@@ -181,7 +181,6 @@ class MusicService : MediaSessionService() {
     }
 
     companion object {
-        const val RADIO_PREFIX = "radio:"
         private const val LEGACY_BROWSER_ACTION = "android.media.browse.MediaBrowserService"
         private val SYSTEM_CONTROLLERS = setOf(
             "com.android.systemui",

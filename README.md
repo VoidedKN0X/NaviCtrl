@@ -15,23 +15,25 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Songs tab** with your whole library, A to Z or by date added, that opens instantly
 - **Shuffle all**: an endless random queue
 - **Favourites tab** for songs, albums and artists
+- **Playlists tab** with your playlists and the ones shared on your server: play, shuffle or download them, make new ones, rename or delete your own, and remove songs
 - **Background playback** with lock screen and Bluetooth controls
 - **Synced lyrics**, sleep timer, and a mix of similar songs started from any song
 - **Up next queue** you can reorder; your last queue comes back after a restart
 - **Downloads** for offline listening, and a cache of played songs
 - **Scrobbling** to Last.fm and ListenBrainz through Navidrome
-- **Album and artist pages**, search, and **Add to playlist** from any song
+- **Album and artist pages**, search, and **Add to playlist** from any song or album
 - **Scan for new music** on your server from the app (admin accounts)
 - **Several servers and accounts**; streaming quality for Wi-Fi and mobile data
 
 ## Planned
 
-Not in the app yet: browsing and playing your playlists, genre pages and internet radio.
+Not in the app yet: genre pages.
 
 ## Requirements
 
 - Android 13 or newer
 - A Navidrome server
+- No Google Play services needed: NaviCtrl is Google-free and never contacts Google
 
 ## Install
 
@@ -52,7 +54,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 
 1. Enter your Navidrome address, e.g. `https://music.example.com`.
 2. Sign in with your Navidrome username and password.
-3. Tap **Shuffle all** or pick a song to start listening.
+3. Tap **Shuffle all**, pick a song, or open the **Playlists** tab to start listening.
 
 Downloads, **Settings**, accounts, sign out and (for admins) **Scan for new music** are behind your profile picture at the top right.
 
@@ -66,13 +68,13 @@ Downloads, **Settings**, accounts, sign out and (for admins) **Scan for new musi
 
 NaviCtrl can share anonymous usage stats, **only if you say yes**. It asks once after you sign in, and you can change it any time in **Settings > Usage stats**.
 
-- **Shared:** which screens you open (the kind of screen, never which album, artist, playlist or genre), how you start music (from an album, playlist, artist, genre, favourites, search, downloads, the songs list, shuffle all, a mix or internet radio, with or without shuffle, and whether the song was downloaded), whether you download a song, album or playlist, the app version, Android version, phone model, language, phone or tablet, your theme, and whether you stream original files on Wi-Fi.
-- **Never shared:** your server address, username or passwords, what you listen to or search for (no song, album, artist, playlist or station names or IDs), or any ID that stays the same between sessions.
+- **Shared:** which screens you open (the kind of screen, never which album, artist, playlist or genre), how you start music (from an album, playlist, artist, genre, favourites, search, downloads, the songs list, shuffle all or a mix, with or without shuffle, and whether the song was downloaded), whether you download a song, album or playlist, the app version, Android version, phone model, language, phone or tablet, your theme, and whether you stream original files on Wi-Fi.
+- **Never shared:** your server address, username or passwords, what you listen to or search for (no song, album, artist or playlist names or IDs), or any ID that stays the same between sessions.
 - **Where:** VKNXWorks' own self-hosted [Aptabase](https://aptabase.com) server. Nothing goes to Google or analytics companies. Like any website, the server sees your IP address; Aptabase uses it only to work out the country and doesn't store it.
 
 Builds from source don't include the stats key, so they can't send anything and the setting is hidden. The code is in [`Telemetry.kt`](app/src/main/java/com/vknxworks/navictrl/data/telemetry/Telemetry.kt).
 
-Apart from these opt-in stats, NaviCtrl only talks to your own Navidrome server, plus the stream address of an internet radio station when you play it.
+Apart from these opt-in stats, NaviCtrl only talks to your own Navidrome server.
 
 ## Build from source
 

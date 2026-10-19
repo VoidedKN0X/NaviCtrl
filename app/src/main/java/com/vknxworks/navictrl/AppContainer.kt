@@ -21,7 +21,11 @@ import com.vknxworks.navictrl.music.MusicController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -44,8 +48,8 @@ class AppContainer(val context: Context) {
                     .build()
             )
         }
-        // Plain HTTP only to the user's own server (after they chose it) or a radio stream they started,
-        // and never via a redirect from an HTTPS request.
+        // Plain HTTP only to the user's own server (after they chose it), and never via a redirect
+        // from an HTTPS request.
         .addNetworkInterceptor(CleartextPolicy.interceptor)
         // The Navidrome session header and the sign-in request never follow a redirect to another server.
         .addNetworkInterceptor(RedirectGuard.interceptor)
@@ -57,6 +61,13 @@ class AppContainer(val context: Context) {
     val stars = StarStore(context, sessions, appScope)
     val downloads = DownloadRepository(context, appScope, sessions, settings, http)
     val music by lazy { MusicController(context, this) }
+
+    private val _playlistEdits = MutableStateFlow(0)
+
+    /** Goes up after every playlist change made in the app, so playlist lists and pages already open reload. */
+    val playlistEdits: StateFlow<Int> = _playlistEdits.asStateFlow()
+
+    fun playlistsChanged() = _playlistEdits.update { it + 1 }
 
     /**
      * Streamed songs are kept on disk so replays and skips back don't hit the network.
