@@ -4,6 +4,14 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.2.1 (2026-10-19)
+
+### New
+
+- **Support NaviCtrl** under **About** at the bottom of the You page (tap your profile picture) opens VKNXWorks' GitHub Sponsors page in your browser. NaviCtrl is free and open source, and sponsoring helps keep it that way
+- **Source code and issues** in the same **About** section opens NaviCtrl's GitHub repository, where you can read the code or report a bug
+- **Licence** in the same section opens the GNU General Public License v3.0 that NaviCtrl is released under
+
 ## v0.2.0 (2026-10-19)
 
 Playlists get their own tab, internet radio is gone, and the app is now completely Google-free.
