@@ -4,6 +4,14 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.2.2 (2026-10-19)
+
+### Changed
+
+- **One About section in every Ctrl app**: Support, Report a bug, Source code and Licence (GPL-3.0), with the version underneath, at the bottom of the You page (tap your profile picture). Every Ctrl app now has the same four rows, in the same order, with the same wording and icons
+- **Report a bug** is a new row in **About** that opens NaviCtrl's GitHub issues page, where you can report a problem or suggest an idea
+- **Source code and issues** is now called **Source code**, since reporting bugs has its own row. It still opens NaviCtrl's GitHub repository
+
 ## v0.2.1 (2026-10-19)
 
 ### New
