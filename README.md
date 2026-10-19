@@ -16,12 +16,17 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Shuffle all**: an endless random queue
 - **Favourites tab** for songs, albums and artists
 - **Background playback** with lock screen and Bluetooth controls
-- **Synced lyrics**, sleep timer and song mixes
+- **Synced lyrics**, sleep timer, and a mix of similar songs started from any song
 - **Up next queue** you can reorder; your last queue comes back after a restart
 - **Downloads** for offline listening, and a cache of played songs
 - **Scrobbling** to Last.fm and ListenBrainz through Navidrome
-- **Playlists**, album, artist and genre pages, search
+- **Album and artist pages**, search, and **Add to playlist** from any song
+- **Scan for new music** on your server from the app (admin accounts)
 - **Several servers and accounts**; streaming quality for Wi-Fi and mobile data
+
+## Planned
+
+Not in the app yet: browsing and playing your playlists, genre pages and internet radio.
 
 ## Requirements
 
@@ -49,10 +54,13 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 2. Sign in with your Navidrome username and password.
 3. Tap **Shuffle all** or pick a song to start listening.
 
+Downloads, **Settings**, accounts, sign out and (for admins) **Scan for new music** are behind your profile picture at the top right.
+
 ## Tips and troubleshooting
 
 - **Plain HTTP** works, but the app warns you first because your password would be sent unencrypted.
-- Song mixes need Last.fm set up in Navidrome.
+- **Start a mix from this song** (in a song's menu) needs Last.fm set up in Navidrome.
+- **Scrobbling** and play counts use **Settings > Report what I play**; Last.fm and ListenBrainz are linked in Navidrome itself.
 
 ## Usage stats
 
