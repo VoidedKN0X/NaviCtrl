@@ -12,7 +12,6 @@ import kotlinx.serialization.json.contentOrNull
 @Serializable private class SongList(val song: List<Song> = emptyList())
 @Serializable private class PlaylistList(val playlist: List<Playlist> = emptyList())
 @Serializable private class GenreList(val genre: List<Genre> = emptyList())
-@Serializable private class RadioList(val internetRadioStation: List<RadioStation> = emptyList())
 @Serializable private class LyricsList(val structuredLyrics: List<StructuredLyrics> = emptyList())
 @Serializable private class LegacyLyrics(val value: String? = null)
 
@@ -122,9 +121,6 @@ suspend fun SubsonicClient.lyrics(song: Song): Lyrics? {
     if (plain.isNullOrBlank()) return null
     return Lyrics(false, plain.lines().map { LyricLine(null, it) })
 }
-
-suspend fun SubsonicClient.radioStations(): List<RadioStation> =
-    get("getInternetRadioStations", "internetRadioStations", RadioList.serializer()).internetRadioStation
 
 suspend fun SubsonicClient.scanStatus(): ScanStatus = get("getScanStatus", "scanStatus", ScanStatus.serializer())
 

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -42,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +65,8 @@ import com.vknxworks.navictrl.data.api.StarKind
 import com.vknxworks.navictrl.data.api.album
 import com.vknxworks.navictrl.data.api.coverArtUrl
 import com.vknxworks.navictrl.data.api.createPlaylist
+import com.vknxworks.navictrl.data.api.deletePlaylist
+import com.vknxworks.navictrl.data.api.playlist
 import com.vknxworks.navictrl.data.api.playlists
 import com.vknxworks.navictrl.data.api.updatePlaylist
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
@@ -197,12 +201,77 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
     }
 }
 
+/** A playlist's menu in the Playlists tab: play it without opening it, or rename or delete it if it's yours. */
+@Composable
+fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val c = context.container
+    var renaming by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    if (renaming) {
+        TextInputDialog("Rename playlist", "Name", "Save", initial = pl.name, onDismiss = onDismiss) { name ->
+            onDismiss()
+            c.runTask {
+                c.api.updatePlaylist(pl.id, name = name)
+                c.playlistsChanged()
+            }
+        }
+        return
+    }
+    if (deleting) {
+        ConfirmDialog("Delete \"${pl.name}\"?", "The songs stay in your library.", "Delete", onDismiss = onDismiss) {
+            onDismiss()
+            c.runTask {
+                c.api.deletePlaylist(pl.id)
+                c.playlistsChanged()
+                Toast.makeText(context, "Deleted ${pl.name}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        return
+    }
+    val mine = pl.ownedBy(c.api.username)
+    // The list of playlists doesn't include their songs, so fetch them when an action needs them.
+    fun withSongs(block: (List<Song>) -> Unit) {
+        onDismiss()
+        c.runTask {
+            val songs = c.api.playlist(pl.id).entry
+            if (songs.isEmpty()) Toast.makeText(context, "${pl.name} is empty", Toast.LENGTH_SHORT).show()
+            else block(songs)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
+            SheetHeader(
+                c.api.coverArtUrl(pl.coverArt, 160),
+                pl.name,
+                listOfNotNull(countLabel(pl.songCount, "song"), formatLength(pl.duration)).joinToString("  ·  "),
+            )
+            ActionItem(Icons.Filled.PlayArrow, "Play") { withSongs { c.music.play(it, source = "playlist") } }
+            ActionItem(Icons.Filled.Shuffle, "Shuffle") { withSongs { c.music.shuffle(it, source = "playlist") } }
+            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { withSongs { c.music.playNext(it) } }
+            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { withSongs { c.music.enqueue(it) } }
+            if (mine) {
+                ActionItem(Icons.Filled.Edit, "Rename") { renaming = true }
+                ActionItem(Icons.Outlined.Delete, "Delete playlist") { deleting = true }
+            }
+        }
+    }
+}
+
 /** Pick a playlist to add songs to, or make a new one. */
 @Composable
 fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val c = context.container
-    val lists = rememberLoader("playlists-picker") { c.api.playlists() }
+    // Only playlists songs can be added to: your own, and not smart or synced ones.
+    val lists = rememberLoader("playlists-picker") { c.api.playlists().filter { it.songsEditableBy(c.api.username) } }
+    // Song counts change as songs are added, so the list is fetched again each time it opens.
+    LaunchedEffect(Unit) { if (lists.state is Load.Ok) lists.reload(silent = true) }
     var naming by remember { mutableStateOf(false) }
     val label = if (songs.size == 1) "\"${songs.first().title}\"" else "${songs.size} songs"
 
@@ -217,6 +286,7 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
             onDismiss()
             c.runTask {
                 c.api.createPlaylist(name, songs.map { it.id })
+                c.playlistsChanged()
                 Toast.makeText(context, "Created $name", Toast.LENGTH_SHORT).show()
             }
         }
@@ -234,6 +304,7 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
                         onDismiss()
                         c.runTask {
                             c.api.updatePlaylist(p.id, add = songs.map { it.id })
+                            c.playlistsChanged()
                             Toast.makeText(context, "Added to ${p.name}", Toast.LENGTH_SHORT).show()
                         }
                     }

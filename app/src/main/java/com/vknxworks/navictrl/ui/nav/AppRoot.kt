@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.outlined.QueueMusic
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
@@ -67,6 +69,7 @@ import com.vknxworks.navictrl.ui.detail.ArtistScreen
 import com.vknxworks.navictrl.ui.detail.FavouritesScreen
 import com.vknxworks.navictrl.ui.detail.GenreScreen
 import com.vknxworks.navictrl.ui.detail.PlaylistScreen
+import com.vknxworks.navictrl.ui.playlists.PlaylistsScreen
 import com.vknxworks.navictrl.ui.search.SearchScreen
 import com.vknxworks.navictrl.ui.settings.AccountsScreen
 import com.vknxworks.navictrl.ui.settings.DownloadsScreen
@@ -100,6 +103,7 @@ private data class TopDest(val route: Any, val item: TabItem)
 private val topDestinations = listOf(
     TopDest(SongsRoute, TabItem("Songs", Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
     TopDest(FavouritesRoute, TabItem("Favourites", Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
+    TopDest(PlaylistsRoute, TabItem("Playlists", Icons.AutoMirrored.Outlined.QueueMusic, Icons.AutoMirrored.Filled.QueueMusic)),
     TopDest(SearchRoute, TabItem("Search", Icons.Outlined.Search, Icons.Filled.Search)),
 )
 
@@ -239,6 +243,7 @@ private fun PhoneLayout(
 private fun AppNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = SongsRoute) {
         composable<SongsRoute> { SongsScreen() }
+        composable<PlaylistsRoute> { PlaylistsScreen() }
         composable<SearchRoute> { SearchScreen() }
         composable<YouRoute> { YouScreen() }
 

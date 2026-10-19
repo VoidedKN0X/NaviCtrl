@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 /** What's shared, in the words used by the first-run question and the Settings footer. */
 const val USAGE_STATS_DESCRIPTION =
-    "Which screens you open, how you start music (an album, playlist, artist, shuffle or radio), whether you " +
+    "Which screens you open, how you start music (an album, playlist, artist, shuffle or a mix), whether you " +
         "download songs, the app version, Android version, phone model and language. Never your server address, " +
         "username, or what you listen to or search for. Sent to VKNXWorks' own server, not to any analytics company."
 

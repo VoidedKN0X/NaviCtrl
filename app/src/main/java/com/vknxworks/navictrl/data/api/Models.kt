@@ -95,8 +95,16 @@ data class Playlist(
     val created: String? = null,
     val changed: String? = null,
     val coverArt: String? = null,
+    /** OpenSubsonic: songs can't be added or removed (a smart or synced playlist, or someone else's). */
+    val readonly: Boolean = false,
     val entry: List<Song> = emptyList(),
-)
+) {
+    /** Yours to rename or delete. Servers that leave the owner out only return your own playlists to edit. */
+    fun ownedBy(username: String): Boolean = owner == null || owner.equals(username, ignoreCase = true)
+
+    /** Yours, and songs can be added and removed. */
+    fun songsEditableBy(username: String): Boolean = ownedBy(username) && !readonly
+}
 
 @Serializable
 data class Genre(val value: String = "", val songCount: Int = 0, val albumCount: Int = 0)
@@ -128,9 +136,6 @@ data class StructuredLyrics(
 
 /** Lyrics ready to show: lines with an optional start time in ms. */
 data class Lyrics(val synced: Boolean, val lines: List<LyricLine>)
-
-@Serializable
-data class RadioStation(val id: String, val name: String = "", val streamUrl: String = "", val homePageUrl: String? = null)
 
 @Serializable
 data class ScanStatus(val scanning: Boolean = false, val count: Long = 0, val folderCount: Long = 0, val lastScan: String? = null)

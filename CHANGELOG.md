@@ -4,12 +4,36 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v0.2.0 (2026-10-19)
+
+Playlists get their own tab, internet radio is gone, and the app is now completely Google-free.
+
+### New
+
+- **Playlists tab.** A new tab in the bar at the bottom (and in the side rail on tablets and unfolded foldables) lists your playlists and the ones other people share on your Navidrome server. Each shows its cover, how many songs it has, how long it is, and who made it if it isn't yours. Pull down to refresh the list
+- **Make a playlist** with the **+** button at the top of the Playlists tab. It starts empty; add songs with **Add to playlist** in any song's or album's menu
+- **Playlist menu.** Tap the three dots next to a playlist, or press and hold it, to play or shuffle it without opening it, play it next, or add it to the queue. On your own playlists the menu also has **Rename** and **Delete playlist**; deleting asks first, and the songs stay in your library
+- **Playlist page.** Tap a playlist to see its songs with **Play** and **Shuffle** buttons. Tap any song to play the playlist from that song. The download button saves the whole playlist for offline listening, and the **...** menu has Play next, Add to queue, and for your own playlists Rename and Delete
+- **Remove a song from a playlist** with **Remove from this playlist** in the song's menu on your own playlists
 
 ### Changed
 
-- **README brought up to date with 0.1.13.** Playlists, genre pages and internet radio can't currently be opened in the app (they were on the old Library tab, which became Favourites), so the README now lists them under a new **Planned** section instead of as features. The feature list now also mentions starting a mix of similar songs from any song, **Add to playlist**, and **Scan for new music** for admin accounts. **Getting started** explains that downloads, settings and accounts are behind your profile picture now that the You tab is gone, and the tips now name the **Start a mix from this song** menu item and the **Report what I play** setting for scrobbling. Nothing in the app has changed.
-- Tidied the changelog: removed a doubled bullet marker in the previous version's notes.
+- The bar at the bottom now has four tabs: Songs, Favourites, Playlists and Search
+- **Add to playlist** now only lists playlists you can add songs to: your own, but not smart playlists or playlists synced from a file, which Navidrome doesn't let you change. Before, picking one of those failed with an error. The list is also fetched again each time you open it, so song counts are up to date
+- Playlists you make, rename, delete or add songs to anywhere in the app update straight away on the Playlists tab and on an open playlist page
+- Smart playlists and playlists synced from a file no longer offer **Remove from this playlist**, which Navidrome doesn't allow on them. You can still rename or delete your own
+- Removing a song from a playlist first checks the playlist on your server, so the right song is removed even if the playlist was changed in another app after you opened it
+- **README brought up to date.** Playlists are now listed as a feature, and the **Planned** section only lists genre pages. The README also mentions starting a mix of similar songs from any song, **Add to playlist**, and **Scan for new music** for admin accounts; **Getting started** explains that downloads, settings and accounts are behind your profile picture, and the tips name the **Start a mix from this song** menu item and the **Report what I play** setting for scrobbling
+- Tidied the changelog: removed a doubled bullet marker in the 0.1.13 notes
+
+### Removed
+
+- **Internet radio is gone.** NaviCtrl is a player for the music on your Navidrome server, and radio stations could only be reached from the old Library screen, which hasn't been in the app since 0.1.10. Everything for radio has been removed: the station list, playing a station's stream, the "Internet radio" and "Live" display in the player, and the exception that let a radio stream use plain HTTP. NaviCtrl now only ever connects to your own Navidrome server (plus the opt-in usage stats)
+- The opt-in usage stats no longer have "internet radio" as a way to start music
+
+### Privacy
+
+- **Google-free.** NaviCtrl no longer asks Google Play services for an emoji font when it starts (a lookup built into an Android library it uses). Emoji now use your phone's own font. The app has no Google services, Firebase or Google network connections, and the README says so under **Requirements**
 
 ## v0.1.13 (2026-10-19)
 

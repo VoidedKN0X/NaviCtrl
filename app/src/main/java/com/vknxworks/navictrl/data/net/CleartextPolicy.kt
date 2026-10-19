@@ -9,10 +9,10 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Plain HTTP is allowed by the platform (many Navidrome servers live on a home network), so the app
  * enforces it instead: an unencrypted request only goes out to a server address the user chose
- * (an http:// address they typed, or confirmed after HTTPS failed) or an internet radio stream they
- * started. Everything else must be HTTPS. Installed as a network interceptor, so
- * every redirect hop is checked: an HTTP hop is allowed only when the call itself was started for an
- * allowed HTTP address (so an HTTPS request can never be redirected down to HTTP).
+ * (an http:// address they typed, or confirmed after HTTPS failed). Everything else must be HTTPS.
+ * Installed as a network interceptor, so every redirect hop is checked: an HTTP hop is allowed only
+ * when the call itself was started for an allowed HTTP address (so an HTTPS request can never be
+ * redirected down to HTTP).
  */
 object CleartextPolicy {
     private val allowed: MutableSet<String> = ConcurrentHashMap.newKeySet()
@@ -22,11 +22,6 @@ object CleartextPolicy {
     /** Allows plain HTTP to the server at [baseUrl]. No-op for https addresses. */
     fun allowServer(baseUrl: String) {
         val url = baseUrl.toHttpUrlOrNull() ?: return
-        if (!url.isHttps) allowed += origin(url)
-    }
-
-    /** Allows plain HTTP to a radio stream the user picked. */
-    fun allowStream(url: HttpUrl) {
         if (!url.isHttps) allowed += origin(url)
     }
 

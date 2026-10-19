@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
@@ -120,7 +119,7 @@ fun MiniPlayer(onOpen: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(44.dp).clip(MaterialTheme.shapes.small)) {
-                    ArtImage(art, Modifier.fillMaxSize(), placeholderIcon = if (s.isRadio) Icons.Filled.Radio else Icons.Outlined.MusicNote)
+                    ArtImage(art, Modifier.fillMaxSize(), placeholderIcon = Icons.Outlined.MusicNote)
                 }
                 Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                     Text(song.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -133,15 +132,13 @@ fun MiniPlayer(onOpen: () -> Unit) {
                         Icon(if (s.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (s.isPlaying) "Pause" else "Play")
                     }
                 }
-                IconButton(onClick = { music.next() }, enabled = !s.isRadio) { Icon(Icons.Filled.SkipNext, "Next song") }
+                IconButton(onClick = { music.next() }) { Icon(Icons.Filled.SkipNext, "Next song") }
             }
-            if (!s.isRadio) {
-                val p = if (s.durationMs > 0) (s.positionMs.toFloat() / s.durationMs).coerceIn(0f, 1f) else 0f
-                Box(
-                    Modifier.align(Alignment.BottomStart).padding(horizontal = 16.dp).fillMaxWidth(p).height(2.dp)
-                        .clip(CircleShape).background(MaterialTheme.colorScheme.primary),
-                )
-            }
+            val p = if (s.durationMs > 0) (s.positionMs.toFloat() / s.durationMs).coerceIn(0f, 1f) else 0f
+            Box(
+                Modifier.align(Alignment.BottomStart).padding(horizontal = 16.dp).fillMaxWidth(p).height(2.dp)
+                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+            )
         }
     }
 }
@@ -179,16 +176,12 @@ fun NowPlayingScreen() {
                         IconButton(onClick = nav::back) { Icon(Icons.Filled.KeyboardArrowDown, "Close") }
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                when {
-                                    s.isRadio -> "Internet radio"
-                                    s.endless -> "Endless queue"
-                                    else -> "Playing from"
-                                },
+                                if (s.endless) "Endless queue" else "Playing from",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
-                                if (s.isRadio) song.title else song.album.orEmpty(),
+                                song.album.orEmpty(),
                                 style = MaterialTheme.typography.labelLarge,
                                 textAlign = TextAlign.Center,
                                 maxLines = 1,
@@ -196,14 +189,13 @@ fun NowPlayingScreen() {
                                 modifier = Modifier.clickable(enabled = !song.albumId.isNullOrBlank()) { nav.album(song.albumId) },
                             )
                         }
-                        if (s.isRadio) IconButton(onClick = { music.stop(); nav.back() }) { Icon(Icons.Filled.Stop, "Stop") }
-                        else IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More") }
+                        IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More") }
                     }
                     Spacer(Modifier.height(20.dp))
                     Box(
                         Modifier.widthIn(max = 440.dp).fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.large)
                             .clickable(enabled = !song.albumId.isNullOrBlank()) { nav.album(song.albumId) },
-                    ) { ArtImage(art, Modifier.fillMaxSize(), placeholderIcon = if (s.isRadio) Icons.Filled.Radio else Icons.Outlined.MusicNote) }
+                    ) { ArtImage(art, Modifier.fillMaxSize(), placeholderIcon = Icons.Outlined.MusicNote) }
                     Spacer(Modifier.height(28.dp))
                     Row(Modifier.widthIn(max = 440.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -217,35 +209,29 @@ fun NowPlayingScreen() {
                                 modifier = Modifier.clickable(enabled = !song.artistId.isNullOrBlank()) { nav.artist(song.artistId) },
                             )
                         }
-                        if (!s.isRadio) {
-                            IconButton(onClick = { c.stars.set(StarKind.SONG, song.id, !starred) }) {
-                                Icon(
-                                    if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                    if (starred) "Remove from favourites" else "Add to favourites",
-                                    tint = if (starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                        IconButton(onClick = { c.stars.set(StarKind.SONG, song.id, !starred) }) {
+                            Icon(
+                                if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                if (starred) "Remove from favourites" else "Add to favourites",
+                                tint = if (starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                     Spacer(Modifier.height(16.dp))
-                    if (s.isRadio) {
-                        Text("Live", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    } else {
-                        Column(Modifier.widthIn(max = 440.dp).fillMaxWidth()) {
-                            SeekBar(
-                                positionMs = scrub ?: s.positionMs,
-                                durationMs = s.durationMs,
-                                bufferedMs = s.bufferedMs,
-                                onScrub = { scrub = it },
-                                onSeek = { music.seekTo(it); scrub = null },
-                                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                                bufferColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
-                            )
-                            Row(Modifier.fillMaxWidth()) {
-                                Text(formatClock(scrub ?: s.positionMs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.weight(1f))
-                                Text(formatClock(s.durationMs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    Column(Modifier.widthIn(max = 440.dp).fillMaxWidth()) {
+                        SeekBar(
+                            positionMs = scrub ?: s.positionMs,
+                            durationMs = s.durationMs,
+                            bufferedMs = s.bufferedMs,
+                            onScrub = { scrub = it },
+                            onSeek = { music.seekTo(it); scrub = null },
+                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                            bufferColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
+                        )
+                        Row(Modifier.fillMaxWidth()) {
+                            Text(formatClock(scrub ?: s.positionMs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.weight(1f))
+                            Text(formatClock(s.durationMs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Spacer(Modifier.height(12.dp))
@@ -254,10 +240,10 @@ fun NowPlayingScreen() {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        IconButton(onClick = { music.toggleShuffle() }, enabled = !s.isRadio) {
+                        IconButton(onClick = { music.toggleShuffle() }) {
                             Icon(Icons.Filled.Shuffle, "Shuffle", tint = if (s.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        IconButton(onClick = { music.previous() }, enabled = !s.isRadio, modifier = Modifier.size(56.dp)) {
+                        IconButton(onClick = { music.previous() }, modifier = Modifier.size(56.dp)) {
                             Icon(Icons.Filled.SkipPrevious, "Previous", Modifier.size(36.dp))
                         }
                         Box(
@@ -275,10 +261,10 @@ fun NowPlayingScreen() {
                                 )
                             }
                         }
-                        IconButton(onClick = { music.next() }, enabled = !s.isRadio, modifier = Modifier.size(56.dp)) {
+                        IconButton(onClick = { music.next() }, modifier = Modifier.size(56.dp)) {
                             Icon(Icons.Filled.SkipNext, "Next", Modifier.size(36.dp))
                         }
-                        IconButton(onClick = { music.cycleRepeat() }, enabled = !s.isRadio) {
+                        IconButton(onClick = { music.cycleRepeat() }) {
                             Icon(
                                 if (s.repeatMode == Player.REPEAT_MODE_ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
                                 "Repeat",
@@ -289,8 +275,8 @@ fun NowPlayingScreen() {
                     if (!wide) {
                         Spacer(Modifier.weight(1f))
                         Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            if (!s.isRadio) PanelButton(Icons.AutoMirrored.Filled.Subject, "Lyrics") { panel = "lyrics" }
-                            if (!s.isRadio) PanelButton(Icons.AutoMirrored.Filled.QueueMusic, "Up next") { panel = "queue" }
+                            PanelButton(Icons.AutoMirrored.Filled.Subject, "Lyrics") { panel = "lyrics" }
+                            PanelButton(Icons.AutoMirrored.Filled.QueueMusic, "Up next") { panel = "queue" }
                             PanelButton(Icons.Filled.Bedtime, sleepLabel(s) ?: "Sleep", selected = sleepLabel(s) != null) { sleepSheet = true }
                         }
                     }

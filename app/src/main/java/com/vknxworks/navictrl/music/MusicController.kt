@@ -14,13 +14,11 @@ import androidx.media3.session.SessionToken
 import com.vknxworks.navictrl.AppContainer
 import com.vknxworks.navictrl.cacheTag
 import com.vknxworks.navictrl.data.api.ApiJson
-import com.vknxworks.navictrl.data.api.RadioStation
 import com.vknxworks.navictrl.data.api.Song
 import com.vknxworks.navictrl.data.api.SongSort
 import com.vknxworks.navictrl.data.api.randomSongs
 import com.vknxworks.navictrl.data.api.similarSongs
 import com.vknxworks.navictrl.data.api.streamUrl
-import com.vknxworks.navictrl.data.net.CleartextPolicy
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +34,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -44,7 +41,6 @@ import kotlin.coroutines.resumeWithException
 data class MusicState(
     val connected: Boolean = false,
     val current: Song? = null,
-    val isRadio: Boolean = false,
     val isPlaying: Boolean = false,
     val buffering: Boolean = false,
     val positionMs: Long = 0,
@@ -54,7 +50,7 @@ data class MusicState(
     val index: Int = 0,
     val shuffle: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
-    /** True while the queue tops itself up (shuffle all, the songs list, radio mixes). */
+    /** True while the queue tops itself up (shuffle all, the songs list). */
     val endless: Boolean = false,
     val sleepAtMs: Long? = null,
     val sleepAtEndOfTrack: Boolean = false,
@@ -164,7 +160,6 @@ class MusicController(private val context: Context, private val c: AppContainer)
         _state.value = MusicState(
             connected = true,
             current = current,
-            isRadio = p.currentMediaItem?.mediaId?.startsWith(MusicService.RADIO_PREFIX) == true,
             isPlaying = p.isPlaying,
             buffering = p.playbackState == Player.STATE_BUFFERING,
             positionMs = p.currentPosition.coerceAtLeast(0),
@@ -330,28 +325,6 @@ class MusicController(private val context: Context, private val c: AppContainer)
         if (similar.isEmpty()) throw IllegalStateException("No similar songs found. The server needs Last.fm for mixes.")
         trackPlayback("mix", shuffle = false, first = song)
         startQueue(listOf(song) + similar.filterNot { it.id == song.id })
-    }
-
-    fun playRadio(station: RadioStation) = launch {
-        // The stream address comes from the server: only ever hand plain web streams to the player.
-        val streamUrl = station.streamUrl.trim().toHttpUrlOrNull()
-            ?: throw IllegalStateException("This station's stream address isn't a web (http/https) address")
-        if (!streamUrl.isHttps) CleartextPolicy.allowStream(streamUrl)
-        trackPlayback("radio", shuffle = false)
-        continuation = null
-        unshuffled = null
-        val item = MediaItem.Builder()
-            .setMediaId(MusicService.RADIO_PREFIX + station.id)
-            .setUri(streamUrl.toString())
-            .setMediaMetadata(
-                MediaMetadata.Builder().setTitle(station.name).setArtist("Internet radio").setIsPlayable(true).setIsBrowsable(false).build()
-            )
-            .build()
-        val mc = controller()
-        mc.setMediaItem(item)
-        mc.prepare()
-        mc.play()
-        refresh()
     }
 
     fun enqueue(songs: List<Song>) = launch {
@@ -534,7 +507,6 @@ class MusicController(private val context: Context, private val c: AppContainer)
             delay(1500)
             val mc = controller ?: return@launch
             val key = c.sessions.active.value?.account?.key ?: return@launch
-            if (mc.currentMediaItem?.mediaId?.startsWith(MusicService.RADIO_PREFIX) == true) return@launch
             val songs = (0 until mc.mediaItemCount).map { songOf(mc.getMediaItemAt(it)) }
             if (songs.isEmpty()) return@launch
             // Keep a window around the current song so very long endless queues stay small on disk.

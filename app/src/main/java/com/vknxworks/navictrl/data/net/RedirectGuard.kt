@@ -32,7 +32,7 @@ object RedirectGuard {
         // Subsonic signs every request in its address (u = user, t = md5(password + salt), s = salt), and
         // redirects often copy the query along ("https://new.host$request_uri"). Another server must not
         // get them: with a token and its salt it could sign in as you, or try to guess the password.
-        // (Only for calls the app signed itself; a radio station's own address is left as it is.)
+        // (Only for calls the app signed itself; other addresses are left as they are.)
         val signed = original.url.queryParameter("u") != null || original.url.queryParameter("apiKey") != null ||
             original.url.queryParameter("jwt") != null
         val url = if (!signed) request.url else request.url.newBuilder().apply { AUTH_QUERY.forEach { removeAllQueryParameters(it) } }.build()
