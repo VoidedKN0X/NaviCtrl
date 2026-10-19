@@ -96,7 +96,7 @@ Or open the folder in Android Studio and press **Run** with your phone connected
 
 ## Support the project
 
-NaviCtrl is free and open source. If it's useful to you, you can support development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X), or tap **Support NaviCtrl** under **About** on the You page (tap your profile picture). Starring the repo and [reporting bugs](https://github.com/VoidedKN0X/NaviCtrl/issues) helps too.
+NaviCtrl is free and open source. If it's useful to you, tap **Support NaviCtrl** under **About** on the You page (tap your profile picture) to sponsor development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Found a problem or have an idea? Tap **Report a bug** in the same section, or [open an issue](https://github.com/VoidedKN0X/NaviCtrl/issues). Starring the repo helps too.
 
 ## The Ctrl series
 
