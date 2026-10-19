@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -71,6 +72,8 @@ class Telemetry(
     private val queue = Channel<JSONObject>(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     @Volatile private var sessionId = newSessionId()
     @Volatile private var lastEventAt = 0L
+    /** The request being sent right now, so switching stats off can stop it. */
+    @Volatile private var inFlight: Call? = null
 
     /** Mirrors the stored setting; false until it has been read, so nothing goes out before that. */
     @Volatile private var optedIn = false
@@ -90,6 +93,8 @@ class Telemetry(
                         firstRead && openPending && s.usageStats -> { openPending = false; trackOpened(s) }
                         // Switched on in Settings or the first-run question: start a fresh session.
                         !firstRead && !wasOptedIn && s.usageStats -> { resetSession(); trackOpened(s) }
+                        // Switched off: nothing queued goes out, and a request being sent is stopped.
+                        wasOptedIn && !s.usageStats -> dropPending()
                     }
                 }
             }
@@ -143,6 +148,12 @@ class Telemetry(
         queue.trySend(event)
     }
 
+    private fun dropPending() {
+        while (queue.tryReceive().isSuccess) Unit
+        inFlight?.cancel()
+        resetSession()
+    }
+
     /** A fresh session after opting back in, so stats from before and after aren't linked. */
     private fun resetSession() {
         sessionId = newSessionId()
@@ -158,7 +169,12 @@ class Telemetry(
             .header("User-Agent", "NaviCtrl/${BuildConfig.VERSION_NAME} (Android)")
             .post(event.toString().toRequestBody(JSON))
             .build()
-        runCatching { http.newCall(request).execute().close() }
+        val call = http.newCall(request)
+        inFlight = call
+        // Re-checked here too: switching off between the check above and this point still stops it.
+        if (!enabled) call.cancel()
+        runCatching { call.execute().close() }
+        inFlight = null
     }
 
     /** "phone" or "tablet", from the screen's smallest width (the same split as the app's layouts). */
