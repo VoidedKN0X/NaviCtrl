@@ -29,6 +29,10 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
 Not in the app yet: genre pages.
 
+## Screenshots
+
+Coming soon.
+
 ## Requirements
 
 - Android 13 or newer
