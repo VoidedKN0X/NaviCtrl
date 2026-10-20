@@ -37,7 +37,7 @@ Coming soon.
 
 - Android 13 or newer
 - A Navidrome server
-- No Google Play services needed: NaviCtrl is Google-free and never contacts Google
+- **Google-free and de-Googled:** no Google Play services, Firebase or other Google services, and the app never contacts Google. It works the same on de-Googled phones (GrapheneOS, CalyxOS, /e/OS, LineageOS without Google apps).
 
 ## Install
 

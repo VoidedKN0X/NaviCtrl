@@ -4,6 +4,19 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.2.4 (2026-10-20)
+
+NaviCtrl is now Google-free and de-Googled.
+
+### Changed
+
+- **Media controls trust the apps built into your phone.** NaviCtrl's music player used to accept controls only from a fixed list of named apps (system UI, Bluetooth and car mode), some of them Google's. It now accepts the apps that are part of your phone's system, plus apps Android itself marks as trusted for media control, so the notification, lock screen, Bluetooth and car controls keep working as before, also on de-Googled phones whose built-in apps have different names. NaviCtrl checks which app is really asking before it trusts it, and apps you installed yourself still can't control playback.
+- **README**: the Google-free line now reads "Google-free and de-Googled": no Google Play services, Firebase or other Google services, the app never contacts Google, and it works the same on de-Googled phones (GrapheneOS, CalyxOS, /e/OS, LineageOS without Google apps). It's the only place Google is mentioned in the README.
+
+### Privacy
+
+- **No mention of Google left in the app's own code.** NaviCtrl has no Google Play services, Firebase or other Google services and never contacts Google: it only talks to your Navidrome server. The music player no longer names Google apps or uses Google's helper code directly (it uses an AndroidX helper instead), and a technical note in its setup file is gone. It works the same on de-Googled phones such as GrapheneOS, CalyxOS, /e/OS and LineageOS without Google apps.
+
 ## v0.2.3 (2026-10-20)
 
 ### Privacy

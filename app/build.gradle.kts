@@ -22,8 +22,8 @@ android {
         minSdk = 33
         targetSdk = 36
         // Bump both to publish a new release (see CHANGELOG.md).
-        versionCode = 17
-        versionName = "0.2.3"
+        versionCode = 18
+        versionName = "0.2.4"
 
     }
 
@@ -123,6 +123,7 @@ dependencies {
     implementation(libs.media3.database)
     implementation(libs.media3.datasource.okhttp)
     implementation(libs.media3.session)
+    implementation(libs.androidx.concurrent.futures) // futures for Media3 callbacks
     implementation(libs.androidx.palette)
     implementation(libs.haze)
 }
