@@ -142,7 +142,7 @@ fun SearchScreen() {
                     if (r.song.isNotEmpty()) {
                         item(key = "songs-h") { SectionHeader("Songs") }
                         itemsIndexed(r.song, key = { _, s -> "s-${s.id}" }) { i, s ->
-                            SongRow(s, onClick = { c.music.play(r.song, i, source = "search") })
+                            SongRow(s, onClick = { c.music.play(r.song, i) })
                         }
                     }
                 }

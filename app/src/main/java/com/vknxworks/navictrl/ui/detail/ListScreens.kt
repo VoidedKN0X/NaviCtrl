@@ -147,7 +147,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
                         if (allOffline) "Remove download" else "Download",
                         onClick = {
                             if (allOffline) c.downloads.remove(songs.map { it.id })
-                            else { c.downloads.enqueue(songs); c.telemetry.track("download_started", mapOf("kind" to "playlist")) }
+                            else c.downloads.enqueue(songs)
                         },
                         active = allOffline,
                     )
@@ -165,12 +165,12 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
                     }
                 }
             } else {
-                item(key = "buttons") { PlayShuffleRow(onPlay = { c.music.play(songs, source = "playlist") }, onShuffle = { c.music.shuffle(songs, source = "playlist") }) }
+                item(key = "buttons") { PlayShuffleRow(onPlay = { c.music.play(songs) }, onShuffle = { c.music.shuffle(songs) }) }
             }
             itemsIndexed(songs, key = { i, s -> "$i-${s.id}" }) { i, s ->
                 SongRow(
                     s,
-                    onClick = { c.music.play(songs, i, source = "playlist") },
+                    onClick = { c.music.play(songs, i) },
                     extraActions = if (!editable) emptyList() else listOf(
                         SongAction("Remove from this playlist", Icons.Outlined.RemoveCircleOutline) {
                             c.runTask {
@@ -335,10 +335,10 @@ private fun GenreSongs(name: String) {
         loader.items.isEmpty() -> MessageView(Icons.Outlined.MusicNote, "No songs in $name")
         else -> LazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
             item(key = "buttons") {
-                PlayShuffleRow(onPlay = { c.music.play(loader.items.toList(), source = "genre") }, onShuffle = { c.music.shuffleGenre(name) })
+                PlayShuffleRow(onPlay = { c.music.play(loader.items.toList()) }, onShuffle = { c.music.shuffleGenre(name) })
             }
             itemsIndexed(loader.items, key = { i, s -> "$i-${s.id}" }) { i, s ->
-                SongRow(s, onClick = { c.music.play(loader.items.toList(), i, source = "genre") })
+                SongRow(s, onClick = { c.music.play(loader.items.toList(), i) })
             }
             if (loader.loading) item { Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
         }
@@ -369,8 +369,8 @@ fun FavouritesScreen() {
                 when (tab) {
                     FavTab.SONGS -> if (starred.song.isEmpty()) Empty("Tap the heart on any song to keep it here.") else
                         LazyColumn(Modifier.fillMaxSize(), contentPadding = bottom) {
-                            item { PlayShuffleRow(onPlay = { c.music.play(starred.song, source = "favourites") }, onShuffle = { c.music.shuffle(starred.song, source = "favourites") }) }
-                            itemsIndexed(starred.song, key = { _, s -> s.id }) { i, s -> SongRow(s, onClick = { c.music.play(starred.song, i, source = "favourites") }) }
+                            item { PlayShuffleRow(onPlay = { c.music.play(starred.song) }, onShuffle = { c.music.shuffle(starred.song) }) }
+                            itemsIndexed(starred.song, key = { _, s -> s.id }) { i, s -> SongRow(s, onClick = { c.music.play(starred.song, i) }) }
                         }
                     FavTab.ALBUMS -> if (starred.album.isEmpty()) Empty("Favourite albums show up here.") else
                         LazyColumn(Modifier.fillMaxSize(), contentPadding = bottom) { items(starred.album, key = { it.id }) { AlbumRow(it) } }

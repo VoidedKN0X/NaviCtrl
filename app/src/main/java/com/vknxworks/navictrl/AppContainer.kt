@@ -16,7 +16,6 @@ import com.vknxworks.navictrl.data.net.CleartextPolicy
 import com.vknxworks.navictrl.data.net.RedirectGuard
 import com.vknxworks.navictrl.data.library.StarStore
 import com.vknxworks.navictrl.data.settings.SettingsRepository
-import com.vknxworks.navictrl.data.telemetry.Telemetry
 import com.vknxworks.navictrl.music.MusicController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +56,6 @@ class AppContainer(val context: Context) {
 
     val sessions = SessionManager(context, http, appScope)
     val settings = SettingsRepository(context, appScope)
-    val telemetry = Telemetry(context, settings, appScope)
     val stars = StarStore(context, sessions, appScope)
     val downloads = DownloadRepository(context, appScope, sessions, settings, http)
     val music by lazy { MusicController(context, this) }

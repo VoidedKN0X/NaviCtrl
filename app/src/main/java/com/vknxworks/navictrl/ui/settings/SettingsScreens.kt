@@ -107,16 +107,6 @@ fun SettingsScreen() {
                 GroupSwitch("Report what I play", "Updates play counts, recently played and scrobbles", s.scrobble) { v -> update { it.copy(scrobble = v) } }
             }
 
-            if (c.telemetry.available) {
-                Group("Usage stats", footer = USAGE_STATS_DESCRIPTION) {
-                    GroupSwitch(
-                        "Share anonymous usage stats",
-                        "Helps decide what to improve next",
-                        s.usageStats,
-                    ) { v -> update { it.copy(usageStats = v, usageStatsAsked = true) } }
-                }
-            }
-
             Group("Appearance") {
                 GroupChoice("Theme", ThemeChoice.entries.map { it to it.label }, s.theme) { v -> update { it.copy(theme = v) } }
                 GroupSwitch("Use wallpaper colours", "Replaces the default colours with ones from your wallpaper", s.dynamicColor) { v ->
@@ -263,10 +253,10 @@ fun DownloadsScreen() {
                 val songs = done.map { it.song }
                 item(key = "done-h") {
                     Text("On this phone", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
-                    PlayShuffleRow(onPlay = { c.music.play(songs, source = "downloads") }, onShuffle = { c.music.shuffle(songs, source = "downloads") })
+                    PlayShuffleRow(onPlay = { c.music.play(songs) }, onShuffle = { c.music.shuffle(songs) })
                 }
                 items(songs.size, key = { "d-${songs[it].id}" }) { i ->
-                    SongRow(songs[i], onClick = { c.music.play(songs, i, source = "downloads") })
+                    SongRow(songs[i], onClick = { c.music.play(songs, i) })
                 }
             }
         }
