@@ -3,19 +3,18 @@ package com.vknxworks.navictrl.music
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.concurrent.futures.CallbackToFutureAdapter
 import androidx.media3.common.util.BitmapLoader
 import androidx.media3.datasource.DataSourceBitmapLoader
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
 import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.api.coverArtUrl
 import okhttp3.OkHttpClient
 
 /**
  * Artwork URIs put in MediaMetadata. They carry only the cover id and size, never the auth token,
- * because media metadata is shared with other apps (system UI, Bluetooth, Android Auto).
+ * because media metadata is shared with other apps (system UI, Bluetooth, car mode).
  */
 object ArtworkUris {
     const val SCHEME = "navictrl-art"
@@ -56,11 +55,11 @@ class ArtworkBitmapLoader(
 
     override fun supportsMimeType(mimeType: String): Boolean = delegate.supportsMimeType(mimeType)
 
-    override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> = delegate.decodeBitmap(data)
+    override fun decodeBitmap(data: ByteArray) = delegate.decodeBitmap(data)
 
-    override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> {
-        val real = ArtworkUris.resolve(uri, client())
-            ?: return Futures.immediateFailedFuture<Bitmap>(IllegalArgumentException("No artwork for $uri"))
-        return delegate.loadBitmap(real)
-    }
+    override fun loadBitmap(uri: Uri) = ArtworkUris.resolve(uri, client())?.let { delegate.loadBitmap(it) }
+        ?: CallbackToFutureAdapter.getFuture<Bitmap> { completer ->
+            completer.setException(IllegalArgumentException("No artwork for $uri"))
+            "loadBitmap"
+        }
 }

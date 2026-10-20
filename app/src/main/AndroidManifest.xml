@@ -42,7 +42,7 @@
             </intent-filter>
         </service>
 
-        <!-- Google-free: no emoji font download through Google Play services on start.
+        <!-- No downloadable emoji font: androidx.emoji2 would look one up from a font provider on start.
              Emoji use the phone's own font. WorkManager's initializer stays. -->
         <provider
             android:name="androidx.startup.InitializationProvider"

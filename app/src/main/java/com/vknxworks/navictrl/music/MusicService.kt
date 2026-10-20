@@ -17,8 +17,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
+import androidx.concurrent.futures.CallbackToFutureAdapter
 import com.vknxworks.navictrl.MainActivity
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.api.scrobble
@@ -115,8 +114,9 @@ class MusicService : MediaSessionService() {
     }
 
     /**
-     * Only this app and the system's own media surfaces (notification, lock screen, Bluetooth,
-     * Android Auto, apps holding MEDIA_CONTENT_CONTROL) may control playback. Other apps get nothing.
+     * Only this app and the system's own media surfaces (notification, lock screen, Bluetooth, car
+     * and voice controls built into the phone, apps holding MEDIA_CONTENT_CONTROL) may control
+     * playback. Other apps get nothing.
      */
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         val s = session ?: return null
@@ -126,7 +126,7 @@ class MusicService : MediaSessionService() {
         val pkgVerified = uid >= 0 && packageManager.getPackagesForUid(uid)?.contains(pkg) == true
         val allowed = uid == Process.myUid() ||
             controllerInfo.isTrusted ||
-            (pkgVerified && pkg in SYSTEM_CONTROLLERS) ||
+            (pkgVerified && isSystemApp(pkg)) ||
             // Media button intents delivered to the service by the platform (no binder caller).
             (uid < 0 && pkg == MediaSession.ControllerInfo.LEGACY_CONTROLLER_PACKAGE_NAME &&
                 controllerInfo.controllerVersion == MediaSession.ControllerInfo.LEGACY_CONTROLLER_VERSION) ||
@@ -138,9 +138,15 @@ class MusicService : MediaSessionService() {
         return if (allowed) s else null
     }
 
+    /** Apps built into the phone's firmware (system UI, Bluetooth, car mode); a sideloaded app never is one. */
+    private fun isSystemApp(pkg: String): Boolean = runCatching {
+        val ai = packageManager.getApplicationInfo(pkg, 0)
+        ai.flags and (android.content.pm.ApplicationInfo.FLAG_SYSTEM or android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+    }.getOrDefault(false)
+
     /**
      * Only the app itself puts songs in the queue. Other allowed controllers (system UI, Bluetooth,
-     * Android Auto) can play, pause and skip, but can't make the player open their own addresses or
+     * car mode) can play, pause and skip, but can't make the player open their own addresses or
      * files from the app's private storage.
      */
     private object QueueGuard : MediaSession.Callback {
@@ -148,11 +154,13 @@ class MusicService : MediaSessionService() {
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>,
-        ): ListenableFuture<MutableList<MediaItem>> {
+        ) = CallbackToFutureAdapter.getFuture<MutableList<MediaItem>> { completer ->
             if (controller.uid != Process.myUid() || mediaItems.any { it.localConfiguration == null }) {
-                return Futures.immediateFailedFuture(UnsupportedOperationException("Not allowed"))
+                completer.setException(UnsupportedOperationException("Not allowed"))
+            } else {
+                completer.set(mediaItems)
             }
-            return Futures.immediateFuture(mediaItems)
+            "onAddMediaItems"
         }
     }
 
@@ -182,11 +190,5 @@ class MusicService : MediaSessionService() {
 
     companion object {
         private const val LEGACY_BROWSER_ACTION = "android.media.browse.MediaBrowserService"
-        private val SYSTEM_CONTROLLERS = setOf(
-            "com.android.systemui",
-            "com.android.bluetooth",
-            "com.google.android.bluetooth",
-            "com.google.android.projection.gearhead",
-        )
     }
 }
