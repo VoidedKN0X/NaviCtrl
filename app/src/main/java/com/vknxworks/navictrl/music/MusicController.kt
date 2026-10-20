@@ -246,21 +246,10 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     // ---------- Starting playback ----------
 
-    /**
-     * Replaces the queue and plays from [startIndex]. [shuffle] mixes the songs first. [source] is the kind of
-     * place playback was started from ("album", "playlist", ...), for the opt-in usage stats only.
-     */
-    fun play(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false, source: String = "other") {
+    /** Replaces the queue and plays from [startIndex]. [shuffle] mixes the songs first. */
+    fun play(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false) {
         if (songs.isEmpty()) return
-        trackPlayback(source, shuffle, songs.getOrNull(startIndex) ?: songs.first())
         startQueue(songs, startIndex, shuffle)
-    }
-
-    /** Usage stats (only if the user opted in): how playback was started, never which songs. */
-    private fun trackPlayback(source: String, shuffle: Boolean, first: Song? = null) {
-        val props = mutableMapOf<String, Any>("source" to source, "shuffle" to shuffle.toString())
-        if (first != null) props["offline"] = (c.downloads.completedFile(first.id) != null).toString()
-        c.telemetry.track("playback_started", props)
     }
 
     /** Replaces the queue and plays from [startIndex]. [shuffle] mixes the songs first. [more] keeps the queue topped up. */
@@ -282,13 +271,12 @@ class MusicController(private val context: Context, private val c: AppContainer)
         refresh()
     }
 
-    fun shuffle(songs: List<Song>, source: String = "other") = play(songs, shuffle = true, source = source)
+    fun shuffle(songs: List<Song>) = play(songs, shuffle = true)
 
     /** Plays the whole library in random order, topping up as it goes. */
     fun shuffleAll() = launch {
         val first = c.api.randomSongs(200)
         if (first.isEmpty()) throw IllegalStateException("Your library has no songs yet")
-        trackPlayback("shuffle_all", shuffle = true, first = first.first())
         startQueue(first, more = randomMore())
     }
 
@@ -300,7 +288,6 @@ class MusicController(private val context: Context, private val c: AppContainer)
     fun shuffleGenre(genre: String) = launch {
         val first = c.api.randomSongs(200, genre)
         if (first.isEmpty()) throw IllegalStateException("No songs in $genre")
-        trackPlayback("genre", shuffle = true, first = first.first())
         startQueue(first, more = randomMore(genre))
     }
 
@@ -312,7 +299,6 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val (page, total) = c.api.songsPage(index, pageSize, sort, ascending)
         if (page.isEmpty()) return@launch
         var next = index + page.size
-        trackPlayback("songs", shuffle = false, first = page.first())
         startQueue(page, more = {
             if (next >= total) emptyList()
             else c.api.songsPage(next, pageSize, sort, ascending).first.also { next += it.size }
@@ -323,7 +309,6 @@ class MusicController(private val context: Context, private val c: AppContainer)
     fun startMix(song: Song) = launch {
         val similar = runCatching { c.api.similarSongs(song.id, 80) }.getOrDefault(emptyList())
         if (similar.isEmpty()) throw IllegalStateException("No similar songs found. The server needs Last.fm for mixes.")
-        trackPlayback("mix", shuffle = false, first = song)
         startQueue(listOf(song) + similar.filterNot { it.id == song.id })
     }
 
