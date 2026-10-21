@@ -1,6 +1,10 @@
 package com.vknxworks.navictrl
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.vknxworks.navictrl.ui.lock.AppLock
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -13,6 +17,16 @@ class NaviCtrlApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        // The app lock: lock when the app leaves the screen, or after the chosen time away.
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                AppLock.onForeground(container.lockEnabled, container.settings.settings.value.lockTimeout.millis)
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                AppLock.onBackground(container.lockEnabled, container.settings.settings.value.lockTimeout.millis)
+            }
+        })
     }
 
     /**

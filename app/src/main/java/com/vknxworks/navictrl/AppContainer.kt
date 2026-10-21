@@ -15,8 +15,14 @@ import com.vknxworks.navictrl.data.download.DownloadRepository
 import com.vknxworks.navictrl.data.net.CleartextPolicy
 import com.vknxworks.navictrl.data.net.RedirectGuard
 import com.vknxworks.navictrl.data.library.StarStore
+import com.vknxworks.navictrl.data.lock.LockVault
 import com.vknxworks.navictrl.data.settings.SettingsRepository
 import com.vknxworks.navictrl.music.MusicController
+import com.vknxworks.navictrl.music.MusicService
+import com.vknxworks.navictrl.ui.lock.AppLock
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,8 +60,15 @@ class AppContainer(val context: Context) {
         .addNetworkInterceptor(RedirectGuard.interceptor)
         .build()
 
-    val sessions = SessionManager(context, http, appScope)
     val settings = SettingsRepository(context, appScope)
+
+    /** The app lock's PIN, fingerprint key and the key that seals the saved passwords while locked. */
+    val vault = LockVault(context, "navictrl")
+
+    /** Read once, synchronously, so the app never shows unlocked for a moment at start. */
+    val lockAtStart: Boolean = vault.enabled || runBlocking { runCatching { settings.stored.first().appLock }.getOrDefault(false) }
+
+    val sessions = SessionManager(context, http, vault, appScope)
     val stars = StarStore(context, sessions, appScope)
     val downloads = DownloadRepository(context, appScope, sessions, settings, http)
     val music by lazy { MusicController(context, this) }
@@ -98,6 +111,69 @@ class AppContainer(val context: Context) {
                     loader.diskCache?.clear()
                 }
             }
+        }
+    }
+
+    /** The app lock is on, either with a PIN or still the old one waiting for a PIN. */
+    val lockEnabled: Boolean get() = vault.enabled || settings.settings.value.appLock
+
+    /** Turns the app lock on with [pin]: the PIN seals the saved passwords from now on. */
+    suspend fun enableLock(pin: String) {
+        // Unlocked first, so the lock screen doesn't flash up while the PIN is being saved.
+        AppLock.markUnlocked()
+        withContext(Dispatchers.Default) { vault.setUp(pin) }
+        settings.update { it.copy(appLock = true) }
+        sessions.sealPasswords()
+    }
+
+    /** Turns the app lock off (after the PIN was confirmed): passwords go back to Keystore-only encryption. */
+    suspend fun disableLock() {
+        sessions.unsealPasswords()
+        settings.update { it.copy(appLock = false) }
+        vault.disable()
+    }
+
+    /**
+     * "Forgot PIN?": the sealed passwords can't be read any more, so forget every account, and the
+     * downloads, playback cache, saved queues and artwork kept for them.
+     */
+    suspend fun forgetEverything() {
+        if (MusicService.running) runCatching { music.reset() }
+        val keys = sessions.accounts.value.map { it.key }
+        downloads.deleteEverything()
+        sessions.forgetAllAccounts()
+        withContext(Dispatchers.IO) {
+            runCatching { playbackCache?.let { cache -> cache.keys.toList().forEach(cache::removeResource) } }
+            keys.forEach { key -> runCatching { MusicController.forgetSavedQueue(context, key) } }
+            runCatching {
+                SingletonImageLoader.get(context).let { loader ->
+                    loader.memoryCache?.clear()
+                    loader.diskCache?.clear()
+                }
+            }
+        }
+        AppLock.markUnlocked()
+        settings.update { it.copy(appLock = false) }
+        vault.disable()
+    }
+
+    /** Locked: wipe the key from memory and drop the session, unless music or downloads need it. */
+    fun onLocked() {
+        vault.close()
+        sessions.onLocked()
+    }
+
+    fun onUnlocked() {
+        AppLock.markUnlocked()
+        sessions.onUnlocked()
+    }
+
+    init {
+        AppLock.onLocked = { onLocked() }
+        sessions.mediaBusy = { MusicService.running || downloads.busy() }
+        // The last download finished while the app is locked: nothing needs the sign-in any more.
+        appScope.launch {
+            downloads.entries.map { downloads.busy() }.distinctUntilChanged().collect { busy -> if (!busy) sessions.mediaStopped() }
         }
     }
 
