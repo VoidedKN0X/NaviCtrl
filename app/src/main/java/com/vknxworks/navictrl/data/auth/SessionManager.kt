@@ -11,6 +11,7 @@ import com.vknxworks.navictrl.data.api.ping
 import com.vknxworks.navictrl.data.api.serverInfo
 import com.vknxworks.navictrl.data.api.user
 import com.vknxworks.navictrl.data.appDataStore
+import com.vknxworks.navictrl.data.lock.LockVault
 import com.vknxworks.navictrl.data.net.CleartextPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import okhttp3.OkHttpClient
@@ -47,10 +50,14 @@ class HttpFallbackNeeded(val httpUrl: String, cause: Throwable) :
 
 data class ActiveSession(val account: Account, val client: SubsonicClient)
 
-/** Saved Navidrome accounts and the active one. Passwords never leave the Keystore-encrypted store. */
+/**
+ * Saved Navidrome accounts and the active one. Passwords never leave the Keystore-encrypted store and,
+ * with the app lock on, are also sealed with the app lock's key, so they can only be read while it's unlocked.
+ */
 class SessionManager(
     private val context: Context,
     private val http: OkHttpClient,
+    private val vault: LockVault,
     private val scope: CoroutineScope,
 ) {
     private val accountsKey = stringPreferencesKey("accounts")
@@ -65,18 +72,117 @@ class SessionManager(
     private val _ready = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = _ready.asStateFlow()
 
+    /** The saved accounts have been read (their passwords may still be sealed while the app is locked). */
+    private val _loaded = MutableStateFlow(false)
+    val loaded: StateFlow<Boolean> = _loaded.asStateFlow()
+
+    private val mutex = Mutex()
+
+    /** The app is locked (only ever true with the app lock on). */
+    @Volatile var isLocked = false
+        private set
+
+    /**
+     * Set by the app: whether music is playing (or paused with a queue) or downloads are running.
+     * Those keep the signed-in session in memory while the app is locked, so playback, media
+     * controls, scrobbling and downloads carry on. Everything else drops it until the next unlock.
+     */
+    @Volatile var mediaBusy: () -> Boolean = { false }
+
     init {
         scope.launch { load() }
     }
 
-    private suspend fun load() {
+    private suspend fun load() = mutex.withLock {
         val prefs = context.appDataStore.data.first()
         val list = prefs[accountsKey]?.let {
             runCatching { ApiJson.decodeFromString(ListSerializer(Account.serializer()), it) }.getOrNull()
         }.orEmpty()
         _accounts.value = list
-        val acc = list.firstOrNull { it.key == prefs[activeKey] } ?: list.firstOrNull()
-        if (acc != null) activate(acc)
+        _loaded.value = true
+        // With the app lock on, the password can only be decrypted after unlocking; onUnlocked() continues.
+        if (vault.enabled && !vault.isOpen) {
+            isLocked = true
+            return@withLock
+        }
+        activateSaved()
+        _ready.value = true
+    }
+
+    private suspend fun activateSaved() {
+        val activeKeyValue = context.appDataStore.data.first()[activeKey]
+        val list = _accounts.value
+        val acc = list.firstOrNull { it.key == activeKeyValue } ?: list.firstOrNull()
+        if (acc != null) activate(acc) else _active.value = null
+    }
+
+    /** The password of [acc], or null while it's sealed by the app lock and the app is locked. */
+    private fun passwordOf(acc: Account): String? {
+        val plain = KeystoreCrypto.decrypt(acc.passwordEnc) ?: return null
+        if (!LockVault.isSealed(plain)) return plain
+        return vault.open(plain)
+    }
+
+    /** Encrypts a password for saving: with the Keystore, and also with the app lock's key when it's on. */
+    private fun storePassword(password: String, seal: Boolean = vault.enabled): String {
+        val inner = if (seal) vault.seal(password) ?: throw ApiException("Unlock NaviCtrl first.") else password
+        return KeystoreCrypto.encrypt(inner)
+    }
+
+    /** The app locked: forget the session and its password until the next unlock, unless music or downloads need it. */
+    fun onLocked() {
+        if (!vault.enabled) return
+        isLocked = true
+        if (!mediaBusy()) dropSession()
+    }
+
+    /** Music or the downloads stopped: if the app is locked, nothing needs the session any more. */
+    fun mediaStopped() {
+        if (isLocked && vault.enabled && !mediaBusy()) dropSession()
+    }
+
+    private fun dropSession() {
+        scope.launch {
+            mutex.withLock {
+                if (!isLocked || mediaBusy()) return@withLock
+                _ready.value = false
+                _active.value = null
+            }
+        }
+    }
+
+    /** The app unlocked: decrypt the password and open the session again. */
+    fun onUnlocked() {
+        isLocked = false
+        scope.launch {
+            mutex.withLock {
+                if (!_loaded.value) return@withLock // load() is still running and will activate it
+                if (_active.value == null) activateSaved()
+                _ready.value = true
+            }
+        }
+    }
+
+    /** The app lock was turned on: seal every saved password with its key too. */
+    suspend fun sealPasswords() = reencrypt(seal = true)
+
+    /** The app lock is being turned off (while unlocked): back to Keystore-only encryption. */
+    suspend fun unsealPasswords() = reencrypt(seal = false)
+
+    private suspend fun reencrypt(seal: Boolean) = mutex.withLock {
+        val list = _accounts.value.map { acc ->
+            val password = passwordOf(acc) ?: return@map acc
+            acc.copy(passwordEnc = storePassword(password, seal))
+        }
+        persist(list, context.appDataStore.data.first()[activeKey])
+        _active.value?.let { s -> list.firstOrNull { it.key == s.account.key }?.let { _active.value = s.copy(account = it) } }
+    }
+
+    /** "Forgot PIN?": the passwords can't be decrypted any more, so forget every account. */
+    suspend fun forgetAllAccounts() = mutex.withLock {
+        _active.value = null
+        persist(emptyList(), null)
+        isLocked = false
         _ready.value = true
     }
 
@@ -105,7 +211,7 @@ class SessionManager(
             val account = Account(
                 serverUrl = client.baseUrl,
                 username = username.trim(),
-                passwordEnc = KeystoreCrypto.encrypt(password),
+                passwordEnc = storePassword(password),
                 serverVersion = info.serverVersion,
                 isAdmin = isAdmin,
             )
@@ -169,7 +275,7 @@ class SessionManager(
     }
 
     private fun clientFor(acc: Account): SubsonicClient? {
-        val password = KeystoreCrypto.decrypt(acc.passwordEnc) ?: return null
+        val password = passwordOf(acc) ?: return null
         // Reconnects always use the saved address and scheme; never switch an https account to http.
         CleartextPolicy.allowServer(acc.serverUrl)
         return SubsonicClient(acc.serverUrl, acc.username, password, http)

@@ -78,6 +78,10 @@ class MusicService : MediaSessionService() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 startTrack(mediaItem)
             }
+
+            override fun onEvents(player: Player, events: Player.Events) {
+                updateRunning(player)
+            }
         })
 
         // Count real listening time once a second; submit at half the track or four minutes.
@@ -185,10 +189,27 @@ class MusicService : MediaSessionService() {
         }
         session = null
         scope.cancel()
+        if (running) {
+            running = false
+            // With the app locked, the sign-in was only kept in memory for playback.
+            container.sessions.mediaStopped()
+        }
         super.onDestroy()
     }
 
+    /** Music is playing or paused with a queue (its notification is up): that keeps the sign-in while locked. */
+    private fun updateRunning(player: Player) {
+        val now = player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE && player.playbackState != Player.STATE_ENDED
+        if (now == running) return
+        running = now
+        if (!now) container.sessions.mediaStopped()
+    }
+
     companion object {
+        /** Music is playing or paused with a queue: it keeps the sign-in in memory while the app is locked. */
+        @Volatile var running = false
+            private set
+
         private const val LEGACY_BROWSER_ACTION = "android.media.browse.MediaBrowserService"
     }
 }

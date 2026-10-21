@@ -131,12 +131,25 @@ class DownloadRepository(
 
     fun removeAll() = remove(forActive(_entries.value).map { it.song.id })
 
+    /** Something is queued or downloading, for any account. */
+    fun busy(): Boolean = _entries.value.any { it.status == DownloadStatus.QUEUED || it.status == DownloadStatus.RUNNING }
+
+    /** "Forgot PIN?" in the app lock: every download of every account, its files and anything still queued. */
+    suspend fun deleteEverything() = withContext(Dispatchers.IO) {
+        WorkManager.getInstance(context).cancelAllWorkByTag(TAG)
+        update { emptyList() }
+        root.listFiles()?.forEach { it.deleteRecursively() }
+    }
+
     fun usedBytes(list: List<DownloadEntry>): Long = forActive(list).filter { it.status == DownloadStatus.DONE }.sumOf { it.bytes }
 
-    /** Run by the worker. Returns true when the file is saved. */
-    suspend fun perform(accountKey: String, id: String, onProgress: suspend (Float) -> Unit): Boolean {
+    /** Run by the worker. Returns true when the file is saved, null when it has to wait for the app lock. */
+    suspend fun perform(accountKey: String, id: String, onProgress: suspend (Float) -> Unit): Boolean? {
         // The worker may start the process cold; wait until saved state is read.
         loaded.first { it }
+        sessions.loaded.first { it }
+        // NaviCtrl restarted while the app lock is on: the password stays sealed until you unlock, so wait.
+        if (sessions.isLocked && sessions.active.value == null) return null
         sessions.ready.first { it }
         val entry = _entries.value.firstOrNull { it.song.id == id && it.accountKey == accountKey } ?: return true
         val session = sessions.active.value
@@ -237,7 +250,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val account = inputData.getString(DownloadRepository.KEY_ACCOUNT) ?: return Result.failure()
         val ok = applicationContext.container.downloads.perform(account, id) { p ->
             setProgress(workDataOf("progress" to p))
-        }
+        } ?: return Result.retry()
         return if (ok) Result.success() else Result.failure()
     }
 }

@@ -65,12 +65,9 @@ import kotlinx.coroutines.launch
 fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
     val context = LocalContext.current
     val c = context.container
-    // The password can be shown in clear text here: keep this screen out of the recent-apps preview.
-    DisposableEffect(Unit) {
-        val activity = context.findActivity()
-        activity?.setRecentsScreenshotEnabled(false)
-        onDispose { activity?.setRecentsScreenshotEnabled(true) }
-    }
+    // The password can be shown in clear text here: keep this screen out of screenshots, screen
+    // recordings and the recent-apps preview.
+    com.vknxworks.navictrl.ui.lock.SecureScreen()
     val scope = rememberCoroutineScope()
     var address by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }

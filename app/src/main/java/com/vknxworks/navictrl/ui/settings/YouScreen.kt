@@ -88,7 +88,7 @@ fun YouScreen() {
     val mine = c.downloads.forActive(downloads)
     val ready = mine.count { it.status == DownloadStatus.DONE }
     fun open(url: String) {
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        runCatching { com.vknxworks.navictrl.ui.lock.AppLock.expectReturn(); context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)) }
     }
 
     Column(Modifier.fillMaxSize()) {

@@ -4,6 +4,36 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.3.0 (2026-10-21)
+
+NaviCtrl gets the app lock every Ctrl app shares.
+
+### New
+
+- **App lock** (**Settings > Privacy and security > App lock**, off until you turn it on). NaviCtrl asks for its own app PIN when you open it: at least 6 digits, separate from your phone's screen lock, and very obvious ones (like 111111 or 123456) are refused. Turning the lock off asks for the PIN too.
+- **Unlock with fingerprint** (optional). Only strong biometrics such as the fingerprint sensor count, not face unlock that only uses the camera. The PIN is still needed after the phone restarts and at least every 72 hours.
+- **Lock again**: as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link from the About section or answering the notification permission question doesn't count as leaving, unless you stay away for more than 5 minutes.
+- **Change app PIN** in the same place; it asks for your current PIN first.
+- **Music and downloads keep going while NaviCtrl is locked.** Music that's playing (or paused with a queue) and downloads in progress carry on, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server. Starting something new needs an unlock. Downloads that were still waiting when the phone restarted start once you unlock. Your queue is kept as it was.
+- **Hide in screenshots and recent apps** (**Settings > Privacy and security**): screenshots and screen recordings of NaviCtrl come out black, and the recent-apps screen shows a blank card. Off by default. With the app lock on, the recent-apps screen always shows a blank card.
+
+### Changed
+
+- **Settings are in the same order as in the other Ctrl apps**: Appearance and Privacy and security first, then Streaming, Downloads and Listening history.
+
+### Security
+
+- **Your server password is encrypted with your PIN while NaviCtrl is locked.** The key that decrypts it only exists in memory while the app is unlocked and is wiped the moment it locks. A locked app, or a copy of its files, can't use your password. Only music or downloads that are already running keep the sign-in they need in memory, until they stop.
+- **The PIN can't be guessed off the phone.** It's never stored. It's stretched with 600,000 rounds of PBKDF2 and mixed with a secret held in the phone's secure hardware (StrongBox where available), so copying NaviCtrl's files to a computer isn't enough to try PINs there.
+- **Wrong PINs lock the screen**: after 5 tries you wait 30 seconds, doubling with every further 5 wrong tries up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't reset the wait.
+- **Fingerprint unlock can't be faked**: the fingerprint has to unlock a key in the phone's secure hardware, so a tampered "success" on a rooted phone doesn't open the app. Adding a new fingerprint turns fingerprint unlock off until you turn it on again with your PIN.
+- **Forgot your PIN?** The lock screen offers to remove every account, and delete the downloads, played music, saved queues and artwork kept on the phone. Because the PIN encrypts your passwords, there's no way around it. Nothing changes on your Navidrome server.
+- **The sign-in screen stays out of screenshots** and screen recordings now, not only out of the recent-apps preview, because the password can be shown there.
+
+### Fixed
+
+- **README**: the Ctrl series table lists AdCtrl and MemoCtrl, and the README now describes the app lock and how your password is kept.
+
 ## v0.2.5 (2026-10-20)
 
 ### Changed

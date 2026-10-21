@@ -97,6 +97,8 @@ class MusicController(private val context: Context, private val c: AppContainer)
         scope.launch {
             var last = c.sessions.active.value?.account?.key
             c.sessions.active.map { it?.account?.key }.distinctUntilChanged().collect { key ->
+                // The app lock dropped the session (nothing was playing): the same account comes back on unlock.
+                if (key == null && c.sessions.isLocked) return@collect
                 if (key != last) {
                     last = key
                     reset()

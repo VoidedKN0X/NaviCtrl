@@ -1,6 +1,7 @@
 package com.vknxworks.navictrl.data.settings
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -8,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.vknxworks.navictrl.data.api.AlbumSort
 import com.vknxworks.navictrl.data.api.SongSort
+import com.vknxworks.navictrl.R
 import com.vknxworks.navictrl.data.appDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +20,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 enum class ThemeChoice(val label: String) { SYSTEM("Follow system"), DARK("Dark"), LIGHT("Light"), BLACK("Pure black") }
+
+/** How long the app can be in the background before the app lock asks again. -1: only after a restart. */
+enum class LockTimeout(@StringRes val label: Int, val millis: Long) {
+    IMMEDIATELY(R.string.lock_again_immediately, 0L),
+    MINUTE_1(R.string.lock_again_1m, 60_000L),
+    MINUTES_5(R.string.lock_again_5m, 5 * 60_000L),
+    MINUTES_15(R.string.lock_again_15m, 15 * 60_000L),
+    HOUR_1(R.string.lock_again_1h, 60 * 60_000L),
+    RESTART(R.string.lock_again_restart, -1L),
+}
 
 enum class TranscodeFormat(val param: String, val label: String) {
     MP3("mp3", "MP3"),
@@ -42,6 +54,11 @@ data class AppSettings(
     val songSortAscending: Boolean = true,
     val albumSort: AlbumSort = AlbumSort.NAME,
     val albumGrid: Boolean = true,
+    /** The app lock is on (the PIN itself lives in LockVault). */
+    val appLock: Boolean = false,
+    val lockTimeout: LockTimeout = LockTimeout.IMMEDIATELY,
+    /** Blocks screenshots and screen recording everywhere, and blanks the recent-apps preview. */
+    val hideScreens: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context, scope: CoroutineScope) {
@@ -59,6 +76,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val songAsc = booleanPreferencesKey("song_sort_asc")
         val albumSort = stringPreferencesKey("album_sort")
         val albumGrid = booleanPreferencesKey("album_grid")
+        val appLock = booleanPreferencesKey("app_lock")
+        val lockTimeout = stringPreferencesKey("lock_timeout")
+        val hideScreens = booleanPreferencesKey("hide_screens")
         /** Left over from the optional stats removed in 0.2.3; deleted at start and on every save. */
         val legacy = listOf(booleanPreferencesKey("usage_stats"), booleanPreferencesKey("usage_stats_asked"))
     }
@@ -89,6 +109,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         songSortAscending = this[K.songAsc] ?: true,
         albumSort = enumOr(this[K.albumSort], AlbumSort.NAME),
         albumGrid = this[K.albumGrid] ?: true,
+        appLock = this[K.appLock] ?: false,
+        lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.IMMEDIATELY),
+        hideScreens = this[K.hideScreens] ?: false,
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -107,6 +130,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.songAsc] = s.songSortAscending
             p[K.albumSort] = s.albumSort.name
             p[K.albumGrid] = s.albumGrid
+            p[K.appLock] = s.appLock
+            p[K.lockTimeout] = s.lockTimeout.name
+            p[K.hideScreens] = s.hideScreens
             K.legacy.forEach { p.remove(it) }
         }
     }

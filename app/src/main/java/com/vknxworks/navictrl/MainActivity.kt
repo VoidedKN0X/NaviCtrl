@@ -9,12 +9,23 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import android.view.WindowManager
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.navictrl.data.settings.ThemeChoice
+import com.vknxworks.navictrl.ui.lock.AppLock
+import com.vknxworks.navictrl.ui.lock.AppLockOverlay
+import com.vknxworks.navictrl.ui.lock.ScreenPrivacy
+import com.vknxworks.navictrl.ui.lock.lockCovering
 import com.vknxworks.navictrl.ui.nav.AppRoot
 import com.vknxworks.navictrl.ui.theme.NaviCtrlTheme
 
@@ -40,8 +51,23 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose { }
             }
+            val stored by c.settings.stored.collectAsState(initial = null)
+            // Until the settings are read, trust the synchronous read made at start-up.
+            val lockSetting = stored?.appLock ?: c.lockAtStart
+            val covered = lockCovering(lockSetting, c.vault)
+            val secure = settings.hideScreens || ScreenPrivacy.forced > 0
+            LaunchedEffect(secure, lockSetting) {
+                if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                // With the app lock on, the recent-apps screen shows a blank card instead of your music.
+                setRecentsScreenshotEnabled(!secure && !lockSetting)
+            }
             NaviCtrlTheme(settings.theme, settings.dynamicColor) {
-                AppRoot()
+                Box(Modifier.fillMaxSize()) {
+                    // The app stays underneath (so nothing you typed is lost), hidden from TalkBack too.
+                    Box(if (covered) Modifier.fillMaxSize().clearAndSetSemantics { } else Modifier.fillMaxSize()) { AppRoot() }
+                    AppLockOverlay(lockSetting)
+                }
             }
         }
     }
@@ -49,6 +75,7 @@ class MainActivity : ComponentActivity() {
     /** Asked the first time something wants to show a notification (music playback). */
     fun ensureNotificationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            AppLock.expectReturn()
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
