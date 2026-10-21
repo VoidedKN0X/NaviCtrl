@@ -107,6 +107,7 @@ class SessionManager(
             isLocked = true
             return@withLock
         }
+        runCatching { sealUnsealed() }
         activateSaved()
         _ready.value = true
     }
@@ -159,10 +160,29 @@ class SessionManager(
         scope.launch {
             mutex.withLock {
                 if (!_loaded.value) return@withLock // load() is still running and will activate it
+                // If the app stopped between turning the lock on and sealing the passwords, they are still
+                // only Keystore-encrypted: seal them now.
+                runCatching { sealUnsealed() }
                 if (_active.value == null) activateSaved()
                 _ready.value = true
             }
         }
+    }
+
+    /** With the app lock on and unlocked, seals any saved password that is still Keystore-only. Call with [mutex] held. */
+    private suspend fun sealUnsealed() {
+        if (!vault.enabled || !vault.isOpen) return
+        var changed = false
+        val list = _accounts.value.map { acc ->
+            val plain = KeystoreCrypto.decrypt(acc.passwordEnc) ?: return@map acc
+            if (LockVault.isSealed(plain)) return@map acc
+            val sealed = vault.seal(plain) ?: return@map acc
+            changed = true
+            acc.copy(passwordEnc = KeystoreCrypto.encrypt(sealed))
+        }
+        if (!changed) return
+        persist(list, context.appDataStore.data.first()[activeKey])
+        _active.value?.let { s -> list.firstOrNull { it.key == s.account.key }?.let { _active.value = s.copy(account = it) } }
     }
 
     /** The app lock was turned on: seal every saved password with its key too. */

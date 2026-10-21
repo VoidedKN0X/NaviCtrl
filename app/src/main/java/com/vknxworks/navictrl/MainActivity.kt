@@ -18,6 +18,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.core.content.ContextCompat
@@ -27,6 +28,7 @@ import com.vknxworks.navictrl.ui.lock.AppLock
 import com.vknxworks.navictrl.ui.lock.AppLockOverlay
 import com.vknxworks.navictrl.ui.lock.ScreenPrivacy
 import com.vknxworks.navictrl.ui.lock.lockCovering
+import com.vknxworks.navictrl.ui.lock.lockLocked
 import com.vknxworks.navictrl.ui.nav.AppRoot
 import com.vknxworks.navictrl.ui.theme.NaviCtrlTheme
 
@@ -64,10 +66,21 @@ class MainActivity : ComponentActivity() {
             // "Hide in recent apps" (off by default). With the app lock on, Recents always shows a blank
             // card: a preview there would show what's behind the PIN.
             WindowPrivacy(this, secure, hideRecents = settings.hideRecents || lockSetting || c.vault.enabled)
+            // Locked (not just asked for the PIN again): the app's screens aren't composed at all. Dialogs, menus
+            // and sheets are windows of their own that would stay above (and usable over) the lock screen, and a
+            // hardware keyboard could still reach covered controls. Their state, including where you were, is
+            // kept here and comes back on unlock. Music keeps playing: playback doesn't depend on these screens.
+            val locked = lockLocked(lockSetting, c.vault)
+            val savedRoot = rememberSaveableStateHolder()
             NaviCtrlTheme(settings.theme, settings.dynamicColor) {
                 Box(Modifier.fillMaxSize()) {
-                    // The app stays underneath (so nothing you typed is lost), hidden from TalkBack too.
-                    Box(if (covered) Modifier.fillMaxSize().clearAndSetSemantics { } else Modifier.fillMaxSize()) { AppRoot() }
+                    // While the PIN is asked again, the app stays underneath (so nothing you typed is lost), hidden
+                    // from TalkBack too.
+                    if (!locked) {
+                        Box(if (covered) Modifier.fillMaxSize().clearAndSetSemantics { } else Modifier.fillMaxSize()) {
+                            savedRoot.SaveableStateProvider("root") { AppRoot() }
+                        }
+                    }
                     AppLockOverlay(lockSetting)
                 }
             }
