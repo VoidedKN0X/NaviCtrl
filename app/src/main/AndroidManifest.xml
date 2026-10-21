@@ -9,6 +9,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Fingerprint unlock for the app lock: lets NaviCtrl ask Android for its own fingerprint prompt and check
+         whether the phone has a strong fingerprint sensor. Without it the fingerprint option never shows. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <application
         android:name=".NaviCtrlApp"
         android:allowBackup="false"
