@@ -36,6 +36,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Recents shows a blank card until the settings are read, never a snapshot of a locked app.
+        setRecentsScreenshotEnabled(false)
         val c = container
         setContent {
             val settings by c.settings.settings.collectAsStateWithLifecycle()
@@ -55,7 +57,9 @@ class MainActivity : ComponentActivity() {
             // Until the settings are read, trust the synchronous read made at start-up.
             val lockSetting = stored?.appLock ?: c.lockAtStart
             val covered = lockCovering(lockSetting, c.vault)
-            val secure = settings.hideScreens || ScreenPrivacy.forced > 0
+            // "Hide in screenshots and recent apps", the sign-in screen and the lock and PIN screens keep the
+            // window out of screenshots and recordings. With the app lock on, Recents always shows a blank card.
+            val secure = settings.hideScreens || covered || ScreenPrivacy.forced > 0
             LaunchedEffect(secure, lockSetting) {
                 if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)

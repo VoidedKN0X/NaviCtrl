@@ -62,7 +62,7 @@
     <string name="lock_delete_digit">Delete</string>
     <string name="app_lock_subtitle">Ask for an app PIN (and optionally your fingerprint) when opening NaviCtrl. While locked, your server password stays encrypted with the PIN, and the recent-apps screen hides your music.</string>
     <string name="app_lock_footer">Music that\'s already playing and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification and on the lock screen. They keep the sign-in they need in memory until they stop; anything new needs an unlock.</string>
-    <string name="hide_screens_subtitle">Screenshots and screen recordings of NaviCtrl come out black, and the recent-apps screen shows a blank card</string>
+    <string name="hide_screens_subtitle">Screenshots, screen recordings and the recent apps view show a blank screen</string>
     <string name="lock_prompt_subtitle">Your Navidrome music</string>
     <string name="lock_forgot_body">The PIN can\'t be recovered, because it encrypts your server passwords. NaviCtrl will remove every account, and delete the downloads, played music and artwork kept on this phone. Nothing changes on your Navidrome server.</string>
     <string name="lock_forgot_confirm">Remove accounts and reset</string>
