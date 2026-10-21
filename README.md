@@ -25,7 +25,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Scan for new music** on your server from the app (admin accounts)
 - **Several servers and accounts**; streaming quality for Wi-Fi and mobile data
 - **App lock** with its own PIN and optional fingerprint unlock; your server password stays encrypted while the app is locked, and music and downloads that are already running carry on
-- **Hide in screenshots and recent apps** for the whole app, if you want it
+- **Hide in screenshots** and **Hide in recent apps**, two separate switches, both off by default
 
 ## Planned
 
@@ -75,9 +75,9 @@ Turn it on under **Settings > Privacy and security > App lock**. It's off until 
 - **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link from the About section and answering the notification permission question don't count as leaving, unless you stay away for more than 5 minutes.
 - **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
 - **Forgot your PIN?** It can't be recovered, because it encrypts your server passwords. The lock screen offers to remove every account and delete the downloads, played music and artwork kept on the phone; nothing changes on your Navidrome server.
-- **With the app lock on**, the recent-apps screen always shows a blank card. Music that's already playing (or paused with a queue) and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server: they keep the sign-in they need in memory until they stop, and anything new needs an unlock. Downloads that were waiting when the phone restarted start after you unlock.
+- **With the app lock on**, music that's already playing (or paused with a queue) and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server: they keep the sign-in they need in memory until they stop, and anything new needs an unlock. Downloads that were waiting when the phone restarted start after you unlock.
 
-**Hide in screenshots and recent apps** (in the same section, also without the app lock) keeps NaviCtrl out of screenshots, screen recordings and the recent-apps view. The sign-in screen and the lock screen are always hidden.
+**Hide in screenshots** and **Hide in recent apps** (the last two switches in the same section, both off by default, also without the app lock): the first makes screenshots and screen recordings of NaviCtrl show a blank screen, the second makes the recent apps view show a blank card instead of the app. The sign-in screen and the lock screen are always hidden.
 
 ## Tips and troubleshooting
 
