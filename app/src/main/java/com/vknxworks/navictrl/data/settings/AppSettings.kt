@@ -57,8 +57,10 @@ data class AppSettings(
     /** The app lock is on (the PIN itself lives in LockVault). */
     val appLock: Boolean = false,
     val lockTimeout: LockTimeout = LockTimeout.IMMEDIATELY,
-    /** Blocks screenshots and screen recording everywhere, and blanks the recent-apps preview. */
-    val hideScreens: Boolean = false,
+    /** Hide in screenshots: FLAG_SECURE on the app's windows (which also blanks the recent-apps preview). */
+    val hideScreenshots: Boolean = false,
+    /** Hide in recent apps: the recent-apps view shows a blank card. Screenshots still work. */
+    val hideRecents: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context, scope: CoroutineScope) {
@@ -78,7 +80,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val albumGrid = booleanPreferencesKey("album_grid")
         val appLock = booleanPreferencesKey("app_lock")
         val lockTimeout = stringPreferencesKey("lock_timeout")
+        /** The single "Hide in screenshots and recent apps" switch of the previous version: "on" carries over to both. */
         val hideScreens = booleanPreferencesKey("hide_screens")
+        val hideScreenshots = booleanPreferencesKey("hide_screenshots")
+        val hideRecents = booleanPreferencesKey("hide_recents")
         /** Left over from the optional stats removed in 0.2.3; deleted at start and on every save. */
         val legacy = listOf(booleanPreferencesKey("usage_stats"), booleanPreferencesKey("usage_stats_asked"))
     }
@@ -111,7 +116,8 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         albumGrid = this[K.albumGrid] ?: true,
         appLock = this[K.appLock] ?: false,
         lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.IMMEDIATELY),
-        hideScreens = this[K.hideScreens] ?: false,
+        hideScreenshots = this[K.hideScreenshots] ?: this[K.hideScreens] ?: false,
+        hideRecents = this[K.hideRecents] ?: this[K.hideScreens] ?: false,
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -132,7 +138,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.albumGrid] = s.albumGrid
             p[K.appLock] = s.appLock
             p[K.lockTimeout] = s.lockTimeout.name
-            p[K.hideScreens] = s.hideScreens
+            p[K.hideScreenshots] = s.hideScreenshots
+            p[K.hideRecents] = s.hideRecents
+            p.remove(K.hideScreens)
             K.legacy.forEach { p.remove(it) }
         }
     }

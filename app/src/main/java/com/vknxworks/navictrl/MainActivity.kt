@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Recents shows a blank card until the settings are read, never a snapshot of a locked app.
+        // Recents shows a blank card until the settings are read (then "Hide in recent apps" decides).
         setRecentsScreenshotEnabled(false)
         val c = container
         setContent {
@@ -57,14 +57,15 @@ class MainActivity : ComponentActivity() {
             // Until the settings are read, trust the synchronous read made at start-up.
             val lockSetting = stored?.appLock ?: c.lockAtStart
             val covered = lockCovering(lockSetting, c.vault)
-            // "Hide in screenshots and recent apps", the sign-in screen and the lock and PIN screens keep the
-            // window out of screenshots and recordings. With the app lock on, Recents always shows a blank card.
-            val secure = settings.hideScreens || covered || ScreenPrivacy.forced > 0
-            LaunchedEffect(secure, lockSetting) {
+            // "Hide in screenshots", screens where secrets are typed or shown and the lock and PIN screens keep the
+            // window out of screenshots and recordings; "Hide in recent apps" blanks the recent-apps card.
+            val secure = settings.hideScreenshots || covered || ScreenPrivacy.forced > 0
+            LaunchedEffect(secure) {
                 if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                // With the app lock on, the recent-apps screen shows a blank card instead of your music.
-                setRecentsScreenshotEnabled(!secure && !lockSetting)
+            }
+            LaunchedEffect(settings.hideRecents, secure) {
+                setRecentsScreenshotEnabled(!settings.hideRecents && !secure)
             }
             NaviCtrlTheme(settings.theme, settings.dynamicColor) {
                 Box(Modifier.fillMaxSize()) {

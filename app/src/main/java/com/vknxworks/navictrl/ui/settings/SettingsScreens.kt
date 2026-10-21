@@ -3,6 +3,7 @@ package com.vknxworks.navictrl.ui.settings
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Password
 import androidx.compose.material.icons.outlined.Timer
@@ -193,11 +194,17 @@ private fun PrivacyGroup(s: AppSettings, update: ((AppSettings) -> AppSettings) 
             ) { v -> update { it.copy(lockTimeout = v) } }
         }
         GroupSwitch(
-            stringResource(R.string.hide_screens),
-            stringResource(R.string.hide_screens_subtitle),
-            s.hideScreens,
+            stringResource(R.string.hide_screenshots),
+            stringResource(R.string.hide_screenshots_subtitle),
+            s.hideScreenshots,
             icon = Icons.Outlined.VisibilityOff,
-        ) { v -> update { it.copy(hideScreens = v) } }
+        ) { v -> update { it.copy(hideScreenshots = v) } }
+        GroupSwitch(
+            stringResource(R.string.hide_recents),
+            stringResource(R.string.hide_recents_subtitle),
+            s.hideRecents,
+            icon = Icons.Outlined.Layers,
+        ) { v -> update { it.copy(hideRecents = v) } }
     }
 }
 
