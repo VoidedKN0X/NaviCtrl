@@ -75,9 +75,14 @@ Turn it on under **Settings > Privacy and security > App lock**. It's off until 
 - **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link from the About section and answering the notification permission question don't count as leaving, unless you stay away for more than 5 minutes.
 - **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
 - **Forgot your PIN?** It can't be recovered, because it encrypts your server passwords. The lock screen offers to remove every account and delete the downloads, played music and artwork kept on the phone; nothing changes on your Navidrome server.
-- **With the app lock on**, music that's already playing (or paused with a queue) and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server: they keep the sign-in they need in memory until they stop, and anything new needs an unlock. Downloads that were waiting when the phone restarted start after you unlock.
+- **With the app lock on**, the recent-apps screen always shows a blank card, music that's already playing (or paused with a queue) and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server: they keep the sign-in they need in memory until they stop, and anything new needs an unlock. Downloads that were waiting when the phone restarted start after you unlock.
 
-**Hide in screenshots** and **Hide in recent apps** (the last two switches in the same section, both off by default, also without the app lock): the first makes screenshots and screen recordings of NaviCtrl show a blank screen, the second makes the recent apps view show a blank card instead of the app. The sign-in screen and the lock screen are always hidden.
+Two more switches in the same section work with or without the app lock, and are both off until you turn them on:
+
+- **Hide in screenshots**: screenshots and screen recordings show a blank screen (and so does the recent-apps view).
+- **Hide in recent apps**: the recent-apps view shows a blank card instead of NaviCtrl. Screenshots still work.
+
+The sign-in screen and the lock and PIN screens are always kept out of screenshots and recordings, whatever these switches say.
 
 ## Tips and troubleshooting
 
