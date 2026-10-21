@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,8 +95,16 @@ fun AppRoot() {
             !ready -> LoadingView()
             active == null -> SignInScreen(onDone = {}, onCancel = null)
             else -> key(active!!.account.key) {
-                // Favourite overrides belong to the previous account.
-                LaunchedEffect(Unit) { c.stars.clear() }
+                // Favourite overrides belong to the previous account. Only once per account: the screens are
+                // composed again after unlocking, which mustn't clear them.
+                val accountKey = active!!.account.key
+                var starsFor by rememberSaveable { mutableStateOf<String?>(null) }
+                LaunchedEffect(accountKey) {
+                    if (starsFor != accountKey) {
+                        c.stars.clear()
+                        starsFor = accountKey
+                    }
+                }
                 MainScaffold()
             }
         }

@@ -4,6 +4,17 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.1 (2026-10-21)
+
+### Security
+
+- **Nothing stays usable on top of the lock screen any more.** When NaviCtrl locked while a menu, dialog or sheet was open (for example the actions sheet of a song or album, the add-to-playlist sheet or the sort sheet on Songs), that window stayed on top of the lock screen and could still be read and tapped, and a hardware keyboard could still move to buttons hidden behind the lock. While NaviCtrl is locked, its screens are now closed completely instead of only covered. After you unlock you're back on the same screen and tab as before (an open menu or sheet is closed). Music that's playing carries on as before, with its controls in the notification, on the lock screen and on Bluetooth devices.
+- **Server passwords are always sealed with your app PIN when the app lock is on.** If NaviCtrl was closed at exactly the wrong moment while you turned the app lock on, your saved passwords could stay protected by the phone's keystore only, without the extra encryption from your PIN. NaviCtrl now checks this every time you unlock (and at start-up when it's unlocked) and seals any password that isn't sealed yet.
+
+### Privacy
+
+- **No hidden dependency list in the app file any more**: the build tools used to tuck an encrypted list of the libraries NaviCtrl is built with into the APK's signature block. Only Google can read it, so nobody checking the app could see what it holds. It's now left out, the same as in the other Ctrl apps. Nothing changes in how the app works.
+
 ## v0.4.0 (2026-10-21)
 
 Genre pages are here, the last item that was still planned.

@@ -251,6 +251,10 @@ tailrec fun Context.findActivity(): Activity? = when (this) {
 fun lockCovering(lockSetting: Boolean, vault: LockVault): Boolean =
     (lockSetting && !vault.enabled) || (vault.enabled && !AppLock.unlocked) || AppLock.request != null
 
+/** Locked (or the old lock still waiting for a PIN): the app's screens must not be there at all. */
+fun lockLocked(lockSetting: Boolean, vault: LockVault): Boolean =
+    (lockSetting && !vault.enabled) || (vault.enabled && !AppLock.unlocked)
+
 /**
  * The lock and PIN screens shown on top of the app. The app underneath stays where it was, so
  * nothing you were typing is lost, but it can't be seen or touched.
