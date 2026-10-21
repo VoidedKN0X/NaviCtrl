@@ -4,6 +4,12 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.3 (2026-10-21)
+
+### Fixed
+
+- **Unlock with fingerprint now really works.** NaviCtrl was missing the Android permission that lets an app use the fingerprint sensor, so the phone always answered "no fingerprint available": **Unlock with fingerprint** under **Settings > Privacy and security** stayed greyed out with "Set up a fingerprint on this phone first", even with a fingerprint set up, and the lock screen only ever asked for the PIN. The permission is now included, so you can turn on fingerprint unlock after updating. It still only accepts strong biometrics such as the fingerprint sensor, and NaviCtrl never sees your fingerprint itself; Android only tells it whether the match succeeded.
+
 ## v0.4.2 (2026-10-21)
 
 ### Fixed
