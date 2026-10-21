@@ -3,6 +3,8 @@ package com.vknxworks.navictrl.data.net
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import java.io.IOException
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 /**
  * OkHttp follows redirects on its own. It drops the standard Authorization header when a redirect
@@ -27,7 +29,7 @@ object RedirectGuard {
         val original = chain.call().request()
         if (sameServer(request.url, original.url)) return@Interceptor chain.proceed(request)
         if (request.body != null) {
-            throw IOException("Refused to send this request on to another server (${request.url.host})")
+            throw IOException(str(R.string.refused_to_send_this_request_on, request.url.host))
         }
         // Subsonic signs every request in its address (u = user, t = md5(password + salt), s = salt), and
         // redirects often copy the query along ("https://new.host$request_uri"). Another server must not

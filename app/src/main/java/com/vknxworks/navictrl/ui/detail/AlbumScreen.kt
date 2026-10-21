@@ -62,6 +62,8 @@ import com.vknxworks.navictrl.ui.theme.rememberArtworkColor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
 
 @Composable
 fun AlbumScreen(id: String) {
@@ -94,24 +96,24 @@ private fun AlbumContent(album: Album) {
                     title = album.name,
                     subtitle = album.artist,
                     onSubtitle = album.artistId?.let { aid -> { nav.artist(aid) } },
-                    meta = listOfNotNull(album.year?.toString(), album.genre, countLabel(songs.size, "song"), formatLength(album.duration)).joinToString("  ·  "),
+                    meta = listOfNotNull(album.year?.toString(), album.genre, countLabel(songs.size, R.plurals.count_songs), formatLength(album.duration)).joinToString("  ·  "),
                 ) {
                     CircleIconButton(
                         if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                        if (starred) "Remove from favourites" else "Add to favourites",
+                        if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
                         onClick = { c.stars.set(StarKind.ALBUM, album.id, !starred) },
                         active = starred,
                     )
                     CircleIconButton(
                         if (allOffline) Icons.Filled.DownloadDone else Icons.Filled.Download,
-                        if (allOffline) "Remove download" else "Download",
+                        if (allOffline) stringResource(R.string.remove_download) else stringResource(R.string.download),
                         onClick = {
                             if (allOffline) c.downloads.remove(songs.map { it.id })
                             else c.downloads.enqueue(songs)
                         },
                         active = allOffline,
                     )
-                    CircleIconButton(Icons.Filled.MoreHoriz, "More", onClick = { menu = true })
+                    CircleIconButton(Icons.Filled.MoreHoriz, stringResource(R.string.more), onClick = { menu = true })
                 }
             }
             item(key = "buttons") {
@@ -134,7 +136,7 @@ private fun AlbumContent(album: Album) {
             album.created?.let { created ->
                 item(key = "footer") {
                     Text(
-                        "Added ${formatDate(created).orEmpty()}",
+                        stringResource(R.string.added_x, formatDate(created).orEmpty()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = Gutter, vertical = 16.dp),
@@ -174,13 +176,13 @@ fun ArtistScreen(id: String) {
                         HeroHeader(
                             artUrl = image,
                             title = artist.name,
-                            meta = countLabel(artist.albumCount.takeIf { it > 0 } ?: albums.size, "album"),
+                            meta = countLabel(artist.albumCount.takeIf { it > 0 } ?: albums.size, R.plurals.count_albums),
                             artShape = androidx.compose.foundation.shape.CircleShape,
                             placeholderIcon = Icons.Filled.Person,
                         ) {
                             CircleIconButton(
                                 if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                if (starred) "Remove from favourites" else "Add to favourites",
+                                if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
                                 onClick = { c.stars.set(StarKind.ARTIST, artist.id, !starred) },
                                 active = starred,
                             )
@@ -192,7 +194,7 @@ fun ArtistScreen(id: String) {
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             PillButton(
-                                "Play",
+                                stringResource(R.string.play),
                                 onClick = {
                                     val t = top.value.orEmpty()
                                     if (t.isNotEmpty()) c.music.play(t) else c.runTask { c.music.play(allSongs()) }
@@ -201,7 +203,7 @@ fun ArtistScreen(id: String) {
                                 modifier = Modifier.weight(1f),
                             )
                             PillButton(
-                                "Shuffle",
+                                stringResource(R.string.shuffle),
                                 onClick = { c.runTask { c.music.shuffle(allSongs()) } },
                                 icon = Icons.Filled.Shuffle,
                                 modifier = Modifier.weight(1f),
@@ -212,7 +214,7 @@ fun ArtistScreen(id: String) {
                     }
                     val topSongs = top.value.orEmpty()
                     if (topSongs.isNotEmpty()) {
-                        item(key = "top-h") { SectionHeader("Popular") }
+                        item(key = "top-h") { SectionHeader(stringResource(R.string.popular)) }
                         val shown = if (showAllTop) topSongs else topSongs.take(5)
                         shown.forEachIndexed { i, s ->
                             item(key = "top-$i-${s.id}") { SongRow(s, onClick = { c.music.play(topSongs, i) }) }
@@ -220,14 +222,14 @@ fun ArtistScreen(id: String) {
                         if (topSongs.size > 5) {
                             item(key = "top-more") {
                                 TextButton(onClick = { showAllTop = !showAllTop }, modifier = Modifier.padding(horizontal = 8.dp)) {
-                                    Text(if (showAllTop) "Show less" else "Show all ${topSongs.size}")
+                                    Text(if (showAllTop) stringResource(R.string.show_less) else stringResource(R.string.show_all_x, topSongs.size))
                                 }
                             }
                         }
                     }
                     if (albums.isNotEmpty()) {
                         item(key = "albums") {
-                            SectionHeader("Albums")
+                            SectionHeader(stringResource(R.string.albums))
                             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 items(albums, key = { it.id }) { AlbumCard(it, width = cardW) }
                             }
@@ -236,7 +238,7 @@ fun ArtistScreen(id: String) {
                     val similar = info.value?.similarArtist.orEmpty()
                     if (similar.isNotEmpty()) {
                         item(key = "similar") {
-                            SectionHeader("Similar artists")
+                            SectionHeader(stringResource(R.string.similar_artists))
                             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(similar, key = { it.id }) { ArtistTile(it) }
                             }
@@ -245,7 +247,7 @@ fun ArtistScreen(id: String) {
                     val bio = info.value?.biography?.stripHtml()
                     if (!bio.isNullOrBlank()) {
                         item(key = "bio") {
-                            SectionHeader("About")
+                            SectionHeader(stringResource(R.string.group_about))
                             SelectionContainer {
                                 Text(
                                     bio,
@@ -257,7 +259,7 @@ fun ArtistScreen(id: String) {
                                 )
                             }
                             TextButton(onClick = { bioOpen = !bioOpen }, modifier = Modifier.padding(horizontal = 8.dp)) {
-                                Text(if (bioOpen) "Show less" else "Read more")
+                                Text(if (bioOpen) stringResource(R.string.show_less) else stringResource(R.string.read_more))
                             }
                         }
                     }

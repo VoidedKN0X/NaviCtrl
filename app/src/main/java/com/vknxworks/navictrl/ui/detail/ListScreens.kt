@@ -98,6 +98,10 @@ import com.vknxworks.navictrl.ui.theme.ArtworkTint
 import com.vknxworks.navictrl.ui.theme.Gutter
 import com.vknxworks.navictrl.ui.theme.rememberArtworkColor
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
+import androidx.annotation.StringRes
 
 // ---------- Playlist ----------
 
@@ -139,19 +143,19 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
                     artUrl = c.api.coverArtUrl(p.coverArt, 1200),
                     title = p.name,
                     subtitle = p.comment,
-                    meta = listOfNotNull(countLabel(songs.size, "song"), formatLength(p.duration), p.owner?.takeIf { !mine }?.let { "by $it" }).joinToString("  ·  "),
+                    meta = listOfNotNull(countLabel(songs.size, R.plurals.count_songs), formatLength(p.duration), p.owner?.takeIf { !mine }?.let { stringResource(R.string.by_x, it) }).joinToString("  ·  "),
                     placeholderIcon = Icons.AutoMirrored.Filled.QueueMusic,
                 ) {
                     CircleIconButton(
                         if (allOffline) Icons.Filled.DownloadDone else Icons.Filled.Download,
-                        if (allOffline) "Remove download" else "Download",
+                        if (allOffline) stringResource(R.string.remove_download) else stringResource(R.string.download),
                         onClick = {
                             if (allOffline) c.downloads.remove(songs.map { it.id })
                             else c.downloads.enqueue(songs)
                         },
                         active = allOffline,
                     )
-                    CircleIconButton(Icons.Filled.MoreHoriz, "More", onClick = { menu = true })
+                    CircleIconButton(Icons.Filled.MoreHoriz, stringResource(R.string.more), onClick = { menu = true })
                 }
             }
             if (songs.isEmpty()) {
@@ -159,8 +163,8 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
                     Box(Modifier.fillMaxWidth().padding(vertical = 32.dp)) {
                         MessageView(
                             Icons.Outlined.MusicNote,
-                            "This playlist is empty",
-                            if (editable) "Add songs from their menu, using Add to playlist." else null,
+                            stringResource(R.string.this_playlist_is_empty),
+                            if (editable) stringResource(R.string.add_songs_from_their_menu_using) else null,
                         )
                     }
                 }
@@ -172,7 +176,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
                     s,
                     onClick = { c.music.play(songs, i) },
                     extraActions = if (!editable) emptyList() else listOf(
-                        SongAction("Remove from this playlist", Icons.Outlined.RemoveCircleOutline) {
+                        SongAction(stringResource(R.string.remove_from_this_playlist), Icons.Outlined.RemoveCircleOutline) {
                             c.runTask {
                                 // The server removes by position, so check the position against the playlist as it is
                                 // now (it may have changed in another app since this page loaded).
@@ -180,7 +184,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
                                 val at = if (now.getOrNull(i)?.id == s.id) i else now.indexOfFirst { it.id == s.id }
                                 if (at >= 0) c.api.updatePlaylist(p.id, removeIndexes = listOf(at))
                                 c.playlistsChanged()
-                                Toast.makeText(context, "Removed from ${p.name}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, str(R.string.removed_from_x, p.name), Toast.LENGTH_SHORT).show()
                             }
                         },
                     ),
@@ -192,17 +196,17 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
     if (menu) {
         ModalBottomSheet(onDismissRequest = { menu = false }, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
             Column(Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
-                MenuRow(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { menu = false; c.music.playNext(songs) }
-                MenuRow(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { menu = false; c.music.enqueue(songs) }
+                MenuRow(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { menu = false; c.music.playNext(songs) }
+                MenuRow(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { menu = false; c.music.enqueue(songs) }
                 if (mine) {
-                    MenuRow(Icons.Filled.Edit, "Rename") { menu = false; renaming = true }
-                    MenuRow(Icons.Outlined.Delete, "Delete playlist") { menu = false; deleting = true }
+                    MenuRow(Icons.Filled.Edit, stringResource(R.string.rename)) { menu = false; renaming = true }
+                    MenuRow(Icons.Outlined.Delete, stringResource(R.string.delete_playlist)) { menu = false; deleting = true }
                 }
             }
         }
     }
     if (renaming) {
-        TextInputDialog("Rename playlist", "Name", "Save", initial = p.name, onDismiss = { renaming = false }) { name ->
+        TextInputDialog(stringResource(R.string.rename_playlist), stringResource(R.string.name), stringResource(R.string.save), initial = p.name, onDismiss = { renaming = false }) { name ->
             renaming = false
             c.runTask {
                 c.api.updatePlaylist(p.id, name = name)
@@ -211,12 +215,12 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
         }
     }
     if (deleting) {
-        ConfirmDialog("Delete \"${p.name}\"?", "The songs stay in your library.", "Delete", onDismiss = { deleting = false }) {
+        ConfirmDialog(stringResource(R.string.delete_x, p.name), stringResource(R.string.the_songs_stay_in_your_library), stringResource(R.string.delete), onDismiss = { deleting = false }) {
             deleting = false
             c.runTask {
                 c.api.deletePlaylist(p.id)
                 c.playlistsChanged()
-                Toast.makeText(context, "Deleted ${p.name}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, str(R.string.deleted_x, p.name), Toast.LENGTH_SHORT).show()
                 nav.close(PlaylistRoute::class)
             }
         }
@@ -249,8 +253,8 @@ fun GenreScreen(name: String) {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             Row(Modifier.padding(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !albums, onClick = { albums = false }, label = { Text("Songs") })
-                FilterChip(selected = albums, onClick = { albums = true }, label = { Text("Albums") })
+                FilterChip(selected = !albums, onClick = { albums = false }, label = { Text(stringResource(R.string.songs)) })
+                FilterChip(selected = albums, onClick = { albums = true }, label = { Text(stringResource(R.string.albums)) })
             }
             if (albums) {
                 AlbumsSection(AlbumSort.NAME, settings.albumGrid, genre = name)
@@ -273,7 +277,7 @@ private fun AlbumsSection(sort: AlbumSort, grid: Boolean, genre: String? = null)
     when {
         loader.items.isEmpty() && loader.error != null -> ErrorView(loader.error!!) { loader.refresh() }
         loader.items.isEmpty() && !loader.endReached -> LoadingView()
-        loader.items.isEmpty() -> MessageView(Icons.Outlined.Album, "No albums")
+        loader.items.isEmpty() -> MessageView(Icons.Outlined.Album, stringResource(R.string.no_albums))
         else -> {
             val bottom = 24.dp + LocalBottomClearance.current
             if (grid) {
@@ -332,7 +336,7 @@ private fun GenreSongs(name: String) {
     when {
         loader.items.isEmpty() && loader.error != null -> ErrorView(loader.error!!) { loader.refresh() }
         loader.items.isEmpty() && !loader.endReached -> LoadingView()
-        loader.items.isEmpty() -> MessageView(Icons.Outlined.MusicNote, "No songs in $name")
+        loader.items.isEmpty() -> MessageView(Icons.Outlined.MusicNote, stringResource(R.string.no_songs_in_x, name))
         else -> LazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
             item(key = "buttons") {
                 PlayShuffleRow(onPlay = { c.music.play(loader.items.toList()) }, onShuffle = { c.music.shuffleGenre(name) })
@@ -347,7 +351,7 @@ private fun GenreSongs(name: String) {
 
 // ---------- Favourites ----------
 
-private enum class FavTab(val label: String) { SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists") }
+private enum class FavTab(@StringRes val label: Int) { SONGS(R.string.songs), ALBUMS(R.string.albums), ARTISTS(R.string.artists) }
 
 @Composable
 fun FavouritesScreen() {
@@ -360,21 +364,21 @@ fun FavouritesScreen() {
     // A main tab: big title, no back arrow, content scrolls under the glass island.
     run {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            TabTitle("Favourites")
+            TabTitle(stringResource(R.string.favourites))
             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(FavTab.entries) { t -> FilterChip(selected = t == tab, onClick = { tab = t }, label = { Text(t.label) }) }
+                items(FavTab.entries) { t -> FilterChip(selected = t == tab, onClick = { tab = t }, label = { Text(stringResource(t.label)) }) }
             }
             LoadContent(loader) { starred ->
                 val bottom = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)
                 when (tab) {
-                    FavTab.SONGS -> if (starred.song.isEmpty()) Empty("Tap the heart on any song to keep it here.") else
+                    FavTab.SONGS -> if (starred.song.isEmpty()) Empty(stringResource(R.string.tap_the_heart_on_any_song)) else
                         LazyColumn(Modifier.fillMaxSize(), contentPadding = bottom) {
                             item { PlayShuffleRow(onPlay = { c.music.play(starred.song) }, onShuffle = { c.music.shuffle(starred.song) }) }
                             itemsIndexed(starred.song, key = { _, s -> s.id }) { i, s -> SongRow(s, onClick = { c.music.play(starred.song, i) }) }
                         }
-                    FavTab.ALBUMS -> if (starred.album.isEmpty()) Empty("Favourite albums show up here.") else
+                    FavTab.ALBUMS -> if (starred.album.isEmpty()) Empty(stringResource(R.string.favourite_albums_show_up_here)) else
                         LazyColumn(Modifier.fillMaxSize(), contentPadding = bottom) { items(starred.album, key = { it.id }) { AlbumRow(it) } }
-                    FavTab.ARTISTS -> if (starred.artist.isEmpty()) Empty("Favourite artists show up here.") else
+                    FavTab.ARTISTS -> if (starred.artist.isEmpty()) Empty(stringResource(R.string.favourite_artists_show_up_here)) else
                         LazyColumn(Modifier.fillMaxSize(), contentPadding = bottom) { items(starred.artist, key = { it.id }) { ArtistRow(it) } }
                 }
             }
@@ -383,4 +387,4 @@ fun FavouritesScreen() {
 }
 
 @Composable
-private fun Empty(body: String) = MessageView(Icons.Outlined.FavoriteBorder, "Nothing here yet", body)
+private fun Empty(body: String) = MessageView(Icons.Outlined.FavoriteBorder, stringResource(R.string.nothing_here_yet), body)

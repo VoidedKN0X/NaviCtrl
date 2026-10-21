@@ -78,6 +78,11 @@ import com.vknxworks.navictrl.ui.settings.YouScreen
 import com.vknxworks.navictrl.ui.songs.SongsScreen
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.outlined.Category
+import com.vknxworks.navictrl.ui.genres.GenresScreen
 
 @Composable
 fun AppRoot() {
@@ -100,10 +105,11 @@ fun AppRoot() {
 private data class TopDest(val route: Any, val item: TabItem)
 
 private val topDestinations = listOf(
-    TopDest(SongsRoute, TabItem("Songs", Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
-    TopDest(FavouritesRoute, TabItem("Favourites", Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
-    TopDest(PlaylistsRoute, TabItem("Playlists", Icons.AutoMirrored.Outlined.QueueMusic, Icons.AutoMirrored.Filled.QueueMusic)),
-    TopDest(SearchRoute, TabItem("Search", Icons.Outlined.Search, Icons.Filled.Search)),
+    TopDest(SongsRoute, TabItem(R.string.songs, Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
+    TopDest(FavouritesRoute, TabItem(R.string.favourites, Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
+    TopDest(PlaylistsRoute, TabItem(R.string.playlists, Icons.AutoMirrored.Outlined.QueueMusic, Icons.AutoMirrored.Filled.QueueMusic)),
+    TopDest(GenresRoute, TabItem(R.string.genres, Icons.Outlined.Category, Icons.Filled.Category)),
+    TopDest(SearchRoute, TabItem(R.string.search, Icons.Outlined.Search, Icons.Filled.Search)),
 )
 
 @Composable
@@ -139,8 +145,8 @@ private fun MainScaffold() {
                             NavigationRailItem(
                                 selected = selected,
                                 onClick = { selectTab(i) },
-                                icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = top.item.label) },
-                                label = { Text(top.item.label) },
+                                icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = stringResource(top.item.label)) },
+                                label = { Text(stringResource(top.item.label)) },
                             )
                         }
                         Spacer(Modifier.weight(1f))
@@ -229,6 +235,7 @@ private fun AppNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = SongsRoute) {
         composable<SongsRoute> { SongsScreen() }
         composable<PlaylistsRoute> { PlaylistsScreen() }
+        composable<GenresRoute> { GenresScreen() }
         composable<SearchRoute> { SearchScreen() }
         composable<YouRoute> { YouScreen() }
 

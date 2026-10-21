@@ -80,11 +80,14 @@ import com.vknxworks.navictrl.ui.nav.AddAccountRoute
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.theme.Gutter
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.pluralStringResource
 
-private val STREAM_QUALITY = listOf(
-    0 to "Original files", 320 to "320 kbps", 256 to "256 kbps", 192 to "192 kbps", 128 to "128 kbps", 96 to "96 kbps",
-)
-private val CACHE_SIZES = listOf(0 to "Off", 512 to "512 MB", 1024 to "1 GB", 2048 to "2 GB", 4096 to "4 GB", 8192 to "8 GB")
+private val STREAM_QUALITY: List<Pair<Int, String>>
+    @Composable get() = listOf(0 to stringResource(R.string.original_files)) +
+        listOf(320, 256, 192, 128, 96).map { it to stringResource(R.string.x_kbps, it) }
+private val CACHE_SIZES: List<Pair<Int, String>>
+    @Composable get() = listOf(0 to stringResource(R.string.off), 512 to stringResource(R.string.x_mb, 512)) +
+        listOf(1, 2, 4, 8).map { it * 1024 to stringResource(R.string.x_gb, it) }
 
 @Composable
 fun SettingsScreen() {
@@ -96,38 +99,38 @@ fun SettingsScreen() {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { ScreenTopBar("Settings") },
+        topBar = { ScreenTopBar(stringResource(R.string.settings)) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
-            Group("Appearance") {
-                GroupChoice("Theme", ThemeChoice.entries.map { it to it.label }, s.theme) { v -> update { it.copy(theme = v) } }
-                GroupSwitch("Use wallpaper colours", "Replaces the default colours with ones from your wallpaper", s.dynamicColor) { v ->
+            Group(stringResource(R.string.appearance)) {
+                GroupChoice(stringResource(R.string.theme), ThemeChoice.entries.map { it to stringResource(it.label) }, s.theme) { v -> update { it.copy(theme = v) } }
+                GroupSwitch(stringResource(R.string.use_wallpaper_colours), stringResource(R.string.replaces_the_default_colours_with_ones), s.dynamicColor) { v ->
                     update { it.copy(dynamicColor = v) }
                 }
             }
 
             PrivacyGroup(s) { t -> update(t) }
 
-            Group("Streaming", footer = "Lower quality is converted on your server, so it needs a transcoder set up in Navidrome (it has one by default).") {
-                GroupChoice("Quality on Wi-Fi", STREAM_QUALITY, s.wifiBitrate) { v -> update { it.copy(wifiBitrate = v) } }
-                GroupChoice("Quality on mobile data", STREAM_QUALITY, s.mobileBitrate) { v -> update { it.copy(mobileBitrate = v) } }
-                GroupChoice("Format for lower quality", TranscodeFormat.entries.map { it to it.label }, s.format) { v -> update { it.copy(format = v) } }
-                GroupChoice("Keep played music on the phone", CACHE_SIZES, s.cacheMb) { v -> update { it.copy(cacheMb = v) } }
+            Group(stringResource(R.string.streaming), footer = stringResource(R.string.lower_quality_is_converted_on_your)) {
+                GroupChoice(stringResource(R.string.quality_on_wi_fi), STREAM_QUALITY, s.wifiBitrate) { v -> update { it.copy(wifiBitrate = v) } }
+                GroupChoice(stringResource(R.string.quality_on_mobile_data), STREAM_QUALITY, s.mobileBitrate) { v -> update { it.copy(mobileBitrate = v) } }
+                GroupChoice(stringResource(R.string.format_for_lower_quality), TranscodeFormat.entries.map { it to it.label }, s.format) { v -> update { it.copy(format = v) } }
+                GroupChoice(stringResource(R.string.keep_played_music_on_the_phone), CACHE_SIZES, s.cacheMb) { v -> update { it.copy(cacheMb = v) } }
             }
             Text(
-                "A change to the cache size applies the next time the app starts.",
+                stringResource(R.string.a_change_to_the_cache_size),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = Gutter + 4.dp),
             )
 
-            Group("Downloads") {
-                GroupChoice("Download quality", STREAM_QUALITY, s.downloadBitrate) { v -> update { it.copy(downloadBitrate = v) } }
-                GroupSwitch("Download on Wi-Fi only", checked = s.downloadWifiOnly) { v -> update { it.copy(downloadWifiOnly = v) } }
+            Group(stringResource(R.string.downloads)) {
+                GroupChoice(stringResource(R.string.download_quality), STREAM_QUALITY, s.downloadBitrate) { v -> update { it.copy(downloadBitrate = v) } }
+                GroupSwitch(stringResource(R.string.download_on_wi_fi_only), checked = s.downloadWifiOnly) { v -> update { it.copy(downloadWifiOnly = v) } }
             }
 
-            Group("Listening history", footer = "Navidrome passes plays on to Last.fm or ListenBrainz if you've linked them there.") {
-                GroupSwitch("Report what I play", "Updates play counts, recently played and scrobbles", s.scrobble) { v -> update { it.copy(scrobble = v) } }
+            Group(stringResource(R.string.listening_history), footer = stringResource(R.string.navidrome_passes_plays_on_to_last)) {
+                GroupSwitch(stringResource(R.string.report_what_i_play), stringResource(R.string.updates_play_counts_recently_played_and), s.scrobble) { v -> update { it.copy(scrobble = v) } }
             }
 
         }
@@ -220,15 +223,15 @@ fun AccountsScreen() {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { ScreenTopBar("Servers and accounts") },
+        topBar = { ScreenTopBar(stringResource(R.string.servers_and_accounts)) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
-            Group(footer = "Tap an account to switch to it. Playback stops when you switch.") {
+            Group(footer = stringResource(R.string.tap_an_account_to_switch_to)) {
                 accounts.forEach { a ->
                     val isActive = a.key == active?.account?.key
                     GroupRow(
                         a.username,
-                        if (a.isEncrypted) a.serverUrl else "${a.serverUrl}  ·  Not encrypted (HTTP)",
+                        if (a.isEncrypted) a.serverUrl else stringResource(R.string.x_not_encrypted_http, a.serverUrl),
                         onClick = if (isActive) null else {
                             {
                                 c.music.reset()
@@ -238,15 +241,15 @@ fun AccountsScreen() {
                         },
                         trailing = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (isActive) Icon(Icons.Filled.CheckCircle, "Active", tint = MaterialTheme.colorScheme.primary)
-                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, "Sign out of this account") }
+                                if (isActive) Icon(Icons.Filled.CheckCircle, stringResource(R.string.active), tint = MaterialTheme.colorScheme.primary)
+                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.sign_out_of_this_account)) }
                             }
                         },
                     )
                 }
             }
             Group {
-                GroupRow("Add a server or account", icon = Icons.Filled.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
+                GroupRow(stringResource(R.string.add_a_server_or_account), icon = Icons.Filled.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
             }
         }
     }
@@ -254,9 +257,9 @@ fun AccountsScreen() {
     removing?.let { key ->
         val acc = accounts.firstOrNull { it.key == key }
         ConfirmDialog(
-            "Sign out of ${acc?.serverName ?: "this server"}?",
-            "You can sign in again any time.",
-            "Sign out",
+            acc?.serverName?.let { stringResource(R.string.sign_out_of_x, it) } ?: stringResource(R.string.sign_out_of_this_server),
+            stringResource(R.string.you_can_sign_in_again_any),
+            stringResource(R.string.sign_out),
             onDismiss = { removing = null },
         ) {
             removing = null
@@ -279,8 +282,8 @@ fun DownloadsScreen() {
         contentWindowInsets = WindowInsets(0),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            ScreenTopBar("Downloads") {
-                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }) { Text("Remove all") }
+            ScreenTopBar(stringResource(R.string.downloads)) {
+                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }) { Text(stringResource(R.string.remove_all)) }
             }
         },
     ) { padding ->
@@ -288,8 +291,8 @@ fun DownloadsScreen() {
             Box(Modifier.padding(padding).fillMaxSize()) {
                 MessageView(
                     Icons.Outlined.DownloadForOffline,
-                    "No downloads",
-                    "Download songs, albums or playlists from their menus to listen without a connection.",
+                    stringResource(R.string.no_downloads),
+                    stringResource(R.string.download_songs_albums_or_playlists_from),
                 )
             }
             return@Scaffold
@@ -297,7 +300,7 @@ fun DownloadsScreen() {
         LazyColumn(Modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
             item(key = "summary") {
                 Text(
-                    "${done.size} songs  ·  ${formatBytes(c.downloads.usedBytes(all))}",
+                    pluralStringResource(R.plurals.downloads_summary, done.size, done.size, formatBytes(c.downloads.usedBytes(all))),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = Gutter),
@@ -305,7 +308,7 @@ fun DownloadsScreen() {
             }
             if (pending.isNotEmpty()) {
                 item(key = "pending-h") {
-                    Text("In progress", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
+                    Text(stringResource(R.string.in_progress), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
                 }
                 items(pending, key = { "p-${it.song.id}" }) { e ->
                     Row(Modifier.fillMaxWidth().padding(start = Gutter, end = 4.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -314,7 +317,7 @@ fun DownloadsScreen() {
                             contentAlignment = Alignment.Center,
                         ) {
                             when (e.status) {
-                                DownloadStatus.FAILED -> Icon(Icons.Filled.ErrorOutline, "Failed", tint = MaterialTheme.colorScheme.error)
+                                DownloadStatus.FAILED -> Icon(Icons.Filled.ErrorOutline, stringResource(R.string.failed), tint = MaterialTheme.colorScheme.error)
                                 DownloadStatus.RUNNING -> CircularProgressIndicator(progress = { e.progress }, modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
                                 else -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                             }
@@ -324,9 +327,9 @@ fun DownloadsScreen() {
                             Text(e.song.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(
                                 when (e.status) {
-                                    DownloadStatus.FAILED -> e.error ?: "Failed"
+                                    DownloadStatus.FAILED -> e.error ?: stringResource(R.string.failed)
                                     DownloadStatus.RUNNING -> "${(e.progress * 100).toInt()}%"
-                                    else -> if (c.settings.settings.value.downloadWifiOnly) "Waiting for Wi-Fi" else "Waiting"
+                                    else -> if (c.settings.settings.value.downloadWifiOnly) stringResource(R.string.waiting_for_wi_fi) else stringResource(R.string.waiting)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (e.status == DownloadStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -335,15 +338,15 @@ fun DownloadsScreen() {
                             )
                             if (e.status == DownloadStatus.RUNNING) LinearProgressIndicator(progress = { e.progress }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
                         }
-                        if (e.status == DownloadStatus.FAILED) IconButton(onClick = { c.downloads.retry(e) }) { Icon(Icons.Filled.Refresh, "Retry") }
-                        IconButton(onClick = { c.downloads.remove(listOf(e.song.id)) }) { Icon(Icons.Outlined.Delete, "Cancel") }
+                        if (e.status == DownloadStatus.FAILED) IconButton(onClick = { c.downloads.retry(e) }) { Icon(Icons.Filled.Refresh, stringResource(R.string.retry)) }
+                        IconButton(onClick = { c.downloads.remove(listOf(e.song.id)) }) { Icon(Icons.Outlined.Delete, stringResource(R.string.cancel)) }
                     }
                 }
             }
             if (done.isNotEmpty()) {
                 val songs = done.map { it.song }
                 item(key = "done-h") {
-                    Text("On this phone", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
+                    Text(stringResource(R.string.on_this_phone), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
                     PlayShuffleRow(onPlay = { c.music.play(songs) }, onShuffle = { c.music.shuffle(songs) })
                 }
                 items(songs.size, key = { "d-${songs[it].id}" }) { i ->
@@ -354,7 +357,7 @@ fun DownloadsScreen() {
     }
 
     if (clearing) {
-        ConfirmDialog("Remove all downloads?", "Frees ${formatBytes(c.downloads.usedBytes(all))} on this phone.", "Remove", onDismiss = { clearing = false }) {
+        ConfirmDialog(stringResource(R.string.remove_all_downloads), stringResource(R.string.frees_x_on_this_phone, formatBytes(c.downloads.usedBytes(all))), stringResource(R.string.remove), onDismiss = { clearing = false }) {
             clearing = false
             c.downloads.removeAll()
         }

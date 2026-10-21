@@ -24,6 +24,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.security.MessageDigest
 import java.security.SecureRandom
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 /**
  * Talks to a Navidrome server. Almost everything goes through the Subsonic API with token auth
@@ -71,26 +73,26 @@ class SubsonicClient(
             if (!resp.isSuccessful && body.isBlank()) {
                 throw ApiException(
                     when (resp.code) {
-                        401, 403 -> "The server refused the sign-in"
-                        404 -> "No Navidrome server at this address"
-                        else -> "Server error ${resp.code}"
+                        401, 403 -> str(R.string.the_server_refused_the_sign_in)
+                        404 -> str(R.string.no_navidrome_server_at_this_address)
+                        else -> str(R.string.server_error_x, resp.code)
                     },
                     resp.code,
                 )
             }
             val root = runCatching { ApiJson.parseToJsonElement(body).jsonObject }.getOrNull()
-                ?: throw ApiException(if (resp.isSuccessful) "This doesn't look like a Navidrome server" else "Server error ${resp.code}")
-            val r = root["subsonic-response"] as? JsonObject ?: throw ApiException("This doesn't look like a Navidrome server")
+                ?: throw ApiException(if (resp.isSuccessful) str(R.string.this_doesn_t_look_like_a) else str(R.string.server_error_x, resp.code))
+            val r = root["subsonic-response"] as? JsonObject ?: throw ApiException(str(R.string.this_doesn_t_look_like_a))
             if ((r["status"] as? JsonPrimitive)?.contentOrNull != "ok") {
                 val err = r["error"] as? JsonObject
                 val code = (err?.get("code") as? JsonPrimitive)?.intOrNull ?: 0
                 val msg = (err?.get("message") as? JsonPrimitive)?.contentOrNull
                 throw ApiException(
                     when (code) {
-                        40, 41 -> "Wrong username or password"
-                        50 -> "Your account isn't allowed to do that"
-                        70 -> msg ?: "Not found"
-                        else -> msg ?: "Server error"
+                        40, 41 -> str(R.string.wrong_username_or_password)
+                        50 -> str(R.string.your_account_isn_t_allowed_to)
+                        70 -> msg ?: str(R.string.not_found)
+                        else -> msg ?: str(R.string.server_error)
                     },
                     code,
                 )
@@ -117,10 +119,10 @@ class SubsonicClient(
         }.toString().toRequestBody("application/json".toMediaType())
         val req = Request.Builder().url(base.newBuilder().addPathSegments("auth/login").build()).post(body).build()
         http.newCall(req).execute().use { resp ->
-            if (resp.code == 401) throw ApiException("Wrong username or password", 401)
-            if (!resp.isSuccessful) throw ApiException("Sign-in failed (${resp.code})", resp.code)
+            if (resp.code == 401) throw ApiException(str(R.string.wrong_username_or_password), 401)
+            if (!resp.isSuccessful) throw ApiException(str(R.string.sign_in_failed_x, resp.code), resp.code)
             val login = ApiJson.decodeFromString(NativeLogin.serializer(), resp.body?.string().orEmpty())
-            jwt = login.token ?: throw ApiException("The server returned no session")
+            jwt = login.token ?: throw ApiException(str(R.string.the_server_returned_no_session))
             login
         }
     }
@@ -139,13 +141,13 @@ class SubsonicClient(
                 resp.header("X-ND-Authorization")?.removePrefix("Bearer ")?.takeIf { it.isNotBlank() }?.let { jwt = it }
                 when {
                     resp.code == 401 -> null
-                    !resp.isSuccessful -> throw ApiException("Server error ${resp.code}", resp.code)
+                    !resp.isSuccessful -> throw ApiException(str(R.string.server_error_x, resp.code), resp.code)
                     else -> resp.body?.string().orEmpty() to resp.header("X-Total-Count")?.toIntOrNull()
                 }
             }
         }
         if (result != null) return result
-        if (!retry) throw ApiException("The server refused the sign-in", 401)
+        if (!retry) throw ApiException(str(R.string.the_server_refused_the_sign_in), 401)
         loginLock.withLock { jwt = null }
         return nativeGet(path, params, retry = false)
     }

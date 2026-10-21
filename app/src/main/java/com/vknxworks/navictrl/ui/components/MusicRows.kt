@@ -51,6 +51,8 @@ import com.vknxworks.navictrl.data.api.Song
 import com.vknxworks.navictrl.data.api.coverArtUrl
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.theme.Gutter
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
 
 /**
  * One song in a list. Tap plays, long-press or the menu opens its actions.
@@ -83,7 +85,7 @@ fun SongRow(
     ) {
         if (number != null) {
             Box(Modifier.width(32.dp), contentAlignment = Alignment.CenterStart) {
-                if (playing) Icon(Icons.Filled.GraphicEq, "Playing", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                if (playing) Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 else Text(
                     "$number",
                     style = MaterialTheme.typography.labelLarge,
@@ -97,7 +99,7 @@ fun SongRow(
                     Box(
                         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)),
                         contentAlignment = Alignment.Center,
-                    ) { Icon(Icons.Filled.GraphicEq, "Playing", tint = MaterialTheme.colorScheme.primary) }
+                    ) { Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = MaterialTheme.colorScheme.primary) }
                 }
             }
         }
@@ -112,15 +114,15 @@ fun SongRow(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (song.id in offline) {
-                    Icon(Icons.Filled.DownloadDone, "Downloaded", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.DownloadDone, stringResource(R.string.downloaded), Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(4.dp))
                 }
                 if (starred) {
-                    Icon(Icons.Filled.Favorite, "Favourite", Modifier.size(13.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.Favorite, stringResource(R.string.favourite), Modifier.size(13.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(4.dp))
                 }
                 Text(
-                    song.subtitle(showAlbum).ifBlank { "Unknown artist" },
+                    song.subtitle(showAlbum).ifBlank { stringResource(R.string.unknown_artist) },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -132,7 +134,7 @@ fun SongRow(
             Text(formatClock(it * 1000L), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         IconButton(onClick = { menu = true }) {
-            Icon(Icons.Filled.MoreVert, "More for ${song.title}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Filled.MoreVert, stringResource(R.string.more_for_x, song.title), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     if (menu) SongActionsSheet(song, onDismiss = { menu = false }, extra = extraActions)
@@ -204,7 +206,7 @@ fun AlbumRow(album: Album) {
         Column(Modifier.weight(1f)) {
             Text(album.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                listOfNotNull(album.artist, album.year?.toString(), countLabel(album.songCount, "song")).joinToString("  ·  "),
+                listOfNotNull(album.artist, album.year?.toString(), countLabel(album.songCount, R.plurals.count_songs)).joinToString("  ·  "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -230,7 +232,7 @@ fun ArtistRow(artist: Artist) {
         Column(Modifier.weight(1f)) {
             Text(artist.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (artist.albumCount > 0) {
-                Text(countLabel(artist.albumCount, "album"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(countLabel(artist.albumCount, R.plurals.count_albums), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -267,9 +269,9 @@ fun PlayShuffleRow(onPlay: () -> Unit, onShuffle: () -> Unit, modifier: Modifier
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PillButton("Play", onClick = onPlay, icon = Icons.Filled.PlayArrow, modifier = Modifier.weight(1f))
+        PillButton(stringResource(R.string.play), onClick = onPlay, icon = Icons.Filled.PlayArrow, modifier = Modifier.weight(1f))
         PillButton(
-            "Shuffle",
+            stringResource(R.string.shuffle),
             onClick = onShuffle,
             icon = Icons.Filled.Shuffle,
             modifier = Modifier.weight(1f),

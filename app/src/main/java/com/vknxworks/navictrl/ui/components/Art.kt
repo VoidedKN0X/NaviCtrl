@@ -28,6 +28,10 @@ import com.vknxworks.navictrl.data.api.Song
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
+import androidx.annotation.PluralsRes
+import com.vknxworks.navictrl.plural
 
 /** Artwork with a quiet placeholder while loading and a note icon when there's none. */
 @Composable
@@ -98,7 +102,7 @@ fun formatClock(ms: Long): String {
 fun formatLength(seconds: Int): String? {
     if (seconds <= 0) return null
     val min = (seconds + 30) / 60
-    return if (min >= 60) "${min / 60} hr ${min % 60} min" else "$min min"
+    return if (min >= 60) str(R.string.x_hr_x_min, min / 60, min % 60) else str(R.string.x_min, min)
 }
 
 fun formatBytes(bytes: Long): String {
@@ -110,7 +114,7 @@ fun formatBytes(bytes: Long): String {
     return "%.1f %s".format(v, units[i])
 }
 
-fun countLabel(n: Int, one: String, many: String = one + "s"): String = if (n == 1) "1 $one" else "$n $many"
+fun countLabel(n: Int, @PluralsRes id: Int): String = plural(id, n, n)
 
 fun isoToEpochMs(iso: String?): Long? = iso?.let { s ->
     runCatching { Instant.parse(s).toEpochMilli() }.getOrNull()

@@ -68,6 +68,9 @@ import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.nav.YouRoute
 import com.vknxworks.navictrl.ui.theme.Gutter
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 // ---------- Top bars ----------
 
@@ -82,7 +85,7 @@ fun ScreenTopBar(
     TopAppBar(
         title = { Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = {
-            if (showBack) IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+            if (showBack) IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
         },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
@@ -123,13 +126,13 @@ fun ProfileButton() {
             contentAlignment = Alignment.Center,
         ) {
             if (name.isEmpty()) {
-                Icon(Icons.Filled.AccountCircle, "You", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Filled.AccountCircle, stringResource(R.string.you), tint = MaterialTheme.colorScheme.primary)
             } else {
                 Text(
                     name.take(1).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.semantics { contentDescription = "You" },
+                    modifier = Modifier.semantics { contentDescription = str(R.string.you) },
                 )
             }
         }
@@ -269,7 +272,7 @@ fun <T> ChoiceSheet(
                         color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
-                    if (isSel) Icon(Icons.Filled.Check, "Selected", tint = MaterialTheme.colorScheme.primary)
+                    if (isSel) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }

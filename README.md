@@ -16,6 +16,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Shuffle all**: an endless random queue
 - **Favourites tab** for songs, albums and artists
 - **Playlists tab** with your playlists and the ones shared on your server: play, shuffle or download them, make new ones, rename or delete your own, and remove songs
+- **Genres tab** with every genre on your server: open one for its songs and albums, play it, or shuffle it straight from the list
 - **Background playback** with lock screen and Bluetooth controls
 - **Synced lyrics**, sleep timer, and a mix of similar songs started from any song
 - **Up next queue** you can reorder; your last queue comes back after a restart
@@ -26,10 +27,6 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Several servers and accounts**; streaming quality for Wi-Fi and mobile data
 - **App lock** with its own PIN and optional fingerprint unlock; your server password stays encrypted while the app is locked, and music and downloads that are already running carry on
 - **Hide in screenshots** and **Hide in recent apps**, two separate switches, both off by default
-
-## Planned
-
-Not in the app yet: genre pages.
 
 ## Screenshots
 
