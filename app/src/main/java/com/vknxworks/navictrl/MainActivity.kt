@@ -3,6 +3,7 @@ package com.vknxworks.navictrl
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import com.vknxworks.navictrl.ui.lock.WindowPrivacy
 import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -60,13 +61,9 @@ class MainActivity : ComponentActivity() {
             // "Hide in screenshots", screens where secrets are typed or shown and the lock and PIN screens keep the
             // window out of screenshots and recordings; "Hide in recent apps" blanks the recent-apps card.
             val secure = settings.hideScreenshots || covered || ScreenPrivacy.forced > 0
-            LaunchedEffect(secure) {
-                if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            }
-            LaunchedEffect(settings.hideRecents, secure) {
-                setRecentsScreenshotEnabled(!settings.hideRecents && !secure)
-            }
+            // "Hide in recent apps" (off by default). With the app lock on, Recents always shows a blank
+            // card: a preview there would show what's behind the PIN.
+            WindowPrivacy(this, secure, hideRecents = settings.hideRecents || lockSetting || c.vault.enabled)
             NaviCtrlTheme(settings.theme, settings.dynamicColor) {
                 Box(Modifier.fillMaxSize()) {
                     // The app stays underneath (so nothing you typed is lost), hidden from TalkBack too.

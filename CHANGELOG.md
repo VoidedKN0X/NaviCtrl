@@ -4,6 +4,13 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.3.3 (2026-10-21)
+
+### Security
+
+- **With the app lock on, the recent-apps preview always stays blank**, whatever **Hide in recent apps** is set to, so it never shows what's behind the lock. Android takes that preview the moment you leave the app, before it locks.
+- **README**: the App lock and privacy text now reads the same as in the other Ctrl apps.
+
 ## v0.3.2 (2026-10-21)
 
 ### Changed
