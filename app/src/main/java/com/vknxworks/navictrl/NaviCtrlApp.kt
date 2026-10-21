@@ -16,6 +16,7 @@ class NaviCtrlApp : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        AppStrings.context = this
         container = AppContainer(this)
         // The app lock: lock when the app leaves the screen, or after the chosen time away.
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {

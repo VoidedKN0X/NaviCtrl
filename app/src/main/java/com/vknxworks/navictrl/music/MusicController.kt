@@ -37,6 +37,9 @@ import kotlinx.serialization.Serializable
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
+import com.vknxworks.navictrl.plural
 
 data class MusicState(
     val connected: Boolean = false,
@@ -278,7 +281,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
     /** Plays the whole library in random order, topping up as it goes. */
     fun shuffleAll() = launch {
         val first = c.api.randomSongs(200)
-        if (first.isEmpty()) throw IllegalStateException("Your library has no songs yet")
+        if (first.isEmpty()) throw IllegalStateException(str(R.string.your_library_has_no_songs_yet))
         startQueue(first, more = randomMore())
     }
 
@@ -289,7 +292,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     fun shuffleGenre(genre: String) = launch {
         val first = c.api.randomSongs(200, genre)
-        if (first.isEmpty()) throw IllegalStateException("No songs in $genre")
+        if (first.isEmpty()) throw IllegalStateException(str(R.string.no_songs_in_x, genre))
         startQueue(first, more = randomMore(genre))
     }
 
@@ -310,7 +313,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
     /** A queue of songs like this one, from the server's similar-song data. */
     fun startMix(song: Song) = launch {
         val similar = runCatching { c.api.similarSongs(song.id, 80) }.getOrDefault(emptyList())
-        if (similar.isEmpty()) throw IllegalStateException("No similar songs found. The server needs Last.fm for mixes.")
+        if (similar.isEmpty()) throw IllegalStateException(str(R.string.no_similar_songs_found_the_server))
         startQueue(listOf(song) + similar.filterNot { it.id == song.id })
     }
 
@@ -321,7 +324,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
         mc.addMediaItems(songs.map(::mediaItem))
         unshuffled = unshuffled?.plus(songs.map { it.id })
         if (wasEmpty) { mc.prepare(); mc.play() }
-        Toast.makeText(context, if (songs.size == 1) "Added to queue" else "Added ${songs.size} songs to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, plural(R.plurals.added_to_queue, songs.size, songs.size), Toast.LENGTH_SHORT).show()
         refresh()
     }
 
@@ -332,7 +335,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
         mc.addMediaItems((mc.currentMediaItemIndex + 1).coerceAtMost(mc.mediaItemCount), songs.map(::mediaItem))
         unshuffled = unshuffled?.plus(songs.map { it.id })
         if (wasEmpty) { mc.prepare(); mc.play() }
-        else Toast.makeText(context, if (songs.size == 1) "Plays next" else "${songs.size} songs play next", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(context, plural(R.plurals.plays_next, songs.size, songs.size), Toast.LENGTH_SHORT).show()
         refresh()
     }
 

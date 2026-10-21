@@ -85,6 +85,10 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
+import androidx.compose.ui.res.pluralStringResource
 
 private const val PAGE = 200
 
@@ -149,14 +153,14 @@ fun SongsScreen() {
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TabTitle("Songs") {
-            IconButton(onClick = { sortSheet = true }) { Icon(Icons.AutoMirrored.Filled.Sort, "Sort songs") }
+        TabTitle(stringResource(R.string.songs)) {
+            IconButton(onClick = { sortSheet = true }) { Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.sort_songs)) }
         }
         val total = pager.total
         when {
             total < 0 && pager.error != null -> ErrorView(pager.error!!) { refreshCount++ }
             total < 0 -> LoadingView()
-            total == 0 -> MessageView(Icons.Outlined.MusicNote, "No songs yet", "Once Navidrome has scanned your music, every song shows up here.")
+            total == 0 -> MessageView(Icons.Outlined.MusicNote, stringResource(R.string.no_songs_yet), stringResource(R.string.once_navidrome_has_scanned_your_music))
             else -> key(pagerKey) {
                 val listState = rememberLazyListState()
                 PullToRefreshBox(isRefreshing = false, onRefresh = { refreshCount++ }, modifier = Modifier.fillMaxSize()) {
@@ -168,7 +172,7 @@ fun SongsScreen() {
                         item(key = "header") {
                             Column(Modifier.fillMaxWidth()) {
                                 Text(
-                                    "${NumberFormat.getIntegerInstance().format(total)} songs, ${sortDescription(sort, asc)}",
+                                    pluralStringResource(R.plurals.songs_sorted, total, NumberFormat.getIntegerInstance().format(total), sortDescription(sort, asc)),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = Gutter),
@@ -177,10 +181,10 @@ fun SongsScreen() {
                                     Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    PillButton("Shuffle all", onClick = { c.music.shuffleAll() }, icon = Icons.Filled.Shuffle, modifier = Modifier.weight(1f))
+                                    PillButton(stringResource(R.string.shuffle_all), onClick = { c.music.shuffleAll() }, icon = Icons.Filled.Shuffle, modifier = Modifier.weight(1f))
                                     Spacer(Modifier.width(12.dp))
                                     PillButton(
-                                        "Play",
+                                        stringResource(R.string.play),
                                         onClick = { c.music.playSongList(sort, asc, 0) },
                                         icon = Icons.Filled.PlayArrow,
                                         container = MaterialTheme.colorScheme.secondaryContainer,
@@ -220,10 +224,10 @@ fun SongsScreen() {
 }
 
 private fun sortDescription(sort: SongSort, asc: Boolean): String = when (sort) {
-    SongSort.TITLE -> if (asc) "A to Z" else "Z to A"
-    SongSort.DATE_ADDED -> if (asc) "oldest added first" else "newest added first"
-    SongSort.ARTIST -> if (asc) "by artist, A to Z" else "by artist, Z to A"
-    SongSort.ALBUM -> if (asc) "by album, A to Z" else "by album, Z to A"
+    SongSort.TITLE -> if (asc) str(R.string.a_to_z) else str(R.string.z_to_a)
+    SongSort.DATE_ADDED -> if (asc) str(R.string.oldest_added_first) else str(R.string.newest_added_first)
+    SongSort.ARTIST -> if (asc) str(R.string.by_artist_a_to_z) else str(R.string.by_artist_z_to_a)
+    SongSort.ALBUM -> if (asc) str(R.string.by_album_a_to_z) else str(R.string.by_album_z_to_a)
 }
 
 private val monthYear = DateTimeFormatter.ofPattern("MMM yyyy").withZone(ZoneId.systemDefault())
@@ -239,7 +243,7 @@ private fun scrollLabel(song: Song, sort: SongSort): String = when (sort) {
 private fun SortSheet(sort: SongSort, asc: Boolean, onDismiss: () -> Unit, onPick: (SongSort, Boolean) -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
-            Text("Sort songs by", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+            Text(stringResource(R.string.sort_songs_by), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             SongSort.entries.forEach { s ->
                 val selected = s == sort
                 Row(
@@ -250,17 +254,17 @@ private fun SortSheet(sort: SongSort, asc: Boolean, onDismiss: () -> Unit, onPic
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        s.label,
+                        stringResource(s.label),
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
-                    if (selected) Icon(Icons.Filled.Check, "Selected", tint = MaterialTheme.colorScheme.primary)
+                    if (selected) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = MaterialTheme.colorScheme.primary)
                 }
             }
-            Text("Order", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 24.dp, top = 12.dp, bottom = 4.dp))
+            Text(stringResource(R.string.order), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 24.dp, top = 12.dp, bottom = 4.dp))
             Row(Modifier.padding(horizontal = 24.dp)) {
-                val (first, second) = if (sort == SongSort.DATE_ADDED) "Newest first" to "Oldest first" else "A to Z" to "Z to A"
+                val (first, second) = if (sort == SongSort.DATE_ADDED) stringResource(R.string.newest_first) to stringResource(R.string.oldest_first) else stringResource(R.string.a_to_z) to stringResource(R.string.z_to_a)
                 // For dates, "newest first" is descending.
                 val firstAsc = sort != SongSort.DATE_ADDED
                 FilterChip(selected = asc == firstAsc, onClick = { onPick(sort, firstAsc) }, label = { Text(first) })

@@ -58,6 +58,9 @@ import com.vknxworks.navictrl.ui.components.runTask
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.nav.PlaylistRoute
 import com.vknxworks.navictrl.ui.theme.Gutter
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 /** The Playlists tab: your playlists and the ones others shared, with a button to make a new one. */
 @Composable
@@ -80,16 +83,16 @@ fun PlaylistsScreen() {
     var menuFor by remember { mutableStateOf<Playlist?>(null) }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TabTitle("Playlists") {
-            IconButton(onClick = { creating = true }) { Icon(Icons.Filled.Add, "New playlist") }
+        TabTitle(stringResource(R.string.playlists)) {
+            IconButton(onClick = { creating = true }) { Icon(Icons.Filled.Add, stringResource(R.string.new_playlist)) }
         }
         LoadContent(loader) { lists ->
             if (lists.isEmpty()) {
                 MessageView(
                     Icons.AutoMirrored.Filled.QueueMusic,
-                    "No playlists yet",
-                    "Make one here, or use Add to playlist in any song's menu.",
-                    actionLabel = "New playlist",
+                    stringResource(R.string.no_playlists_yet),
+                    stringResource(R.string.make_one_here_or_use_add),
+                    actionLabel = stringResource(R.string.new_playlist),
                     onAction = { creating = true },
                 )
                 return@LoadContent
@@ -102,7 +105,7 @@ fun PlaylistsScreen() {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
                     item(key = "header") {
                         Text(
-                            countLabel(lists.size, "playlist"),
+                            countLabel(lists.size, R.plurals.count_playlists),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = Gutter, end = Gutter, bottom = 4.dp),
@@ -115,12 +118,12 @@ fun PlaylistsScreen() {
     }
 
     if (creating) {
-        TextInputDialog("New playlist", "Name", "Create", onDismiss = { creating = false }) { name ->
+        TextInputDialog(stringResource(R.string.new_playlist), stringResource(R.string.name), stringResource(R.string.create), onDismiss = { creating = false }) { name ->
             creating = false
             c.runTask {
                 c.api.createPlaylist(name)
                 c.playlistsChanged()
-                Toast.makeText(context, "Created $name", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, str(R.string.created_x, name), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -147,9 +150,9 @@ private fun PlaylistRow(p: Playlist, onMore: () -> Unit) {
             Text(p.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 listOfNotNull(
-                    countLabel(p.songCount, "song"),
+                    countLabel(p.songCount, R.plurals.count_songs),
                     formatLength(p.duration),
-                    p.owner?.takeIf { !p.ownedBy(c.api.username) }?.let { "by $it" },
+                    p.owner?.takeIf { !p.ownedBy(c.api.username) }?.let { stringResource(R.string.by_x, it) },
                 ).joinToString("  ·  "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -158,7 +161,7 @@ private fun PlaylistRow(p: Playlist, onMore: () -> Unit) {
             )
         }
         IconButton(onClick = onMore) {
-            Icon(Icons.Filled.MoreVert, "More for ${p.name}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Filled.MoreVert, stringResource(R.string.more_for_x, p.name), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

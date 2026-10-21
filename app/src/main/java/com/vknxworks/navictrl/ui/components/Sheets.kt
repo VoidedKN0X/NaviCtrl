@@ -72,6 +72,10 @@ import com.vknxworks.navictrl.data.api.updatePlaylist
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
+import androidx.compose.ui.res.pluralStringResource
 
 data class SongAction(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
@@ -111,7 +115,7 @@ private fun ActionItem(icon: ImageVector, label: String, onClick: () -> Unit) {
 /** Format, bitrate and length, e.g. "FLAC  ·  1011 kbps  ·  3:42". */
 private fun Song.techLine(): String = listOfNotNull(
     suffix?.uppercase(),
-    bitRate?.takeIf { it > 0 }?.let { "$it kbps" },
+    bitRate?.takeIf { it > 0 }?.let { str(R.string.x_kbps, it) },
     duration?.takeIf { it > 0 }?.let { formatClock(it * 1000L) },
 ).joinToString("  ·  ")
 
@@ -140,21 +144,21 @@ fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> 
                 song.title,
                 listOf(song.subtitle(), song.techLine()).filter { it.isNotBlank() }.joinToString("\n"),
             )
-            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { act { c.music.playNext(listOf(song)) } }
-            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { act { c.music.enqueue(listOf(song)) } }
-            ActionItem(Icons.Filled.AutoAwesome, "Start a mix from this song") { act { c.music.startMix(song) } }
-            ActionItem(Icons.AutoMirrored.Filled.PlaylistAdd, "Add to playlist") { addTo = true }
+            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { act { c.music.playNext(listOf(song)) } }
+            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { act { c.music.enqueue(listOf(song)) } }
+            ActionItem(Icons.Filled.AutoAwesome, stringResource(R.string.start_a_mix_from_this_song)) { act { c.music.startMix(song) } }
+            ActionItem(Icons.AutoMirrored.Filled.PlaylistAdd, stringResource(R.string.add_to_playlist)) { addTo = true }
             ActionItem(
                 if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                if (starred) "Remove from favourites" else "Add to favourites",
+                if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
             ) { act { c.stars.set(StarKind.SONG, song.id, !starred) } }
             if (song.id in offline) {
-                ActionItem(Icons.Outlined.Delete, "Remove download") { act { c.downloads.remove(listOf(song.id)) } }
+                ActionItem(Icons.Outlined.Delete, stringResource(R.string.remove_download)) { act { c.downloads.remove(listOf(song.id)) } }
             } else {
-                ActionItem(Icons.Filled.Download, "Download") { act { c.downloads.enqueue(listOf(song)) } }
+                ActionItem(Icons.Filled.Download, stringResource(R.string.download)) { act { c.downloads.enqueue(listOf(song)) } }
             }
-            if (!song.albumId.isNullOrBlank()) ActionItem(Icons.Filled.Album, "Go to album") { act { nav.album(song.albumId) } }
-            if (!song.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, "Go to artist") { act { nav.artist(song.artistId) } }
+            if (!song.albumId.isNullOrBlank()) ActionItem(Icons.Filled.Album, stringResource(R.string.go_to_album)) { act { nav.album(song.albumId) } }
+            if (!song.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, stringResource(R.string.go_to_artist)) { act { nav.artist(song.artistId) } }
             extra.forEach { a -> ActionItem(a.icon, a.label) { act(a.onClick) } }
         }
     }
@@ -184,19 +188,19 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(c.api.coverArtUrl(album.coverArt, 160), album.name, listOfNotNull(album.artist, album.year?.toString()).joinToString("  ·  "))
-            ActionItem(Icons.Filled.PlayArrow, "Play") { withSongs { c.music.play(it) } }
-            ActionItem(Icons.Filled.Shuffle, "Shuffle") { withSongs { c.music.shuffle(it) } }
-            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { withSongs { c.music.playNext(it) } }
-            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { withSongs { c.music.enqueue(it) } }
-            ActionItem(Icons.AutoMirrored.Filled.PlaylistAdd, "Add to playlist") {
+            ActionItem(Icons.Filled.PlayArrow, stringResource(R.string.play)) { withSongs { c.music.play(it) } }
+            ActionItem(Icons.Filled.Shuffle, stringResource(R.string.shuffle)) { withSongs { c.music.shuffle(it) } }
+            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { withSongs { c.music.playNext(it) } }
+            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { withSongs { c.music.enqueue(it) } }
+            ActionItem(Icons.AutoMirrored.Filled.PlaylistAdd, stringResource(R.string.add_to_playlist)) {
                 c.runTask { addTo = album.song.ifEmpty { c.api.album(album.id).song } }
             }
             ActionItem(
                 if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                if (starred) "Remove from favourites" else "Add to favourites",
+                if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
             ) { c.stars.set(StarKind.ALBUM, album.id, !starred); onDismiss() }
-            ActionItem(Icons.Filled.Download, "Download album") { withSongs { c.downloads.enqueue(it) } }
-            if (!album.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, "Go to artist") { onDismiss(); nav.artist(album.artistId) }
+            ActionItem(Icons.Filled.Download, stringResource(R.string.download_album)) { withSongs { c.downloads.enqueue(it) } }
+            if (!album.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, stringResource(R.string.go_to_artist)) { onDismiss(); nav.artist(album.artistId) }
         }
     }
 }
@@ -209,7 +213,7 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
     var renaming by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     if (renaming) {
-        TextInputDialog("Rename playlist", "Name", "Save", initial = pl.name, onDismiss = onDismiss) { name ->
+        TextInputDialog(stringResource(R.string.rename_playlist), stringResource(R.string.name), stringResource(R.string.save), initial = pl.name, onDismiss = onDismiss) { name ->
             onDismiss()
             c.runTask {
                 c.api.updatePlaylist(pl.id, name = name)
@@ -219,12 +223,12 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
         return
     }
     if (deleting) {
-        ConfirmDialog("Delete \"${pl.name}\"?", "The songs stay in your library.", "Delete", onDismiss = onDismiss) {
+        ConfirmDialog(stringResource(R.string.delete_x, pl.name), stringResource(R.string.the_songs_stay_in_your_library), stringResource(R.string.delete), onDismiss = onDismiss) {
             onDismiss()
             c.runTask {
                 c.api.deletePlaylist(pl.id)
                 c.playlistsChanged()
-                Toast.makeText(context, "Deleted ${pl.name}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, str(R.string.deleted_x, pl.name), Toast.LENGTH_SHORT).show()
             }
         }
         return
@@ -235,7 +239,7 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
         onDismiss()
         c.runTask {
             val songs = c.api.playlist(pl.id).entry
-            if (songs.isEmpty()) Toast.makeText(context, "${pl.name} is empty", Toast.LENGTH_SHORT).show()
+            if (songs.isEmpty()) Toast.makeText(context, str(R.string.x_is_empty, pl.name), Toast.LENGTH_SHORT).show()
             else block(songs)
         }
     }
@@ -249,15 +253,15 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
             SheetHeader(
                 c.api.coverArtUrl(pl.coverArt, 160),
                 pl.name,
-                listOfNotNull(countLabel(pl.songCount, "song"), formatLength(pl.duration)).joinToString("  ·  "),
+                listOfNotNull(countLabel(pl.songCount, R.plurals.count_songs), formatLength(pl.duration)).joinToString("  ·  "),
             )
-            ActionItem(Icons.Filled.PlayArrow, "Play") { withSongs { c.music.play(it) } }
-            ActionItem(Icons.Filled.Shuffle, "Shuffle") { withSongs { c.music.shuffle(it) } }
-            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { withSongs { c.music.playNext(it) } }
-            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { withSongs { c.music.enqueue(it) } }
+            ActionItem(Icons.Filled.PlayArrow, stringResource(R.string.play)) { withSongs { c.music.play(it) } }
+            ActionItem(Icons.Filled.Shuffle, stringResource(R.string.shuffle)) { withSongs { c.music.shuffle(it) } }
+            ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { withSongs { c.music.playNext(it) } }
+            ActionItem(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { withSongs { c.music.enqueue(it) } }
             if (mine) {
-                ActionItem(Icons.Filled.Edit, "Rename") { renaming = true }
-                ActionItem(Icons.Outlined.Delete, "Delete playlist") { deleting = true }
+                ActionItem(Icons.Filled.Edit, stringResource(R.string.rename)) { renaming = true }
+                ActionItem(Icons.Outlined.Delete, stringResource(R.string.delete_playlist)) { deleting = true }
             }
         }
     }
@@ -273,13 +277,13 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
     // Song counts change as songs are added, so the list is fetched again each time it opens.
     LaunchedEffect(Unit) { if (lists.state is Load.Ok) lists.reload(silent = true) }
     var naming by remember { mutableStateOf(false) }
-    val label = if (songs.size == 1) "\"${songs.first().title}\"" else "${songs.size} songs"
+    val label = if (songs.size == 1) stringResource(R.string.quoted_x, songs.first().title) else pluralStringResource(R.plurals.count_songs, songs.size, songs.size)
 
     if (naming) {
         TextInputDialog(
-            title = "New playlist",
-            label = "Name",
-            confirm = "Create",
+            title = stringResource(R.string.new_playlist),
+            label = stringResource(R.string.name),
+            confirm = stringResource(R.string.create),
             onDismiss = { naming = false },
         ) { name ->
             naming = false
@@ -287,14 +291,14 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
             c.runTask {
                 c.api.createPlaylist(name, songs.map { it.id })
                 c.playlistsChanged()
-                Toast.makeText(context, "Created $name", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, str(R.string.created_x, name), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-        Text("Add $label to", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
-        ActionItem(Icons.Filled.Add, "New playlist") { naming = true }
+        Text(stringResource(R.string.add_x_to, label), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
+        ActionItem(Icons.Filled.Add, stringResource(R.string.new_playlist)) { naming = true }
         when (val s = lists.state) {
             is Load.Loading -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             is Load.Err -> Text(s.message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(24.dp))
@@ -305,7 +309,7 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
                         c.runTask {
                             c.api.updatePlaylist(p.id, add = songs.map { it.id })
                             c.playlistsChanged()
-                            Toast.makeText(context, "Added to ${p.name}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, str(R.string.added_to_x, p.name), Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -327,7 +331,7 @@ private fun PlaylistPickRow(p: Playlist, onClick: () -> Unit) {
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(countLabel(p.songCount, "song"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(countLabel(p.songCount, R.plurals.count_songs), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -347,7 +351,7 @@ fun TextInputDialog(
         title = { Text(title) },
         text = { OutlinedTextField(text, { text = it }, label = { Text(label) }, singleLine = true, modifier = Modifier.fillMaxWidth()) },
         confirmButton = { TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank()) { Text(confirm) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -358,6 +362,6 @@ fun ConfirmDialog(title: String, body: String, confirm: String, onDismiss: () ->
         title = { Text(title) },
         text = { Text(body) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(confirm, color = MaterialTheme.colorScheme.error) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

@@ -24,6 +24,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import okhttp3.OkHttpClient
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 @Serializable
 data class Account(
@@ -46,7 +48,7 @@ data class Account(
  * whether to try plain HTTP (which sends the password unencrypted) and calls signIn again with [httpUrl].
  */
 class HttpFallbackNeeded(val httpUrl: String, cause: Throwable) :
-    Exception("Couldn't connect securely (HTTPS). The server may only support plain HTTP.", cause)
+    Exception(str(R.string.https_failed_try_http), cause)
 
 data class ActiveSession(val account: Account, val client: SubsonicClient)
 
@@ -125,7 +127,7 @@ class SessionManager(
 
     /** Encrypts a password for saving: with the Keystore, and also with the app lock's key when it's on. */
     private fun storePassword(password: String, seal: Boolean = vault.enabled): String {
-        val inner = if (seal) vault.seal(password) ?: throw ApiException("Unlock NaviCtrl first.") else password
+        val inner = if (seal) vault.seal(password) ?: throw ApiException(str(R.string.unlock_navictrl_first)) else password
         return KeystoreCrypto.encrypt(inner)
     }
 
@@ -202,7 +204,7 @@ class SessionManager(
         try {
             val info = client.ping().serverInfo(client.baseUrl)
             if (info.type != null && !info.type.equals("navidrome", ignoreCase = true)) {
-                throw ApiException("This is a ${info.type} server. NaviCtrl works with Navidrome.")
+                throw ApiException(str(R.string.this_is_a_x_server_navictrl, info.type))
             }
             // Navidrome's own API powers the sortable song list; signing in to it also confirms admin rights.
             val isAdmin = runCatching { client.nativeLogin().isAdmin }
@@ -232,10 +234,7 @@ class SessionManager(
             // the explicit "unencrypted" confirmation.
             if (explicit) throw e
             if (e.isTlsProblem()) {
-                throw ApiException(
-                    "Secure connection failed: ${e.message ?: "TLS error"}. " +
-                        "If your server only supports plain HTTP, type http:// in front of the address.",
-                )
+                throw ApiException(str(R.string.tls_failed_sign_in, e.message ?: str(R.string.tls_error)))
             }
             throw HttpFallbackNeeded("http://$raw", e)
         }

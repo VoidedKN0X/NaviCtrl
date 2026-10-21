@@ -2,6 +2,8 @@ package com.vknxworks.navictrl.data.api
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import androidx.annotation.StringRes
+import com.vknxworks.navictrl.R
 
 /** Lenient JSON: servers add fields over time and leave others out. */
 val ApiJson = Json {
@@ -195,20 +197,20 @@ data class NativeSong(
 @Serializable
 data class NativeLogin(val token: String? = null, val isAdmin: Boolean = false, val name: String? = null)
 
-enum class SongSort(val field: String, val label: String) {
-    TITLE("title", "Title"),
-    DATE_ADDED("createdAt", "Date added"),
-    ARTIST("artist", "Artist"),
-    ALBUM("album", "Album"),
+enum class SongSort(val field: String, @StringRes val label: Int) {
+    TITLE("title", R.string.sort_title),
+    DATE_ADDED("createdAt", R.string.sort_date_added),
+    ARTIST("artist", R.string.sort_artist),
+    ALBUM("album", R.string.sort_album),
 }
 
 /** getAlbumList2 types, in the order the sort menu shows them. */
-enum class AlbumSort(val type: String, val label: String) {
-    NAME("alphabeticalByName", "Name"),
-    ARTIST("alphabeticalByArtist", "Artist"),
-    NEWEST("newest", "Recently added"),
-    RECENT("recent", "Recently played"),
-    FREQUENT("frequent", "Most played"),
-    RANDOM("random", "Random"),
-    STARRED("starred", "Favourites"),
+enum class AlbumSort(val type: String, @StringRes val label: Int) {
+    NAME("alphabeticalByName", R.string.sort_name),
+    ARTIST("alphabeticalByArtist", R.string.sort_artist),
+    NEWEST("newest", R.string.sort_recently_added),
+    RECENT("recent", R.string.sort_recently_played),
+    FREQUENT("frequent", R.string.sort_most_played),
+    RANDOM("random", R.string.sort_random),
+    STARRED("starred", R.string.favourites),
 }

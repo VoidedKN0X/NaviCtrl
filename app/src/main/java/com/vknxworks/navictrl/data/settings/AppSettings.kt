@@ -19,7 +19,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class ThemeChoice(val label: String) { SYSTEM("Follow system"), DARK("Dark"), LIGHT("Light"), BLACK("Pure black") }
+enum class ThemeChoice(@StringRes val label: Int) {
+    SYSTEM(R.string.theme_system), DARK(R.string.theme_dark), LIGHT(R.string.theme_light), BLACK(R.string.theme_black),
+}
 
 /** How long the app can be in the background before the app lock asks again. -1: only after a restart. */
 enum class LockTimeout(@StringRes val label: Int, val millis: Long) {

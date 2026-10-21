@@ -64,6 +64,8 @@ import com.vknxworks.navictrl.ui.nav.SettingsRoute
 import com.vknxworks.navictrl.ui.theme.Gutter
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import com.vknxworks.navictrl.str
+import androidx.compose.ui.res.pluralStringResource
 
 private const val SPONSOR_URL = "https://github.com/sponsors/VoidedKN0X"
 private const val REPO_URL = "https://github.com/VoidedKN0X/NaviCtrl"
@@ -92,7 +94,7 @@ fun YouScreen() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        ScreenTopBar("You")
+        ScreenTopBar(stringResource(R.string.you))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp + LocalBottomClearance.current)) {
             Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(96.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
@@ -101,7 +103,7 @@ fun YouScreen() {
                 Spacer(Modifier.height(14.dp))
                 Text(acc.username, style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    listOfNotNull(acc.serverName, acc.serverVersion?.let { "Navidrome ${it.substringBefore(' ')}" }).joinToString("  ·  "),
+                    listOfNotNull(acc.serverName, acc.serverVersion?.let { stringResource(R.string.navidrome_x, it.substringBefore(' ')) }).joinToString("  ·  "),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -109,8 +111,8 @@ fun YouScreen() {
 
             Group {
                 GroupRow(
-                    "Downloads",
-                    if (ready == 0) "Keep music on this phone for offline listening" else "$ready songs, ${formatBytes(c.downloads.usedBytes(downloads))}",
+                    stringResource(R.string.downloads),
+                    if (ready == 0) stringResource(R.string.keep_music_on_this_phone_for) else pluralStringResource(R.plurals.downloads_ready, ready, ready, formatBytes(c.downloads.usedBytes(downloads))),
                     icon = Icons.Filled.Download,
                     showChevron = true,
                     onClick = { nav.navigate(DownloadsRoute) },
@@ -118,25 +120,25 @@ fun YouScreen() {
             }
 
             val status = scan.value
-            Group("Server", footer = status?.lastScan?.let { "Last scanned ${com.vknxworks.navictrl.ui.components.formatDate(it).orEmpty()}" }) {
+            Group(stringResource(R.string.server), footer = status?.lastScan?.let { stringResource(R.string.last_scanned_x, com.vknxworks.navictrl.ui.components.formatDate(it).orEmpty()) }) {
                 GroupRow(
                     acc.serverUrl,
                     listOfNotNull(
-                        if (acc.isEncrypted) null else "Not encrypted (HTTP)",
-                        status?.let { "${NumberFormat.getIntegerInstance().format(it.count)} files in the library" },
+                        if (acc.isEncrypted) null else stringResource(R.string.not_encrypted_http),
+                        status?.let { pluralStringResource(R.plurals.library_files, it.count.toInt(), NumberFormat.getIntegerInstance().format(it.count)) },
                     ).joinToString("  ·  ").ifEmpty { null },
                     icon = Icons.Filled.Dns,
                 )
                 if (acc.isAdmin) {
                     GroupRow(
-                        "Scan for new music",
-                        if (status?.scanning == true || scanning) "Scanning…" else "Picks up files added since the last scan",
+                        stringResource(R.string.scan_for_new_music),
+                        if (status?.scanning == true || scanning) stringResource(R.string.scanning) else stringResource(R.string.picks_up_files_added_since_the),
                         icon = Icons.Filled.Refresh,
                         onClick = {
                             scanning = true
                             scope.launch {
                                 runCatching { c.api.startScan() }
-                                    .onSuccess { Toast.makeText(context, "Scan started", Toast.LENGTH_SHORT).show() }
+                                    .onSuccess { Toast.makeText(context, str(R.string.scan_started), Toast.LENGTH_SHORT).show() }
                                     .onFailure { Toast.makeText(context, it.friendlyMessage(), Toast.LENGTH_SHORT).show() }
                                 scanning = false
                                 scan.reload(silent = true)
@@ -150,10 +152,10 @@ fun YouScreen() {
             }
 
             Group {
-                GroupRow("Settings", icon = Icons.Filled.Settings, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
-                GroupRow("Servers and accounts", icon = Icons.Filled.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
+                GroupRow(stringResource(R.string.settings), icon = Icons.Filled.Settings, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
+                GroupRow(stringResource(R.string.servers_and_accounts), icon = Icons.Filled.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
                 GroupRow(
-                    "Sign out",
+                    stringResource(R.string.sign_out),
                     icon = Icons.AutoMirrored.Filled.Logout,
                     iconTint = MaterialTheme.colorScheme.error,
                     titleColor = MaterialTheme.colorScheme.error,
@@ -203,9 +205,9 @@ fun YouScreen() {
 
     if (confirmSignOut) {
         ConfirmDialog(
-            "Sign out of ${acc.serverName}?",
-            "Downloads for this account stay on the phone until you remove them.",
-            "Sign out",
+            stringResource(R.string.sign_out_of_x, acc.serverName),
+            stringResource(R.string.downloads_for_this_account_stay_on),
+            stringResource(R.string.sign_out),
             onDismiss = { confirmSignOut = false },
         ) {
             confirmSignOut = false

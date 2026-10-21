@@ -58,6 +58,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
 
 @Composable
 fun SearchScreen() {
@@ -90,14 +92,14 @@ fun SearchScreen() {
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TabTitle("Search")
+        TabTitle(stringResource(R.string.search))
         TextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text("Songs, albums, artists") },
+            placeholder = { Text(stringResource(R.string.songs_albums_artists)) },
             leadingIcon = { Icon(Icons.Filled.Search, null) },
             trailingIcon = {
-                if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Close, "Clear") }
+                if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Close, stringResource(R.string.clear)) }
             },
             singleLine = true,
             shape = CircleShape,
@@ -116,16 +118,16 @@ fun SearchScreen() {
         }
         val r = result
         when {
-            error != null -> MessageView(Icons.Outlined.SearchOff, "Search failed", error)
-            query.isBlank() -> MessageView(Icons.Filled.Search, "Search your library", "Find any song, album or artist on your server.")
+            error != null -> MessageView(Icons.Outlined.SearchOff, stringResource(R.string.search_failed), error)
+            query.isBlank() -> MessageView(Icons.Filled.Search, stringResource(R.string.search_your_library), stringResource(R.string.find_any_song_album_or_artist))
             r == null -> Unit
-            r.song.isEmpty() && r.album.isEmpty() && r.artist.isEmpty() -> MessageView(Icons.Outlined.SearchOff, "Nothing found", "Try fewer or different words.")
+            r.song.isEmpty() && r.album.isEmpty() && r.artist.isEmpty() -> MessageView(Icons.Outlined.SearchOff, stringResource(R.string.nothing_found), stringResource(R.string.try_fewer_or_different_words))
             else -> BoxWithConstraints(Modifier.fillMaxSize()) {
                 val cardW = cardWidthFor(maxWidth)
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
                     if (r.artist.isNotEmpty()) {
                         item(key = "artists") {
-                            SectionHeader("Artists")
+                            SectionHeader(stringResource(R.string.artists))
                             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(r.artist, key = { it.id }) { ArtistTile(it, size = 96.dp) }
                             }
@@ -133,14 +135,14 @@ fun SearchScreen() {
                     }
                     if (r.album.isNotEmpty()) {
                         item(key = "albums") {
-                            SectionHeader("Albums")
+                            SectionHeader(stringResource(R.string.albums))
                             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 items(r.album, key = { it.id }) { AlbumCard(it, width = cardW) }
                             }
                         }
                     }
                     if (r.song.isNotEmpty()) {
-                        item(key = "songs-h") { SectionHeader("Songs") }
+                        item(key = "songs-h") { SectionHeader(stringResource(R.string.songs)) }
                         itemsIndexed(r.song, key = { _, s -> "s-${s.id}" }) { i, s ->
                             SongRow(s, onClick = { c.music.play(r.song, i) })
                         }

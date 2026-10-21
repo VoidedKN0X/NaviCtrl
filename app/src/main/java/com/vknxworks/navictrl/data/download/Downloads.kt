@@ -36,6 +36,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 enum class DownloadStatus { QUEUED, RUNNING, DONE, FAILED }
 
@@ -154,7 +156,7 @@ class DownloadRepository(
         val entry = _entries.value.firstOrNull { it.song.id == id && it.accountKey == accountKey } ?: return true
         val session = sessions.active.value
         if (session == null || session.account.key != accountKey) {
-            mark(accountKey, id) { it.copy(status = DownloadStatus.FAILED, error = "Sign in to this server to download") }
+            mark(accountKey, id) { it.copy(status = DownloadStatus.FAILED, error = str(R.string.sign_in_to_this_server_to)) }
             return false
         }
         mark(accountKey, id) { it.copy(status = DownloadStatus.RUNNING, progress = 0f, error = null) }
@@ -180,10 +182,10 @@ class DownloadRepository(
         val name = SubsonicClient.sha256(song.id).take(32)
         val target = File(dir, "$name.$ext")
         val tmp = File(dir, "$name.part")
-        if (!isInside(dir, target) || !isInside(dir, tmp)) throw java.io.IOException("Invalid file name")
+        if (!isInside(dir, target) || !isInside(dir, tmp)) throw java.io.IOException(str(R.string.invalid_file_name))
         http.newCall(Request.Builder().url(url).build()).execute().use { resp ->
-            if (!resp.isSuccessful) throw java.io.IOException("Server error ${resp.code}")
-            val body = resp.body ?: throw java.io.IOException("Empty response")
+            if (!resp.isSuccessful) throw java.io.IOException(str(R.string.server_error_x, resp.code))
+            val body = resp.body ?: throw java.io.IOException(str(R.string.empty_response))
             val total = body.contentLength().takeIf { it > 0 } ?: song.size ?: -1L
             var read = 0L
             var lastReport = 0L

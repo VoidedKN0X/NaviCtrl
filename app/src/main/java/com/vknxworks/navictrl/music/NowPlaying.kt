@@ -94,6 +94,10 @@ import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.theme.ArtworkTint
 import com.vknxworks.navictrl.ui.theme.rememberArtworkColor
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
+import androidx.compose.ui.res.pluralStringResource
 
 /** Floating glass card above the tab island while music plays. */
 @Composable
@@ -129,10 +133,10 @@ fun MiniPlayer(onOpen: () -> Unit) {
                     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) }
                 } else {
                     IconButton(onClick = { music.togglePlay() }) {
-                        Icon(if (s.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (s.isPlaying) "Pause" else "Play")
+                        Icon(if (s.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (s.isPlaying) stringResource(R.string.pause) else stringResource(R.string.play))
                     }
                 }
-                IconButton(onClick = { music.next() }) { Icon(Icons.Filled.SkipNext, "Next song") }
+                IconButton(onClick = { music.next() }) { Icon(Icons.Filled.SkipNext, stringResource(R.string.next_song)) }
             }
             val p = if (s.durationMs > 0) (s.positionMs.toFloat() / s.durationMs).coerceIn(0f, 1f) else 0f
             Box(
@@ -160,7 +164,7 @@ fun NowPlayingScreen() {
     val seed = rememberArtworkColor(song?.let { c.api.coverArtUrl(it.coverArt, 300) })
 
     if (song == null) {
-        MessageView(Icons.Outlined.MusicNote, "Nothing playing", "Play a song, an album or a playlist and it shows up here.")
+        MessageView(Icons.Outlined.MusicNote, stringResource(R.string.nothing_playing), stringResource(R.string.play_a_song_an_album_or))
         return
     }
     val starred = stars[song.id] ?: (song.starred != null)
@@ -173,10 +177,10 @@ fun NowPlayingScreen() {
             val player: @Composable (Modifier) -> Unit = { mod ->
                 Column(mod.statusBarsPadding().padding(horizontal = 28.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = nav::back) { Icon(Icons.Filled.KeyboardArrowDown, "Close") }
+                        IconButton(onClick = nav::back) { Icon(Icons.Filled.KeyboardArrowDown, stringResource(R.string.close)) }
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                if (s.endless) "Endless queue" else "Playing from",
+                                if (s.endless) stringResource(R.string.endless_queue) else stringResource(R.string.playing_from),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -189,7 +193,7 @@ fun NowPlayingScreen() {
                                 modifier = Modifier.clickable(enabled = !song.albumId.isNullOrBlank()) { nav.album(song.albumId) },
                             )
                         }
-                        IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More") }
+                        IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
                     }
                     Spacer(Modifier.height(20.dp))
                     Box(
@@ -212,7 +216,7 @@ fun NowPlayingScreen() {
                         IconButton(onClick = { c.stars.set(StarKind.SONG, song.id, !starred) }) {
                             Icon(
                                 if (starred) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                if (starred) "Remove from favourites" else "Add to favourites",
+                                if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
                                 tint = if (starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -241,10 +245,10 @@ fun NowPlayingScreen() {
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         IconButton(onClick = { music.toggleShuffle() }) {
-                            Icon(Icons.Filled.Shuffle, "Shuffle", tint = if (s.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Filled.Shuffle, stringResource(R.string.shuffle), tint = if (s.shuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = { music.previous() }, modifier = Modifier.size(56.dp)) {
-                            Icon(Icons.Filled.SkipPrevious, "Previous", Modifier.size(36.dp))
+                            Icon(Icons.Filled.SkipPrevious, stringResource(R.string.previous), Modifier.size(36.dp))
                         }
                         Box(
                             Modifier.size(76.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary).clickable { music.togglePlay() },
@@ -255,19 +259,19 @@ fun NowPlayingScreen() {
                             } else {
                                 Icon(
                                     if (s.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    if (s.isPlaying) "Pause" else "Play",
+                                    if (s.isPlaying) stringResource(R.string.pause) else stringResource(R.string.play),
                                     Modifier.size(40.dp),
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                 )
                             }
                         }
                         IconButton(onClick = { music.next() }, modifier = Modifier.size(56.dp)) {
-                            Icon(Icons.Filled.SkipNext, "Next", Modifier.size(36.dp))
+                            Icon(Icons.Filled.SkipNext, stringResource(R.string.next), Modifier.size(36.dp))
                         }
                         IconButton(onClick = { music.cycleRepeat() }) {
                             Icon(
                                 if (s.repeatMode == Player.REPEAT_MODE_ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
-                                "Repeat",
+                                stringResource(R.string.repeat),
                                 tint = if (s.repeatMode != Player.REPEAT_MODE_OFF) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -275,9 +279,9 @@ fun NowPlayingScreen() {
                     if (!wide) {
                         Spacer(Modifier.weight(1f))
                         Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            PanelButton(Icons.AutoMirrored.Filled.Subject, "Lyrics") { panel = "lyrics" }
-                            PanelButton(Icons.AutoMirrored.Filled.QueueMusic, "Up next") { panel = "queue" }
-                            PanelButton(Icons.Filled.Bedtime, sleepLabel(s) ?: "Sleep", selected = sleepLabel(s) != null) { sleepSheet = true }
+                            PanelButton(Icons.AutoMirrored.Filled.Subject, stringResource(R.string.lyrics)) { panel = "lyrics" }
+                            PanelButton(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.up_next)) { panel = "queue" }
+                            PanelButton(Icons.Filled.Bedtime, sleepLabel(s) ?: stringResource(R.string.sleep), selected = sleepLabel(s) != null) { sleepSheet = true }
                         }
                     }
                 }
@@ -287,9 +291,9 @@ fun NowPlayingScreen() {
                     player(Modifier.weight(1f).fillMaxSize())
                     Column(Modifier.weight(1f).fillMaxSize().statusBarsPadding()) {
                         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PanelButton(Icons.AutoMirrored.Filled.QueueMusic, "Up next", selected = panel != "lyrics") { panel = "queue" }
-                            PanelButton(Icons.AutoMirrored.Filled.Subject, "Lyrics", selected = panel == "lyrics") { panel = "lyrics" }
-                            PanelButton(Icons.Filled.Bedtime, sleepLabel(s) ?: "Sleep", selected = sleepLabel(s) != null) { sleepSheet = true }
+                            PanelButton(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.up_next), selected = panel != "lyrics") { panel = "queue" }
+                            PanelButton(Icons.AutoMirrored.Filled.Subject, stringResource(R.string.lyrics), selected = panel == "lyrics") { panel = "lyrics" }
+                            PanelButton(Icons.Filled.Bedtime, sleepLabel(s) ?: stringResource(R.string.sleep), selected = sleepLabel(s) != null) { sleepSheet = true }
                         }
                         if (panel == "lyrics") LyricsView(s) else QueueList(s)
                     }
@@ -311,17 +315,17 @@ fun NowPlayingScreen() {
             SongActionsSheet(
                 song,
                 onDismiss = { menu = false },
-                extra = listOf(SongAction("Stop and clear the queue", Icons.Filled.Stop) { music.stop(); nav.back() }),
+                extra = listOf(SongAction(stringResource(R.string.stop_and_clear_the_queue), Icons.Filled.Stop) { music.stop(); nav.back() }),
             )
         }
     }
 }
 
 private fun sleepLabel(s: MusicState): String? = when {
-    s.sleepAtEndOfTrack -> "After this song"
+    s.sleepAtEndOfTrack -> str(R.string.after_this_song)
     s.sleepAtMs != null -> {
         val min = ((s.sleepAtMs - System.currentTimeMillis()) / 60_000L).coerceAtLeast(0) + 1
-        "$min min left"
+        str(R.string.x_min_left, min)
     }
     else -> null
 }
@@ -353,15 +357,15 @@ private fun SleepSheet(s: MusicState, onDismiss: () -> Unit) {
     val music = LocalContext.current.container.music
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
-            Text("Sleep timer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+            Text(stringResource(R.string.sleep_timer), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             sleepLabel(s)?.let {
-                Text("Pausing: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 24.dp))
+                Text(stringResource(R.string.pausing_x, it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 24.dp))
             }
             listOf(5, 10, 15, 30, 45, 60, 90).forEach { m ->
-                SheetOption("$m minutes") { music.sleepIn(m); onDismiss() }
+                SheetOption(pluralStringResource(R.plurals.x_minutes, m, m)) { music.sleepIn(m); onDismiss() }
             }
-            SheetOption("At the end of this song") { music.sleepAtEndOfTrack(); onDismiss() }
-            if (sleepLabel(s) != null) SheetOption("Turn off", color = MaterialTheme.colorScheme.error) { music.cancelSleep(); onDismiss() }
+            SheetOption(stringResource(R.string.at_the_end_of_this_song)) { music.sleepAtEndOfTrack(); onDismiss() }
+            if (sleepLabel(s) != null) SheetOption(stringResource(R.string.turn_off), color = MaterialTheme.colorScheme.error) { music.cancelSleep(); onDismiss() }
         }
     }
 }
@@ -392,19 +396,19 @@ private fun QueueList(s: MusicState) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Up next", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.up_next), style = MaterialTheme.typography.titleMedium)
                 val left = (s.queue.size - s.index - 1).coerceAtLeast(0)
                 Text(
-                    if (s.endless) "$left queued, more on the way" else if (left == 1) "1 song" else "$left songs",
+                    if (s.endless) stringResource(R.string.x_queued_more_on_the_way, left) else pluralStringResource(R.plurals.count_songs, left, left),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (s.endless) Icon(Icons.Filled.AllInclusive, "Endless", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 8.dp))
+            if (s.endless) Icon(Icons.Filled.AllInclusive, stringResource(R.string.endless), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 8.dp))
             TextButton(onClick = { music.clearUpNext() }) {
                 Icon(Icons.Outlined.ClearAll, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Clear")
+                Text(stringResource(R.string.clear))
             }
         }
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
@@ -451,12 +455,12 @@ private fun QueueList(s: MusicState) {
                             )
                         },
                         contentAlignment = Alignment.Center,
-                    ) { Icon(Icons.Filled.DragHandle, "Drag to reorder", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    ) { Icon(Icons.Filled.DragHandle, stringResource(R.string.drag_to_reorder), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                     Box(Modifier.size(44.dp).clip(MaterialTheme.shapes.extraSmall)) {
                         ArtImage(c.api.coverArtUrl(e.coverArt, 160), Modifier.fillMaxSize())
                         if (current) {
                             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
-                                Icon(Icons.Filled.GraphicEq, "Playing", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -471,7 +475,7 @@ private fun QueueList(s: MusicState) {
                         e.artist?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     }
                     if (!current) {
-                        IconButton(onClick = { music.removeAt(i) }) { Icon(Icons.Filled.Close, "Remove from queue", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        IconButton(onClick = { music.removeAt(i) }) { Icon(Icons.Filled.Close, stringResource(R.string.remove_from_queue), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 }
             }
@@ -488,8 +492,8 @@ private fun LyricsView(s: MusicState) {
     if (lyrics == null || lyrics.lines.isEmpty()) {
         MessageView(
             Icons.Outlined.MusicNote,
-            if (loader.state is Load.Loading) "Looking for lyrics" else "No lyrics for this song",
-            if (loader.state is Load.Loading) null else "Navidrome reads lyrics from the files' tags or from .lrc files next to them.",
+            if (loader.state is Load.Loading) stringResource(R.string.looking_for_lyrics) else stringResource(R.string.no_lyrics_for_this_song),
+            if (loader.state is Load.Loading) null else stringResource(R.string.navidrome_reads_lyrics_from_the_files),
         )
         return
     }

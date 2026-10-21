@@ -38,6 +38,9 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.UnknownHostException
 import kotlin.coroutines.cancellation.CancellationException
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 sealed interface Load<out T> {
     data object Loading : Load<Nothing>
@@ -46,13 +49,13 @@ sealed interface Load<out T> {
 }
 
 fun Throwable.friendlyMessage(): String = when (this) {
-    is ApiException -> message ?: "Server error"
-    is UnknownHostException -> "Can't reach the server - check the address and your connection"
-    is java.net.ConnectException -> "Connection refused - is the server running?"
-    is java.net.SocketTimeoutException -> "The server took too long to respond"
-    is javax.net.ssl.SSLException -> "Secure connection failed: ${message ?: "certificate problem"}"
-    is IOException -> message ?: "Network error"
-    else -> message ?: this::class.simpleName ?: "Something went wrong"
+    is ApiException -> message ?: str(R.string.server_error)
+    is UnknownHostException -> str(R.string.can_t_reach_the_server_check)
+    is java.net.ConnectException -> str(R.string.connection_refused_is_the_server_running)
+    is java.net.SocketTimeoutException -> str(R.string.the_server_took_too_long_to)
+    is javax.net.ssl.SSLException -> str(R.string.tls_failed, message ?: str(R.string.certificate_problem))
+    is IOException -> message ?: str(R.string.network_error)
+    else -> message ?: this::class.simpleName ?: str(R.string.something_went_wrong)
 }.redactAuth()
 
 /** Subsonic sign-in parameters (user, token, salt, password) never show up in a message on screen. */
@@ -185,7 +188,7 @@ fun LoadingView(modifier: Modifier = Modifier) {
 
 @Composable
 fun ErrorView(message: String, modifier: Modifier = Modifier, onRetry: (() -> Unit)? = null) {
-    MessageView(Icons.Outlined.ErrorOutline, "Couldn't load this", message, modifier, actionLabel = onRetry?.let { "Retry" }, onAction = onRetry)
+    MessageView(Icons.Outlined.ErrorOutline, stringResource(R.string.couldn_t_load_this), message, modifier, actionLabel = onRetry?.let { stringResource(R.string.retry) }, onAction = onRetry)
 }
 
 @Composable

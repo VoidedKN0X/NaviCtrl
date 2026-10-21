@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.vknxworks.navictrl.ui.components.ArtImage
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.theme.Gutter
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
 
 /**
  * Top of album, artist and playlist pages: artwork over a wash of its own colour, the title,
@@ -65,7 +67,7 @@ fun HeroHeader(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
             }
             Box(
                 Modifier
@@ -122,6 +124,6 @@ fun DiscHeader(disc: Int) {
     Row(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
         Spacer(Modifier.width(10.dp))
-        Text("Disc $disc", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.disc_x, disc), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

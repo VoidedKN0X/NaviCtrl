@@ -5,6 +5,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 /**
  * Plain HTTP is allowed by the platform (many Navidrome servers live on a home network), so the app
@@ -32,7 +34,7 @@ object CleartextPolicy {
         if (!url.isHttps) {
             val original = chain.call().request().url
             if (original.isHttps || !isAllowed(original)) {
-                throw IOException("Blocked an unencrypted (HTTP) connection to ${url.host}")
+                throw IOException(str(R.string.blocked_an_unencrypted_http_connection_to, url.host))
             }
         }
         chain.proceed(chain.request())

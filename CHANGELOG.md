@@ -4,11 +4,21 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v0.4.0 (2026-10-21)
+
+Genre pages are here, the last item that was still planned.
+
+### New
+
+- **Genres tab** in the bar at the bottom (and in the side rail on tablets and unfolded foldables), between Playlists and Search. It lists every genre on your Navidrome server from A to Z, with how many songs and albums each has. Pull down to refresh the list
+- **Genre pages**: tap a genre to open it, with **Songs** and **Albums** at the top. Songs has **Play** and **Shuffle** buttons and loads more as you scroll; Albums shows the genre's albums in your usual grid or list
+- **Shuffle a genre straight from the list** with the shuffle button next to it. It starts an endless random mix of that genre, the same as **Shuffle** on the genre page
+- Songs without a genre (which Navidrome groups as "<Empty>") don't show up as a genre you can open
 
 ### Changed
 
-- **README**: the App lock and privacy setting paths now start at your profile picture (tap your profile picture › Settings › Privacy and security)
+- **All text is now in one place, ready for translations.** Counts such as "1 song" and "5 songs", "1 minute" and "5 minutes", or "Added to queue" and "Added 3 songs to queue" are now worded properly for one and for more than one everywhere
+- **README**: the Genres tab is listed under Features, and the **Planned** section is gone because nothing is left in it. The App lock and privacy setting paths now start at your profile picture (tap your profile picture › Settings › Privacy and security)
 
 ## v0.3.3 (2026-10-21)
 

@@ -60,6 +60,9 @@ import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.PillButton
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.navictrl.R
+import com.vknxworks.navictrl.str
 
 @Composable
 fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
@@ -103,14 +106,12 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
 
     offerHttp?.let { httpUrl ->
         ConfirmDialog(
-            "Use an unencrypted connection?",
-            "NaviCtrl couldn't connect to this server over HTTPS. It can try plain HTTP instead, " +
-                "but then your password and music are sent unencrypted and anyone on the network can read them. " +
-                "Only do this on a network you trust.",
-            "Use HTTP",
+            stringResource(R.string.use_an_unencrypted_connection),
+            stringResource(R.string.navictrl_couldn_t_connect_to_this),
+            stringResource(R.string.use_http),
             onDismiss = {
                 offerHttp = null
-                error = "Couldn't connect securely (HTTPS)"
+                error = str(R.string.couldn_t_connect_securely_https)
             },
         ) {
             offerHttp = null
@@ -134,18 +135,18 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box(Modifier.height(48.dp)) {
-                if (onCancel != null) IconButton(onClick = onCancel) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                if (onCancel != null) IconButton(onClick = onCancel) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
             }
-            Text(if (onCancel == null) "NaviCtrl" else "Add a server", style = MaterialTheme.typography.displaySmall)
+            Text(if (onCancel == null) "NaviCtrl" else stringResource(R.string.add_a_server), style = MaterialTheme.typography.displaySmall)
             Text(
-                "Sign in to your Navidrome server with the address you'd open in a browser.",
+                stringResource(R.string.sign_in_to_your_navidrome_server),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(8.dp))
             Field(
                 address, { address = it },
-                label = "Server address",
+                label = stringResource(R.string.server_address),
                 placeholder = "music.example.com",
                 keyboard = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next, autoCorrectEnabled = false),
                 enabled = !busy,
@@ -158,7 +159,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                     Icon(Icons.Outlined.LockOpen, null, tint = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        "Not encrypted (HTTP). Your password and music are sent in the clear. Fine on your home network, risky anywhere else.",
+                        stringResource(R.string.not_encrypted_http_your_password_and),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -166,20 +167,20 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             }
             Field(
                 username, { username = it },
-                label = "Username",
+                label = stringResource(R.string.username),
                 keyboard = KeyboardOptions(imeAction = ImeAction.Next, capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
                 enabled = !busy,
             )
             Field(
                 password, { password = it },
-                label = "Password",
+                label = stringResource(R.string.password),
                 visual = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboard = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 actions = KeyboardActions(onDone = { submit() }),
                 enabled = !busy,
                 trailing = {
                     IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, if (showPassword) "Hide password" else "Show password")
+                        Icon(if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, if (showPassword) stringResource(R.string.hide_password) else stringResource(R.string.show_password))
                     }
                 },
             )
@@ -187,10 +188,10 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             if (busy) {
                 Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp)) }
             } else {
-                PillButton("Sign in", onClick = ::submit, enabled = canSubmit, modifier = Modifier.fillMaxWidth())
+                PillButton(stringResource(R.string.sign_in), onClick = ::submit, enabled = canSubmit, modifier = Modifier.fillMaxWidth())
             }
             Text(
-                "Your password is stored encrypted on this phone and is only sent to your server.",
+                stringResource(R.string.your_password_is_stored_encrypted_on),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
