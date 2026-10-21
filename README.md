@@ -66,12 +66,18 @@ Downloads, **Settings**, accounts, sign out and (for admins) **Scan for new musi
 
 ## App lock
 
-Turn it on in **Settings > Privacy and security > App lock**. NaviCtrl then asks for its own app PIN (at least 6 digits, separate from your phone's; very obvious ones are refused) and, if you like, your fingerprint. The PIN is still needed after the phone restarts and at least every 72 hours. **Lock again** sets when it asks again: as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts.
+Turn it on under **Settings > Privacy and security > App lock**. It's off until you turn it on.
 
-- While NaviCtrl is locked, your server passwords are encrypted with the PIN, and the key that decrypts them is wiped from memory. The PIN itself is never stored, and it can't be guessed on another device: it's mixed with a secret in the phone's secure hardware.
-- Wrong PINs make you wait: 30 seconds after 5 tries, doubling up to 15 minutes, even if you restart the app or change the clock.
-- **Music and downloads keep going.** Music that's playing (or paused with a queue) and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server. They keep the sign-in they need in memory until they stop; starting something new needs an unlock. Downloads that were waiting when the phone restarted start after you unlock.
-- **Forgot your PIN?** The lock screen can remove every account, and the downloads and played music kept on the phone, so you can sign in again. Nothing changes on your Navidrome server.
+- **Its own app PIN** of at least 6 digits, separate from your phone's screen lock. Very obvious PINs such as 111111 or 123456 are refused.
+- **Unlock with fingerprint** (optional) only accepts strong biometrics, such as the fingerprint sensor, checked by the phone's secure hardware. Face unlock that only uses the camera isn't accepted. The PIN is still needed after the phone restarts and at least every 72 hours, and adding a new fingerprint to the phone turns fingerprint unlock off until you turn it on again.
+- **Your server password is encrypted with the PIN while NaviCtrl is locked.** The key only exists in memory while the app is unlocked and is wiped the moment it locks. The PIN itself is never stored: it's stretched with 600,000 rounds of PBKDF2 and mixed with a key held in the phone's secure hardware, so a copy of the app's files isn't enough to guess it on a computer.
+- **Wrong PINs:** after 5 tries you wait 30 seconds, doubling up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't skip the wait.
+- **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link from the About section and answering the notification permission question don't count as leaving, unless you stay away for more than 5 minutes.
+- **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
+- **Forgot your PIN?** It can't be recovered, because it encrypts your server passwords. The lock screen offers to remove every account and delete the downloads, played music and artwork kept on the phone; nothing changes on your Navidrome server.
+- **With the app lock on**, the recent-apps screen always shows a blank card. Music that's already playing (or paused with a queue) and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification, on the lock screen and on Bluetooth devices, and plays are still reported to your server: they keep the sign-in they need in memory until they stop, and anything new needs an unlock. Downloads that were waiting when the phone restarted start after you unlock.
+
+**Hide in screenshots and recent apps** (in the same section, also without the app lock) keeps NaviCtrl out of screenshots, screen recordings and the recent-apps view. The sign-in screen and the lock screen are always hidden.
 
 ## Tips and troubleshooting
 
