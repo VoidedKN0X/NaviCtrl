@@ -1,5 +1,6 @@
 package com.vknxworks.navictrl.ui.nav
 
+import com.vknxworks.navictrl.ui.components.AskForNotificationsOnce
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -124,6 +125,10 @@ private val topDestinations = listOf(
 @Composable
 private fun MainScaffold() {
     val navController = rememberNavController()
+    // Ask once for notifications when the app's own screens are first shown: signed in, unlocked (nothing of the
+    // app is composed while locked) and no PIN screen on top, so the dialog isn't hidden behind or dropped by the
+    // lock. The music controls (and download progress) can't show without them. Settings can ask again later.
+    AskForNotificationsOnce(ready = com.vknxworks.navictrl.ui.lock.AppLock.request == null)
     val navigator = remember(navController) { Navigator(navController) }
     val backStack by navController.currentBackStackEntryAsState()
     val dest = backStack?.destination

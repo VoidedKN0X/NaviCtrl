@@ -4,6 +4,17 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.4 (2026-10-22)
+
+### Fixed
+
+- **NaviCtrl asks for notifications as soon as you're in.** On Android 13 and newer an app has to ask before it can show notifications. NaviCtrl only asked once music had already started, so the question popped up in the middle of playback, and if it was dismissed or didn't show, the music controls in the notification and on the lock screen were silently missing. It now asks once, the first time your library is shown after you've signed in (and unlocked the app, if the app lock is on). If you've already answered, it doesn't ask again.
+- **No more repeated questions when music starts.** NaviCtrl used to ask again every time music started while notifications weren't allowed. Android's question now only comes up automatically once; after that you can turn notifications on from **Settings**.
+
+### New
+
+- **Notifications in Settings.** A new **Notifications** section shows whether NaviCtrl may show notifications. When they're blocked it says **Notifications are blocked** with an **Allow** button: it shows Android's question again if Android still allows that, or otherwise opens NaviCtrl's notification settings so you can turn them on there. It updates as soon as you come back from Android's settings. When they're allowed, tapping the row opens those settings too.
+
 ## v0.4.3 (2026-10-21)
 
 ### Fixed

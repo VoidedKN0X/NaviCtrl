@@ -350,4 +350,11 @@
         <item quantity="one">%1$d genre</item>
         <item quantity="other">%1$d genres</item>
     </plurals>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_allowed">Allowed</string>
+    <string name="notifications_allowed_summary">NaviCtrl can show the music controls on the notification and lock screen. Tap to change them in Android\'s settings.</string>
+    <string name="notifications_are_blocked">Notifications are blocked</string>
+    <string name="notifications_are_blocked_summary">Android isn\'t letting NaviCtrl show notifications, so the music controls on the notification and lock screen stay hidden. Tap Allow to turn them on.</string>
+    <string name="notifications_footer">The music controls show in a notification. Android 13 and newer only shows them once you allow notifications for NaviCtrl.</string>
+    <string name="allow">Allow</string>
 </resources>
