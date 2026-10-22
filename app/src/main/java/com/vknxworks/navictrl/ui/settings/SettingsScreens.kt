@@ -32,6 +32,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import com.vknxworks.navictrl.ui.components.openNotificationSettings
+import com.vknxworks.navictrl.ui.components.rememberNotificationAccess
+import androidx.compose.material.icons.outlined.NotificationsOff
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
@@ -91,7 +95,8 @@ private val CACHE_SIZES: List<Pair<Int, String>>
 
 @Composable
 fun SettingsScreen() {
-    val c = LocalContext.current.container
+    val context = LocalContext.current
+    val c = context.container
     val scope = rememberCoroutineScope()
     val s by c.settings.settings.collectAsStateWithLifecycle()
     fun update(t: (AppSettings) -> AppSettings) { scope.launch { c.settings.update(t) } }
@@ -110,6 +115,29 @@ fun SettingsScreen() {
             }
 
             PrivacyGroup(s) { t -> update(t) }
+
+            // Music controls live in a notification: say so when Android blocks it. Checked again on every return.
+            val notifications = rememberNotificationAccess()
+            Group(stringResource(R.string.notifications), footer = stringResource(R.string.notifications_footer)) {
+                if (notifications.granted) {
+                    GroupRow(
+                        stringResource(R.string.notifications_allowed),
+                        stringResource(R.string.notifications_allowed_summary),
+                        Icons.Outlined.Notifications,
+                        showChevron = true,
+                        onClick = { openNotificationSettings(context) },
+                    )
+                } else {
+                    GroupRow(
+                        stringResource(R.string.notifications_are_blocked),
+                        stringResource(R.string.notifications_are_blocked_summary),
+                        Icons.Outlined.NotificationsOff,
+                        iconTint = MaterialTheme.colorScheme.error,
+                        onClick = { notifications.request() },
+                        trailing = { TextButton(onClick = { notifications.request() }) { Text(stringResource(R.string.allow)) } },
+                    )
+                }
+            }
 
             Group(stringResource(R.string.streaming), footer = stringResource(R.string.lower_quality_is_converted_on_your)) {
                 GroupChoice(stringResource(R.string.quality_on_wi_fi), STREAM_QUALITY, s.wifiBitrate) { v -> update { it.copy(wifiBitrate = v) } }
