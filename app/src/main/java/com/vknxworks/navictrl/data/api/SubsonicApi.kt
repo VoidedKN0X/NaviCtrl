@@ -8,10 +8,8 @@ import kotlinx.serialization.json.contentOrNull
 // Typed wrappers around the Subsonic endpoints NaviCtrl uses. Lists come wrapped in an object
 // ({"albumList2": {"album": [...]}}), so each has a tiny holder type.
 
-@Serializable private class AlbumList(val album: List<Album> = emptyList())
 @Serializable private class SongList(val song: List<Song> = emptyList())
 @Serializable private class PlaylistList(val playlist: List<Playlist> = emptyList())
-@Serializable private class GenreList(val genre: List<Genre> = emptyList())
 @Serializable private class LyricsList(val structuredLyrics: List<StructuredLyrics> = emptyList())
 @Serializable private class LegacyLyrics(val value: String? = null)
 
@@ -19,12 +17,6 @@ suspend fun SubsonicClient.ping(): JsonObject = call("ping")
 
 suspend fun SubsonicClient.user(): SubsonicUser =
     get("getUser", "user", SubsonicUser.serializer(), listOf("username" to username))
-
-suspend fun SubsonicClient.albumList(sort: AlbumSort, size: Int = 40, offset: Int = 0, genre: String? = null): List<Album> =
-    get(
-        "getAlbumList2", "albumList2", AlbumList.serializer(),
-        listOf("type" to (if (genre != null) "byGenre" else sort.type), "size" to size, "offset" to offset, "genre" to genre),
-    ).album
 
 suspend fun SubsonicClient.album(id: String): Album = get("getAlbum", "album", Album.serializer(), listOf("id" to id))
 
@@ -46,11 +38,6 @@ suspend fun SubsonicClient.song(id: String): Song = get("getSong", "song", Song.
 
 suspend fun SubsonicClient.randomSongs(size: Int = 100, genre: String? = null): List<Song> =
     get("getRandomSongs", "randomSongs", SongList.serializer(), listOf("size" to size, "genre" to genre)).song
-
-suspend fun SubsonicClient.songsByGenre(genre: String, count: Int = 100, offset: Int = 0): List<Song> =
-    get("getSongsByGenre", "songsByGenre", SongList.serializer(), listOf("genre" to genre, "count" to count, "offset" to offset)).song
-
-suspend fun SubsonicClient.genres(): List<Genre> = get("getGenres", "genres", GenreList.serializer()).genre
 
 suspend fun SubsonicClient.playlists(): List<Playlist> = get("getPlaylists", "playlists", PlaylistList.serializer()).playlist
 

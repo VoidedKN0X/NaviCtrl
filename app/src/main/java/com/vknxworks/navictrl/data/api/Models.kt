@@ -109,9 +109,6 @@ data class Playlist(
 }
 
 @Serializable
-data class Genre(val value: String = "", val songCount: Int = 0, val albumCount: Int = 0)
-
-@Serializable
 data class SearchResult(
     val artist: List<Artist> = emptyList(),
     val album: List<Album> = emptyList(),
