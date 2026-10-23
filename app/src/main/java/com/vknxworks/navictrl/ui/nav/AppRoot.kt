@@ -69,7 +69,6 @@ import com.vknxworks.navictrl.ui.components.LocalHazeState
 import com.vknxworks.navictrl.ui.detail.AlbumScreen
 import com.vknxworks.navictrl.ui.detail.ArtistScreen
 import com.vknxworks.navictrl.ui.detail.FavouritesScreen
-import com.vknxworks.navictrl.ui.detail.GenreScreen
 import com.vknxworks.navictrl.ui.detail.PlaylistScreen
 import com.vknxworks.navictrl.ui.playlists.PlaylistsScreen
 import com.vknxworks.navictrl.ui.search.SearchScreen
@@ -82,9 +81,6 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.navictrl.R
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.outlined.Category
-import com.vknxworks.navictrl.ui.genres.GenresScreen
 
 @Composable
 fun AppRoot() {
@@ -118,7 +114,6 @@ private val topDestinations = listOf(
     TopDest(SongsRoute, TabItem(R.string.songs, Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
     TopDest(FavouritesRoute, TabItem(R.string.favourites, Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
     TopDest(PlaylistsRoute, TabItem(R.string.playlists, Icons.AutoMirrored.Outlined.QueueMusic, Icons.AutoMirrored.Filled.QueueMusic)),
-    TopDest(GenresRoute, TabItem(R.string.genres, Icons.Outlined.Category, Icons.Filled.Category)),
     TopDest(SearchRoute, TabItem(R.string.search, Icons.Outlined.Search, Icons.Filled.Search)),
 )
 
@@ -249,14 +244,12 @@ private fun AppNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = SongsRoute) {
         composable<SongsRoute> { SongsScreen() }
         composable<PlaylistsRoute> { PlaylistsScreen() }
-        composable<GenresRoute> { GenresScreen() }
         composable<SearchRoute> { SearchScreen() }
         composable<YouRoute> { YouScreen() }
 
         composable<AlbumRoute> { AlbumScreen(it.toRoute<AlbumRoute>().id) }
         composable<ArtistRoute> { ArtistScreen(it.toRoute<ArtistRoute>().id) }
         composable<PlaylistRoute> { PlaylistScreen(it.toRoute<PlaylistRoute>().id) }
-        composable<GenreRoute> { GenreScreen(it.toRoute<GenreRoute>().name) }
         composable<FavouritesRoute> { FavouritesScreen() }
         composable<NowPlayingRoute> { NowPlayingScreen() }
         composable<DownloadsRoute> { DownloadsScreen() }

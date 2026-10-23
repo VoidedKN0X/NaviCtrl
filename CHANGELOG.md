@@ -4,6 +4,13 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.5 (2026-10-23)
+
+### Changed
+
+- **The Genres tab is gone.** The bar at the bottom (and the side rail on tablets and unfolded foldables) now has four tabs: **Songs**, **Favourites**, **Playlists** and **Search**. The genre pages that opened from it, with their Songs and Albums lists and their **Play** and **Shuffle** buttons, are removed too, and so is the shuffle button that started an endless random mix of one genre. Everything else about your library is unchanged: **Shuffle all** on the Songs tab still plays your whole library in random order, and a song's or album's genre still shows where it did before (for example on album pages and in the now-playing details on your lock screen and Bluetooth devices).
+- **README**: the Genres tab is no longer listed under Features.
+
 ## v0.4.4 (2026-10-22)
 
 ### Fixed

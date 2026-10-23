@@ -60,12 +60,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.api.AlbumSort
-import com.vknxworks.navictrl.data.api.albumList
 import com.vknxworks.navictrl.data.api.Playlist
 import com.vknxworks.navictrl.data.api.coverArtUrl
 import com.vknxworks.navictrl.data.api.deletePlaylist
 import com.vknxworks.navictrl.data.api.playlist
-import com.vknxworks.navictrl.data.api.songsByGenre
 import com.vknxworks.navictrl.data.api.starred
 import com.vknxworks.navictrl.data.api.updatePlaylist
 import com.vknxworks.navictrl.ui.components.AlbumCard
@@ -236,116 +234,6 @@ private fun MenuRow(icon: ImageVector, label: String, onClick: () -> Unit) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(20.dp))
         Text(label, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-// ---------- Genre ----------
-
-@Composable
-fun GenreScreen(name: String) {
-    val c = LocalContext.current.container
-    val settings by c.settings.settings.collectAsStateWithLifecycle()
-    var albums by rememberSaveable { mutableStateOf(false) }
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = { ScreenTopBar(name) },
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            Row(Modifier.padding(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !albums, onClick = { albums = false }, label = { Text(stringResource(R.string.songs)) })
-                FilterChip(selected = albums, onClick = { albums = true }, label = { Text(stringResource(R.string.albums)) })
-            }
-            if (albums) {
-                AlbumsSection(AlbumSort.NAME, settings.albumGrid, genre = name)
-            } else {
-                GenreSongs(name)
-            }
-        }
-    }
-}
-
-/** Grid or list of a genre's albums that loads more as you scroll. */
-@Composable
-private fun AlbumsSection(sort: AlbumSort, grid: Boolean, genre: String? = null) {
-    val c = LocalContext.current.container
-    val loader = rememberPagedLoader("albums-${sort.name}-$genre", pageSize = 60) { start, limit ->
-        val page = c.api.albumList(sort, limit, start, genre)
-        // The API doesn't say how many there are; a short page means we've reached the end.
-        page to if (page.size < limit) start + page.size else Int.MAX_VALUE
-    }
-    when {
-        loader.items.isEmpty() && loader.error != null -> ErrorView(loader.error!!) { loader.refresh() }
-        loader.items.isEmpty() && !loader.endReached -> LoadingView()
-        loader.items.isEmpty() -> MessageView(Icons.Outlined.Album, stringResource(R.string.no_albums))
-        else -> {
-            val bottom = 24.dp + LocalBottomClearance.current
-            if (grid) {
-                val state = rememberLazyGridState()
-                LoadMoreWhenNearEnd(loader) { state.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
-                LazyVerticalGrid(
-                    GridCells.Adaptive(150.dp),
-                    state = state,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = Gutter, end = Gutter, top = 12.dp, bottom = bottom),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp),
-                ) {
-                    items(loader.items.size, key = { loader.items[it].id }) { AlbumCard(loader.items[it]) }
-                    if (loader.loading) item(span = { GridItemSpan(maxLineSpan) }) { LoadingMore() }
-                }
-            } else {
-                val state = rememberLazyListState()
-                LoadMoreWhenNearEnd(loader) { state.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
-                LazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 4.dp, bottom = bottom)) {
-                    items(loader.items, key = { it.id }) { AlbumRow(it) }
-                    if (loader.loading) item { LoadingMore() }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun <T> LoadMoreWhenNearEnd(loader: PagedLoader<T>, lastVisible: () -> Int) {
-    LaunchedEffect(loader) {
-        snapshotFlow { lastVisible() }.collect { last ->
-            if (last >= loader.items.size - 12) loader.loadMore()
-        }
-    }
-}
-
-@Composable
-private fun LoadingMore() {
-    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) }
-}
-
-@Composable
-private fun GenreSongs(name: String) {
-    val c = LocalContext.current.container
-    val loader = rememberPagedLoader("genre-songs-$name", pageSize = 100) { start, limit ->
-        val page = c.api.songsByGenre(name, limit, start)
-        page to if (page.size < limit) start + page.size else Int.MAX_VALUE
-    }
-    val state = rememberLazyListState()
-    LaunchedEffect(loader) {
-        snapshotFlow { state.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }.collect { last ->
-            if (last >= loader.items.size - 10) loader.loadMore()
-        }
-    }
-    when {
-        loader.items.isEmpty() && loader.error != null -> ErrorView(loader.error!!) { loader.refresh() }
-        loader.items.isEmpty() && !loader.endReached -> LoadingView()
-        loader.items.isEmpty() -> MessageView(Icons.Outlined.MusicNote, stringResource(R.string.no_songs_in_x, name))
-        else -> LazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
-            item(key = "buttons") {
-                PlayShuffleRow(onPlay = { c.music.play(loader.items.toList()) }, onShuffle = { c.music.shuffleGenre(name) })
-            }
-            itemsIndexed(loader.items, key = { i, s -> "$i-${s.id}" }) { i, s ->
-                SongRow(s, onClick = { c.music.play(loader.items.toList(), i) })
-            }
-            if (loader.loading) item { Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
-        }
     }
 }
 

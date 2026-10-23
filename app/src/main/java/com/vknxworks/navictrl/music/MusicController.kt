@@ -285,15 +285,9 @@ class MusicController(private val context: Context, private val c: AppContainer)
         startQueue(first, more = randomMore())
     }
 
-    private fun randomMore(genre: String? = null): suspend () -> List<Song> = {
+    private fun randomMore(): suspend () -> List<Song> = {
         val have = state.value.queue.map { it.id }.toHashSet()
-        c.api.randomSongs(150, genre).filterNot { it.id in have }
-    }
-
-    fun shuffleGenre(genre: String) = launch {
-        val first = c.api.randomSongs(200, genre)
-        if (first.isEmpty()) throw IllegalStateException(str(R.string.no_songs_in_x, genre))
-        startQueue(first, more = randomMore(genre))
+        c.api.randomSongs(150).filterNot { it.id in have }
     }
 
     /**
