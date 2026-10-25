@@ -15,12 +15,14 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
+import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -49,7 +51,7 @@ class SubsonicClient(
      * Builds a /rest URL with auth. Used for API calls, artwork and streams.
      * [freshAuth] signs it with a new one-off salt; otherwise the per-session media salt is used.
      */
-    fun restUrl(endpoint: String, params: List<Pair<String, Any?>> = emptyList(), freshAuth: Boolean = false): String {
+    fun restUrl(endpoint: String, params: List<Pair<String, Any?>> = emptyList(), freshAuth: Boolean = false, client: String = CLIENT): String {
         val salt = if (freshAuth) newSalt() else mediaSalt
         val token = if (freshAuth) md5(password + salt) else mediaToken
         val b = base.newBuilder()
@@ -59,46 +61,67 @@ class SubsonicClient(
             .addQueryParameter("t", token)
             .addQueryParameter("s", salt)
             .addQueryParameter("v", API_VERSION)
-            .addQueryParameter("c", CLIENT)
+            .addQueryParameter("c", client)
             .addQueryParameter("f", "json")
         params.forEach { (k, v) -> if (v != null) b.addQueryParameter(k, v.toString()) }
         return b.build().toString()
     }
 
     /** Calls an endpoint and returns the inner subsonic-response object. */
-    suspend fun call(endpoint: String, params: List<Pair<String, Any?>> = emptyList()): JsonObject = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url(restUrl(endpoint, params, freshAuth = true)).get().build()
-        http.newCall(req).execute().use { resp ->
-            val body = resp.body?.string().orEmpty()
-            if (!resp.isSuccessful && body.isBlank()) {
-                throw ApiException(
-                    when (resp.code) {
-                        401, 403 -> str(R.string.the_server_refused_the_sign_in)
-                        404 -> str(R.string.no_navidrome_server_at_this_address)
-                        else -> str(R.string.server_error_x, resp.code)
-                    },
-                    resp.code,
-                )
-            }
-            val root = runCatching { ApiJson.parseToJsonElement(body).jsonObject }.getOrNull()
-                ?: throw ApiException(if (resp.isSuccessful) str(R.string.this_doesn_t_look_like_a) else str(R.string.server_error_x, resp.code))
-            val r = root["subsonic-response"] as? JsonObject ?: throw ApiException(str(R.string.this_doesn_t_look_like_a))
-            if ((r["status"] as? JsonPrimitive)?.contentOrNull != "ok") {
-                val err = r["error"] as? JsonObject
-                val code = (err?.get("code") as? JsonPrimitive)?.intOrNull ?: 0
-                val msg = (err?.get("message") as? JsonPrimitive)?.contentOrNull
-                throw ApiException(
-                    when (code) {
-                        40, 41 -> str(R.string.wrong_username_or_password)
-                        50 -> str(R.string.your_account_isn_t_allowed_to)
-                        70 -> msg ?: str(R.string.not_found)
-                        else -> msg ?: str(R.string.server_error)
-                    },
-                    code,
-                )
-            }
-            r
+    suspend fun call(endpoint: String, params: List<Pair<String, Any?>> = emptyList(), client: String = CLIENT): JsonObject = withContext(Dispatchers.IO) {
+        val req = Request.Builder().url(restUrl(endpoint, params, freshAuth = true, client = client)).get().build()
+        http.newCall(req).execute().use { resp -> parse(resp) }
+    }
+
+    /** Whether the server takes parameters in a POST body (OpenSubsonic formPost); null until asked. */
+    @Volatile var formPost: Boolean? = null
+
+    /** Like [call], but every parameter (auth included) goes in a form-encoded POST body (OpenSubsonic formPost). */
+    suspend fun callForm(endpoint: String, params: List<Pair<String, Any?>>, client: String = CLIENT): JsonObject = withContext(Dispatchers.IO) {
+        val salt = newSalt()
+        val form = FormBody.Builder()
+            .add("u", username)
+            .add("t", md5(password + salt))
+            .add("s", salt)
+            .add("v", API_VERSION)
+            .add("c", client)
+            .add("f", "json")
+        params.forEach { (k, v) -> if (v != null) form.add(k, v.toString()) }
+        val url = base.newBuilder().addPathSegment("rest").addPathSegment(endpoint).build()
+        val req = Request.Builder().url(url).post(form.build()).build()
+        http.newCall(req).execute().use { resp -> parse(resp) }
+    }
+
+    private fun parse(resp: Response): JsonObject {
+        val body = resp.body?.string().orEmpty()
+        if (!resp.isSuccessful && body.isBlank()) {
+            throw ApiException(
+                when (resp.code) {
+                    401, 403 -> str(R.string.the_server_refused_the_sign_in)
+                    404 -> str(R.string.no_navidrome_server_at_this_address)
+                    else -> str(R.string.server_error_x, resp.code)
+                },
+                resp.code,
+            )
         }
+        val root = runCatching { ApiJson.parseToJsonElement(body).jsonObject }.getOrNull()
+            ?: throw ApiException(if (resp.isSuccessful) str(R.string.this_doesn_t_look_like_a) else str(R.string.server_error_x, resp.code))
+        val r = root["subsonic-response"] as? JsonObject ?: throw ApiException(str(R.string.this_doesn_t_look_like_a))
+        if ((r["status"] as? JsonPrimitive)?.contentOrNull != "ok") {
+            val err = r["error"] as? JsonObject
+            val code = (err?.get("code") as? JsonPrimitive)?.intOrNull ?: 0
+            val msg = (err?.get("message") as? JsonPrimitive)?.contentOrNull
+            throw ApiException(
+                when (code) {
+                    40, 41 -> str(R.string.wrong_username_or_password)
+                    50 -> str(R.string.your_account_isn_t_allowed_to)
+                    70 -> msg ?: str(R.string.not_found)
+                    else -> msg ?: str(R.string.server_error)
+                },
+                code,
+            )
+        }
+        return r
     }
 
     suspend fun <T> get(endpoint: String, key: String, serializer: KSerializer<T>, params: List<Pair<String, Any?>> = emptyList()): T {

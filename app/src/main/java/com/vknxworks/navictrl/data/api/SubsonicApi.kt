@@ -12,6 +12,7 @@ import kotlinx.serialization.json.contentOrNull
 @Serializable private class PlaylistList(val playlist: List<Playlist> = emptyList())
 @Serializable private class LyricsList(val structuredLyrics: List<StructuredLyrics> = emptyList())
 @Serializable private class LegacyLyrics(val value: String? = null)
+@Serializable private class Extension(val name: String = "")
 
 suspend fun SubsonicClient.ping(): JsonObject = call("ping")
 
@@ -107,6 +108,48 @@ suspend fun SubsonicClient.lyrics(song: Song): Lyrics? {
     }.getOrNull()
     if (plain.isNullOrBlank()) return null
     return Lyrics(false, plain.lines().map { LyricLine(null, it) })
+}
+
+/** The play queue saved on the server, or null when there is none. */
+suspend fun SubsonicClient.playQueue(): PlayQueue? {
+    val r = try {
+        call("getPlayQueue")
+    } catch (e: ApiException) {
+        if (e.code == 70) return null else throw e
+    }
+    val el = r["playQueue"] as? JsonObject ?: return null
+    return ApiJson.decodeFromJsonElement(PlayQueue.serializer(), el).takeIf { it.entry.isNotEmpty() }
+}
+
+/**
+ * Saves the play queue on the server so other devices and apps can continue it. Servers with the
+ * OpenSubsonic formPost extension get the song list in the request body, so long queues fit;
+ * others get a shorter window around the current song in the address (proxies cap its length).
+ * Returns how many songs were sent.
+ */
+suspend fun SubsonicClient.savePlayQueue(ids: List<String>, currentIndex: Int, positionMs: Long, client: String): Int {
+    if (ids.isEmpty()) return 0
+    val form = supportsFormPost()
+    val (before, max) = if (form) 200 to 1000 else 20 to 150
+    val from = (currentIndex - before).coerceIn(0, ids.lastIndex)
+    val window = ids.drop(from).take(max)
+    val current = ids[currentIndex.coerceIn(0, ids.lastIndex)]
+    val params = window.map { "id" to it } + listOf("current" to current, "position" to positionMs.coerceAtLeast(0))
+    // [client] names this phone, so other devices can show where the queue came from.
+    if (form) callForm("savePlayQueue", params, client) else call("savePlayQueue", params, client)
+    return window.size
+}
+
+/** True when the server takes API parameters in a POST body (OpenSubsonic formPost). Asked once per sign-in. */
+private suspend fun SubsonicClient.supportsFormPost(): Boolean {
+    formPost?.let { return it }
+    val names = runCatching {
+        val r = call("getOpenSubsonicExtensions")
+        val list = r["openSubsonicExtensions"]
+        if (list == null) emptyList()
+        else ApiJson.decodeFromJsonElement(kotlinx.serialization.builtins.ListSerializer(Extension.serializer()), list).map { it.name }
+    }.getOrDefault(emptyList())
+    return ("formPost" in names).also { formPost = it }
 }
 
 suspend fun SubsonicClient.scanStatus(): ScanStatus = get("getScanStatus", "scanStatus", ScanStatus.serializer())

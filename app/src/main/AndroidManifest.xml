@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Equalizer and bass boost on NaviCtrl's own playback (android.media.audiofx). -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!-- Fingerprint unlock for the app lock: lets NaviCtrl ask Android for its own fingerprint prompt and check
          whether the phone has a strong fingerprint sensor. Without it the fingerprint option never shows. -->

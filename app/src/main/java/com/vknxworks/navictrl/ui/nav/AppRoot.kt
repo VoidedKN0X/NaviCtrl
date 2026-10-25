@@ -75,6 +75,8 @@ import com.vknxworks.navictrl.ui.search.SearchScreen
 import com.vknxworks.navictrl.ui.settings.AccountsScreen
 import com.vknxworks.navictrl.ui.settings.DownloadsScreen
 import com.vknxworks.navictrl.ui.settings.SettingsScreen
+import com.vknxworks.navictrl.ui.settings.EqualizerScreen
+import com.vknxworks.navictrl.music.RemoteQueueDialog
 import com.vknxworks.navictrl.ui.settings.YouScreen
 import com.vknxworks.navictrl.ui.songs.SongsScreen
 import androidx.compose.ui.res.stringResource
@@ -122,6 +124,8 @@ private fun MainScaffold() {
     // app is composed while locked) and no PIN screen on top, so the dialog isn't hidden behind or dropped by the
     // lock. The music controls (and download progress) can't show without them. Settings can ask again later.
     AskForNotificationsOnce(ready = com.vknxworks.navictrl.ui.lock.AppLock.request == null)
+    // Play queue sync: a queue from another device to continue here.
+    RemoteQueueDialog()
     val navigator = remember(navController) { Navigator(navController) }
     val backStack by navController.currentBackStackEntryAsState()
     val dest = backStack?.destination
@@ -257,6 +261,7 @@ private fun AppNavHost(navController: NavHostController) {
         composable<NowPlayingRoute> { NowPlayingScreen() }
         composable<DownloadsRoute> { DownloadsScreen() }
         composable<SettingsRoute> { SettingsScreen() }
+        composable<EqualizerRoute> { EqualizerScreen() }
         composable<AccountsRoute> { AccountsScreen() }
         composable<AddAccountRoute> {
             val navigator = LocalNavigator.current

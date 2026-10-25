@@ -26,6 +26,8 @@ class NaviCtrlApp : Application(), SingletonImageLoader.Factory {
 
             override fun onStop(owner: LifecycleOwner) {
                 AppLock.onBackground(container.lockEnabled, container.settings.settings.value.lockTimeout.millis)
+                // Play queue sync: the server gets the queue and position as the app goes to the background.
+                runCatching { container.music.saveNow() }
             }
         })
     }

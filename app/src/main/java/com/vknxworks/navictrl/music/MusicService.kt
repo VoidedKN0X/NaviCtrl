@@ -21,6 +21,13 @@ import androidx.concurrent.futures.CallbackToFutureAdapter
 import com.vknxworks.navictrl.MainActivity
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.api.scrobble
+import com.vknxworks.navictrl.data.settings.AppSettings
+import com.vknxworks.navictrl.data.settings.ReplayGainMode
+import kotlin.math.abs
+import kotlin.math.log10
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,6 +46,12 @@ class MusicService : MediaSessionService() {
     private var trackId: String? = null
     private var listenedMs = 0L
     private var submitted = false
+
+    // Loudness: the ReplayGain part of the volume (1 or lower) and whether the song fades in.
+    private var settingsNow = AppSettings()
+    private var rgVolume = 1f
+    private var fadeIn = false
+    private var lastItem: MediaItem? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -61,6 +74,8 @@ class MusicService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(this, remote)))
             .build()
+        settingsNow = c.settings.settings.value
+        applyGapless(player)
 
         val openApp = PendingIntent.getActivity(
             this, 0,
@@ -77,12 +92,43 @@ class MusicService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 startTrack(mediaItem)
+                // Crossfade: a song that follows on its own fades in, unless it carries on the same album gaplessly.
+                val prev = lastItem
+                fadeIn = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && prev != null && mediaItem != null &&
+                    settingsNow.crossfadeSec > 0 && !(settingsNow.gapless && continuesAlbum(prev, mediaItem))
+                lastItem = mediaItem
+                updateGain(player)
             }
 
             override fun onEvents(player: Player, events: Player.Events) {
                 updateRunning(player)
             }
+
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                AudioFx.attach(audioSessionId, settingsNow)
+                updateGain(player)
+            }
         })
+        AudioFx.attach(player.audioSessionId, settingsNow)
+        lastItem = player.currentMediaItem
+
+        // Settings changed in the app apply straight away.
+        scope.launch {
+            c.settings.settings.collect { s ->
+                settingsNow = s
+                applyGapless(player)
+                AudioFx.apply(s)
+                updateGain(player)
+            }
+        }
+
+        // Volume ramps for crossfade, often while a fade can happen and rarely otherwise.
+        scope.launch {
+            while (isActive) {
+                applyVolume(player)
+                delay(if (player.isPlaying && settingsNow.crossfadeSec > 0) 50 else 250)
+            }
+        }
 
         // Count real listening time once a second; submit at half the track or four minutes.
         scope.launch {
@@ -100,6 +146,89 @@ class MusicService : MediaSessionService() {
             }
         }
     }
+
+    /** Gapless: load the next song well ahead, so it follows without a pause even on a slow connection. */
+    private fun applyGapless(player: ExoPlayer) {
+        player.setPreloadConfiguration(
+            if (settingsNow.gapless) ExoPlayer.PreloadConfiguration(PRELOAD_US) else ExoPlayer.PreloadConfiguration.DEFAULT,
+        )
+    }
+
+    /** ReplayGain for the current song: turned down with the player volume, raised with the loudness enhancer. */
+    private fun updateGain(player: Player) {
+        val s = settingsNow
+        val ex = player.currentMediaItem?.mediaMetadata?.extras
+        var db: Double? = null
+        if (s.replayGain != ReplayGainMode.OFF && ex != null) {
+            val track = ex.dbl(RG_TRACK_GAIN)
+            val album = ex.dbl(RG_ALBUM_GAIN)
+            val trackPeak = ex.dbl(RG_TRACK_PEAK)
+            val albumPeak = ex.dbl(RG_ALBUM_PEAK)
+            val gain = if (s.replayGain == ReplayGainMode.ALBUM) album ?: track else track ?: album
+            val peak = if (s.replayGain == ReplayGainMode.ALBUM) albumPeak ?: trackPeak else trackPeak ?: albumPeak
+            // Songs without ReplayGain tags keep their own loudness, unless the server suggests a fallback gain.
+            db = (gain ?: ex.dbl(RG_FALLBACK_GAIN))?.plus(s.replayGainPreamp)
+            if (db != null && s.preventClipping && peak != null && peak > 0.0) db = min(db, -20.0 * log10(peak))
+        }
+        val d = (db ?: 0.0).coerceIn(-30.0, 15.0)
+        if (d > 0.0 && AudioFx.canBoost) {
+            rgVolume = 1f
+            AudioFx.setBoost((d * 100).roundToInt())
+        } else {
+            AudioFx.setBoost(0)
+            rgVolume = 10.0.pow(min(d, 0.0) / 20.0).toFloat()
+        }
+        applyVolume(player)
+    }
+
+    private fun applyVolume(player: Player) {
+        val v = (rgVolume * fadeFactor(player)).coerceIn(0f, 1f)
+        if (abs(player.volume - v) > 0.002f) player.volume = v
+    }
+
+    /** Crossfade: 1 normally, ramping to 0 over the last seconds of a song and back up at the start of the next. */
+    private fun fadeFactor(player: Player): Float {
+        val fadeMs = settingsNow.crossfadeSec * 1000L
+        if (fadeMs <= 0) {
+            fadeIn = false
+            return 1f
+        }
+        var f = 1f
+        val duration = player.duration
+        val pos = player.currentPosition
+        if (duration != C.TIME_UNSET && duration > fadeMs * 2 && fadesIntoNext(player)) {
+            val remaining = duration - pos
+            if (remaining < fadeMs) f = (remaining.toFloat() / fadeMs).coerceIn(0f, 1f)
+        }
+        if (fadeIn) {
+            if (pos >= fadeMs) fadeIn = false else f = min(f, (pos.toFloat() / fadeMs).coerceIn(0f, 1f))
+        }
+        return f
+    }
+
+    private fun fadesIntoNext(player: Player): Boolean {
+        if (player.repeatMode == Player.REPEAT_MODE_ONE) return false
+        val next = player.nextMediaItemIndex
+        if (next == C.INDEX_UNSET) return false
+        val current = player.currentMediaItem ?: return false
+        return !(settingsNow.gapless && continuesAlbum(current, player.getMediaItemAt(next)))
+    }
+
+    /** [b] is the next song of [a]'s album (by track and disc number when the songs have them). */
+    private fun continuesAlbum(a: MediaItem, b: MediaItem): Boolean {
+        val albumA = a.mediaMetadata.extras?.getString("albumId")
+        val albumB = b.mediaMetadata.extras?.getString("albumId")
+        if (albumA.isNullOrBlank() || albumA != albumB) return false
+        val ta = a.mediaMetadata.trackNumber
+        val tb = b.mediaMetadata.trackNumber
+        if (ta == null || tb == null) return true
+        val da = a.mediaMetadata.discNumber ?: 1
+        val db = b.mediaMetadata.discNumber ?: 1
+        return (db == da && tb == ta + 1) || (db == da + 1 && tb == 1)
+    }
+
+    private fun android.os.Bundle.dbl(key: String): Double? =
+        if (containsKey(key)) getDouble(key).takeUnless { it.isNaN() || it.isInfinite() } else null
 
     private fun startTrack(item: MediaItem?) {
         val id = item?.mediaId?.takeIf { it.isNotBlank() }
@@ -188,6 +317,7 @@ class MusicService : MediaSessionService() {
             release()
         }
         session = null
+        AudioFx.release()
         scope.cancel()
         if (running) {
             running = false
@@ -209,6 +339,15 @@ class MusicService : MediaSessionService() {
         /** Music is playing or paused with a queue: it keeps the sign-in in memory while the app is locked. */
         @Volatile var running = false
             private set
+
+        const val RG_TRACK_GAIN = "rgTrackGain"
+        const val RG_ALBUM_GAIN = "rgAlbumGain"
+        const val RG_TRACK_PEAK = "rgTrackPeak"
+        const val RG_ALBUM_PEAK = "rgAlbumPeak"
+        const val RG_FALLBACK_GAIN = "rgFallbackGain"
+
+        /** How much of the next song gapless playback loads ahead: 30 seconds. */
+        private const val PRELOAD_US = 30_000_000L
 
         private const val LEGACY_BROWSER_ACTION = "android.media.browse.MediaBrowserService"
     }
