@@ -22,6 +22,10 @@ To publish a new version: bump `versionCode` and `versionName` in `app/build.gra
 - **Android permission:** NaviCtrl now asks Android for "change your audio settings" (granted at install, no question), which the equalizer and bass boost need.
 - **README**: queue sync, gapless playback, crossfade, ReplayGain and the equalizer are listed under Features.
 
+### Fixed
+
+- **Build fix before release:** the first 0.7.0 build failed because some new texts had apostrophes Android's resource compiler doesn't accept unescaped. They are now escaped (commit f946843); the released 0.7.0 APK already contains this fix, so nothing changes for you.
+
 ## v0.6.0 (2026-10-25)
 
 ### New
