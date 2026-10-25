@@ -32,9 +32,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -123,15 +126,28 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     // ---------- Connection ----------
 
-    private suspend fun controller(): MediaController {
-        controller?.let { return it }
+    private val connecting = Mutex()
+
+    private suspend fun controller(): MediaController = connecting.withLock {
+        controller?.let { existing ->
+            if (existing.isConnected) return@withLock existing
+            // The music service stopped (closed from Recents, or ended by Android) while the app stayed
+            // in memory: this connection is dead, so make a new one, which starts the service again.
+            controller = null
+            runCatching { existing.release() }
+        }
         val token = SessionToken(context, ComponentName(context, MusicService::class.java))
-        val future = MediaController.Builder(context, token).buildAsync()
+        val future = MediaController.Builder(context, token)
+            .setListener(object : MediaController.Listener {
+                override fun onDisconnected(controller: MediaController) = onServiceGone(controller)
+            })
+            .buildAsync()
         val mc = suspendCancellableCoroutine<MediaController> { cont ->
+            cont.invokeOnCancellation { MediaController.releaseFuture(future) }
             future.addListener({
                 runCatching { future.get() }
-                    .onSuccess { cont.resume(it) }
-                    .onFailure { cont.resumeWithException(it) }
+                    .onSuccess { if (cont.isActive) cont.resume(it) else it.release() }
+                    .onFailure { if (cont.isActive) cont.resumeWithException(it) }
             }, ContextCompat.getMainExecutor(context))
         }
         controller = mc
@@ -154,7 +170,29 @@ class MusicController(private val context: Context, private val c: AppContainer)
             }
         })
         startPolling()
-        return mc
+        mc
+    }
+
+    /** The music service went away: forget the connection; the next action connects again. */
+    private fun onServiceGone(gone: MediaController) {
+        if (controller !== gone) return
+        controller = null
+        runCatching { gone.release() }
+        // A save still waiting (the pause as the service stopped) is written now, from the last state seen.
+        if (saveJob?.isActive == true) {
+            saveJob?.cancel()
+            val last = _state.value
+            val key = c.sessions.active.value?.account?.key
+            if (key != null && last.queue.isNotEmpty()) {
+                scope.launch { writeLocal(key, last.queue, last.index, last.positionMs) }
+            }
+        }
+        sleepJob?.cancel()
+        sleepJob = null
+        sleepAtMs = null
+        pauseAfterTrack = false
+        _currentId.value = null
+        _state.value = MusicState()
     }
 
     private var polling = false
@@ -164,11 +202,15 @@ class MusicController(private val context: Context, private val c: AppContainer)
         scope.launch {
             var ticks = 0
             while (true) {
-                if (controller?.isPlaying == true) {
-                    refresh()
-                    // Every 30 seconds while playing, the server's copy of the queue gets the new position.
-                    if (++ticks >= 60) { ticks = 0; saveQueueSoon() }
+                if (controller?.isPlaying != true) {
+                    // Nothing playing: sleep until something does, instead of waking up twice a second in the background.
+                    _state.first { it.isPlaying }
+                    delay(500)
+                    continue
                 }
+                refresh()
+                // Every 30 seconds while playing, the server's copy of the queue gets the new position.
+                if (++ticks >= 60) { ticks = 0; saveQueueSoon() }
                 delay(500)
             }
         }
@@ -525,14 +567,21 @@ class MusicController(private val context: Context, private val c: AppContainer)
             val key = c.sessions.active.value?.account?.key ?: return@launch
             val songs = (0 until mc.mediaItemCount).map { songOf(mc.getMediaItemAt(it)) }
             if (songs.isEmpty()) return@launch
-            // Keep a window around the current song so very long endless queues stay small on disk.
-            val from = (mc.currentMediaItemIndex - 500).coerceAtLeast(0)
-            val kept = songs.drop(from).take(2000)
-            val saved = SavedQueue(key, kept, (mc.currentMediaItemIndex - from).coerceIn(0, kept.lastIndex), mc.currentPosition.coerceAtLeast(0))
-            withContext(Dispatchers.IO) {
-                runCatching { savedQueueFile.writeText(ApiJson.encodeToString(SavedQueue.serializer(), saved)) }
-            }
+            writeLocal(key, songs, mc.currentMediaItemIndex, mc.currentPosition.coerceAtLeast(0))
             syncToServer(key, songs.map { it.id }, mc.currentMediaItemIndex, mc.currentPosition.coerceAtLeast(0))
+        }
+    }
+
+    /** The queue on the phone, brought back after a restart. */
+    private suspend fun writeLocal(key: String, songs: List<Song>, index: Int, positionMs: Long) {
+        if (songs.isEmpty()) return
+        // Keep a window around the current song so very long endless queues stay small on disk.
+        val from = (index - 500).coerceAtLeast(0)
+        val kept = songs.drop(from).take(2000)
+        if (kept.isEmpty()) return
+        val saved = SavedQueue(key, kept, (index - from).coerceIn(0, kept.lastIndex), positionMs.coerceAtLeast(0))
+        withContext(Dispatchers.IO) {
+            runCatching { savedQueueFile.writeText(ApiJson.encodeToString(SavedQueue.serializer(), saved)) }
         }
     }
 

@@ -48,6 +48,15 @@
             </intent-filter>
         </service>
 
+        <!-- Libraries add exported receivers for app-store and adb tooling (profile installer, WorkManager
+             diagnostics). NaviCtrl only exports its launcher screen and the music service, so they're removed. -->
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:node="remove" />
+        <receiver
+            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+            tools:node="remove" />
+
         <!-- No downloadable emoji font: androidx.emoji2 would look one up from a font provider on start.
              Emoji use the phone's own font. WorkManager's initializer stays. -->
         <provider
