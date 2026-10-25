@@ -224,6 +224,8 @@ object AppLock {
         onError: (String?) -> Unit = {},
         onSuccess: (Cipher) -> Unit,
     ) {
+        // A closing screen can't show a prompt: Android would refuse it, or it would crash.
+        if (activity.isFinishing || activity.isDestroyed) return
         // Replaces a prompt that is still marked as open; its late answer (if any) is ignored.
         val (signal, finish) = openPrompt()
         try {
@@ -269,6 +271,8 @@ object AppLock {
 
     /** The old app lock: confirms it's you once, before you choose a PIN. */
     fun legacyAuthenticate(activity: Activity, onResult: (String?) -> Unit) {
+        // A closing screen can't show a prompt: Android would refuse it, or it would crash.
+        if (activity.isFinishing || activity.isDestroyed) return
         // Replaces a prompt that is still marked as open; its late answer (if any) is ignored.
         val (signal, finish) = openPrompt()
         try {
@@ -327,7 +331,13 @@ fun lockLocked(lockSetting: Boolean, vault: LockVault): Boolean =
  */
 @Composable
 fun AppLockOverlay(lockSetting: Boolean) {
-    val c = LocalContext.current.container
+    val context = LocalContext.current
+    val c = context.container
+    // Leaving with Back or from Recents can lock the app while the screen is already closing. Nothing new is
+    // shown then (a dialog or fingerprint prompt on a closing screen crashes); the app is still locked and
+    // opens locked next time.
+    val activity = context.findActivity()
+    if (activity != null && (activity.isFinishing || activity.isDestroyed)) return
     val vault = c.vault
     when {
         // Updated from the old app lock (the phone's screen lock): confirm once, then choose a PIN.

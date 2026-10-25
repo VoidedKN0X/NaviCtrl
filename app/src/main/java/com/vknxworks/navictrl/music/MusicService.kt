@@ -33,6 +33,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -53,6 +55,9 @@ class MusicService : MediaSessionService() {
     private var fadeIn = false
     private var lastItem: MediaItem? = null
 
+    /** Whether the player is playing; the timers below sleep while it isn't instead of waking up all the time. */
+    private val playing = MutableStateFlow(false)
+
     override fun onCreate() {
         super.onCreate()
         val c = container
@@ -72,6 +77,8 @@ class MusicService : MediaSessionService() {
             )
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
+            // No playback metrics handed to Android's media metrics service: NaviCtrl is telemetry-free.
+            .setUsePlatformDiagnostics(false)
             .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(this, remote)))
             .build()
         settingsNow = c.settings.settings.value
@@ -101,6 +108,7 @@ class MusicService : MediaSessionService() {
             }
 
             override fun onEvents(player: Player, events: Player.Events) {
+                playing.value = player.isPlaying
                 updateRunning(player)
             }
 
@@ -126,13 +134,19 @@ class MusicService : MediaSessionService() {
         scope.launch {
             while (isActive) {
                 applyVolume(player)
-                delay(if (player.isPlaying && settingsNow.crossfadeSec > 0) 50 else 250)
+                if (!player.isPlaying) {
+                    playing.first { it }
+                    delay(50)
+                    continue
+                }
+                delay(if (settingsNow.crossfadeSec > 0) 50 else 250)
             }
         }
 
         // Count real listening time once a second; submit at half the track or four minutes.
         scope.launch {
             while (isActive) {
+                if (!player.isPlaying) playing.first { it }
                 delay(1000)
                 if (!player.isPlaying) continue
                 if (trackId == null) startTrack(player.currentMediaItem)
@@ -304,26 +318,41 @@ class MusicService : MediaSessionService() {
         return super.onBind(intent)
     }
 
+    /**
+     * NaviCtrl swiped away from Recents: music that's playing carries on; otherwise the service stops,
+     * and its notification goes with it. The session is released here too, so the app's own
+     * connection to it ends and the service really stops instead of lingering in the background.
+     */
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = session?.player
-        if (player == null || !player.playWhenReady || player.mediaItemCount == 0) {
-            stopSelf()
-        }
+        val keep = player != null && player.playWhenReady && player.mediaItemCount > 0 &&
+            player.playbackState != Player.STATE_IDLE && player.playbackState != Player.STATE_ENDED &&
+            // Only while the service is in the foreground: one that isn't must stop, or Android ends it with a crash.
+            isPlaybackOngoing()
+        if (keep) return
+        runCatching { pauseAllPlayersAndStopSelf() }.onFailure { stopSelf() }
+        releaseSession()
     }
 
-    override fun onDestroy() {
-        session?.run {
-            player.release()
-            release()
-        }
+    private fun releaseSession() {
+        val s = session ?: return
         session = null
-        AudioFx.release()
+        // The timers stop first, so nothing touches the player once it's released.
         scope.cancel()
+        runCatching { s.player.release() }
+        runCatching { s.release() }
+        AudioFx.release()
         if (running) {
             running = false
             // With the app locked, the sign-in was only kept in memory for playback.
             container.sessions.mediaStopped()
         }
+    }
+
+    override fun onDestroy() {
+        releaseSession()
+        AudioFx.release()
+        scope.cancel()
         super.onDestroy()
     }
 

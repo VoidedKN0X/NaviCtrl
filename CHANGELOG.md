@@ -4,6 +4,24 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.7.1 (2026-10-25)
+
+### Fixed
+
+- **Closing NaviCtrl while music is paused or stopped now really closes it.** Swiping NaviCtrl away from recent apps stopped the player but left the music service connected and running in the background, so the paused notification could stay up for up to 10 minutes and Android could end the service with a crash. Now the service stops, its notification goes away and nothing keeps running. Music that's playing when you swipe the app away still carries on, as before.
+- **Playback controls work again after the music service was closed.** If NaviCtrl stayed in memory after its music service stopped (closed from Recents, or ended by the phone to save memory), play, the mini player and the queue could stop responding until the app was restarted. NaviCtrl now notices and reconnects on the next tap, bringing back your last queue paused.
+- **No crash when the app lock locks as you leave.** With **Lock again** set to **as soon as you leave**, pressing Back on the first screen or swiping the app away locked the app while its screen was closing, and the lock screen (or its fingerprint prompt) tried to open on that closing screen, which could crash. The app still locks right away and opens locked next time; nothing is shown on the closing screen. The fingerprint prompt is also never asked for on a screen that's closing.
+- **Less battery use while nothing plays.** The playback timers (crossfade volume, play counting for scrobbles and the position shown in the app) kept waking up several times a second in the background even when music was paused. They now sleep until music plays again.
+- **Your last queue is kept when the service stops right after a pause.** A queue change still waiting to be saved on the phone is now written before the connection closes, so it comes back after a restart.
+
+### Security
+
+- **Fewer ways in for other apps:** two components that libraries add for app-store and developer tools (the profile installer and WorkManager's diagnostics receiver) are removed. NaviCtrl's launcher screen and its music service are now the only parts other apps can reach.
+
+### Changed
+
+- **Telemetry-free, also towards Android:** the player no longer hands playback statistics to Android's built-in media metrics service.
+
 ## v0.7.0 (2026-10-25)
 
 ### New
