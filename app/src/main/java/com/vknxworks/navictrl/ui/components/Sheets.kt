@@ -307,7 +307,7 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
         Text(stringResource(R.string.add_x_to, label), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
         ActionItem(Icons.Filled.Add, stringResource(R.string.new_playlist)) { naming = true }
         when (val s = lists.state) {
-            is Load.Loading -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = CtrlColors.Accent) }
+            is Load.Loading -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = CtrlColors.AccentText) }
             is Load.Err -> Text(s.message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(24.dp))
             is Load.Ok -> LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(s.value, key = { it.id }) { p ->
@@ -367,7 +367,7 @@ fun TextInputDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank(), colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Accent)) { Text(confirm) }
+            TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank(), colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) { Text(confirm) }
         },
         dismissButton = { TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Muted)) { Text(stringResource(R.string.cancel)) } },
         shape = CtrlShapes.Hero,

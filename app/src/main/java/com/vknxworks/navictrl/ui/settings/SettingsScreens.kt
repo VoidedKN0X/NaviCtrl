@@ -133,7 +133,7 @@ fun SettingsScreen() {
                         Icons.Outlined.NotificationsOff,
                         iconTint = MaterialTheme.colorScheme.error,
                         onClick = { notifications.request() },
-                        trailing = { TextButton(onClick = { notifications.request() }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Accent)) { Text(stringResource(R.string.allow)) } },
+                        trailing = { TextButton(onClick = { notifications.request() }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) { Text(stringResource(R.string.allow)) } },
                     )
                 }
             }
@@ -269,7 +269,7 @@ fun AccountsScreen() {
                         trailing = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (isActive) {
-                                    Text(stringResource(R.string.active).uppercase(), style = CtrlType.Label, color = CtrlColors.Accent)
+                                    Text(stringResource(R.string.active).uppercase(), style = CtrlType.Label, color = CtrlColors.AccentText)
                                     Spacer(Modifier.width(8.dp))
                                     StatusDot(active = true)
                                 }
@@ -314,7 +314,7 @@ fun DownloadsScreen() {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ScreenTopBar(stringResource(R.string.downloads)) {
-                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Accent)) { Text(stringResource(R.string.remove_all)) }
+                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) { Text(stringResource(R.string.remove_all)) }
             }
         },
     ) { padding ->
@@ -348,7 +348,7 @@ fun DownloadsScreen() {
                         ) {
                             when (e.status) {
                                 DownloadStatus.FAILED -> Icon(Icons.Filled.ErrorOutline, stringResource(R.string.failed), tint = MaterialTheme.colorScheme.error)
-                                DownloadStatus.RUNNING -> CircularProgressIndicator(progress = { e.progress }, modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = CtrlColors.Accent, trackColor = CtrlColors.ProgressTrack)
+                                DownloadStatus.RUNNING -> CircularProgressIndicator(progress = { e.progress }, modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = CtrlColors.AccentText, trackColor = CtrlColors.ProgressTrack)
                                 else -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp, color = CtrlColors.Muted)
                             }
                         }

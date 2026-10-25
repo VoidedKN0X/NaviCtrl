@@ -183,7 +183,7 @@ fun <T> LoadContent(
 
 @Composable
 fun LoadingView(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = com.vknxworks.navictrl.ui.theme.CtrlColors.AccentText) }
 }
 
 @Composable

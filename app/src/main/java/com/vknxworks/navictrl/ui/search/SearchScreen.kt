@@ -116,7 +116,7 @@ fun SearchScreen() {
             modifier = Modifier.fillMaxWidth().padding(horizontal = Gutter),
         )
         Box(Modifier.fillMaxWidth().padding(horizontal = Gutter + 16.dp, vertical = 4.dp)) {
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = CtrlColors.Accent, trackColor = CtrlColors.ProgressTrack)
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = CtrlColors.AccentText, trackColor = CtrlColors.ProgressTrack)
         }
         val r = result
         when {

@@ -252,7 +252,7 @@ fun GroupRow(
     title: String,
     subtitle: String? = null,
     icon: ImageVector? = null,
-    iconTint: Color = CtrlColors.Accent,
+    iconTint: Color = CtrlColors.AccentText,
     titleColor: Color = CtrlColors.Text,
     showChevron: Boolean = false,
     onClick: (() -> Unit)? = null,
@@ -269,7 +269,7 @@ fun GroupRow(
 @Composable
 fun GroupSwitch(title: String, subtitle: String? = null, checked: Boolean, icon: ImageVector? = null, onChange: (Boolean) -> Unit) {
     GroupRowContent(
-        title, subtitle, icon, CtrlColors.Accent, CtrlColors.Text, showChevron = false,
+        title, subtitle, icon, CtrlColors.AccentText, CtrlColors.Text, showChevron = false,
         modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
     ) { CtrlSwitch(checked, onCheckedChange = null) }
 }
@@ -312,10 +312,10 @@ fun <T> ChoiceSheet(
                     Text(
                         label,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (isSel) CtrlColors.Accent else CtrlColors.Text,
+                        color = if (isSel) CtrlColors.AccentText else CtrlColors.Text,
                         modifier = Modifier.weight(1f),
                     )
-                    if (isSel) Icon(Icons.Outlined.Check, stringResource(R.string.selected), tint = CtrlColors.Accent)
+                    if (isSel) Icon(Icons.Outlined.Check, stringResource(R.string.selected), tint = CtrlColors.AccentText)
                 }
             }
         }
@@ -355,7 +355,7 @@ fun RoundAction(
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = if (active) CtrlColors.Accent else CtrlColors.Muted,
+            color = if (active) CtrlColors.AccentText else CtrlColors.Muted,
             maxLines = 1,
         )
     }
