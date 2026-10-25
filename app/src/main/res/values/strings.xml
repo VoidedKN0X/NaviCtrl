@@ -369,12 +369,12 @@
     <string name="eq_on">On</string>
     <string name="eq_use">Use the equalizer</string>
     <string name="eq_use_subtitle">Changes are heard straight away, also on Bluetooth and in the car</string>
-    <string name="eq_footer">The equalizer and bass boost are the phone's own, so the presets and bands depend on your phone.</string>
+    <string name="eq_footer">The equalizer and bass boost are the phone\'s own, so the presets and bands depend on your phone.</string>
     <string name="eq_presets">Presets</string>
     <string name="eq_custom">Custom</string>
     <string name="eq_bands">Bands</string>
     <string name="eq_unavailable">No equalizer on this phone</string>
-    <string name="eq_unavailable_body">Android doesn't offer an equalizer that NaviCtrl can use on this phone.</string>
+    <string name="eq_unavailable_body">Android doesn\'t offer an equalizer that NaviCtrl can use on this phone.</string>
     <string name="bass_boost">Bass boost</string>
     <string name="bass_boost_strength">Strength</string>
     <string name="bass_boost_footer">Only while the equalizer is on.</string>
@@ -383,7 +383,7 @@
     <string name="queue_sync_group">Other devices</string>
     <string name="queue_sync">Sync the play queue</string>
     <string name="queue_sync_subtitle">Saves your queue, song and position on your server, and offers to continue a queue saved by another device</string>
-    <string name="queue_sync_footer">Uses your server's saved play queue, the same one other Subsonic apps and devices use. It's only stored on your own server.</string>
+    <string name="queue_sync_footer">Uses your server\'s saved play queue, the same one other Subsonic apps and devices use. It\'s only stored on your own server.</string>
     <string name="queue_sync_resume">Resume from another device</string>
     <string name="queue_sync_resume_subtitle">Look for the queue saved on your server now</string>
     <string name="queue_sync_nothing">No other queue on your server</string>
