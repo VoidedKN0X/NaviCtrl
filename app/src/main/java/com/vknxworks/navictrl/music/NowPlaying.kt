@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -142,7 +143,7 @@ fun MiniPlayer(onOpen: () -> Unit) {
                 Text(song.artist.orEmpty(), style = MaterialTheme.typography.bodySmall, color = CtrlColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (s.buffering) {
-                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = CtrlColors.Accent) }
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = CtrlColors.AccentText) }
             } else {
                 CtrlSquareButton(
                     if (s.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
@@ -231,7 +232,7 @@ fun NowPlayingScreen() {
                         if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
                         onClick = { c.stars.set(StarKind.SONG, song.id, !starred) },
                         size = 44.dp,
-                        tint = if (starred) CtrlColors.Accent else CtrlColors.Muted,
+                        tint = if (starred) CtrlColors.AccentText else CtrlColors.Muted,
                         iconSize = 22.dp,
                     )
                 }
@@ -262,7 +263,7 @@ fun NowPlayingScreen() {
                         Icons.Filled.Shuffle,
                         stringResource(R.string.shuffle),
                         onClick = { music.toggleShuffle() },
-                        tint = if (s.shuffle) CtrlColors.Accent else CtrlColors.Muted,
+                        tint = if (s.shuffle) CtrlColors.AccentText else CtrlColors.Muted,
                     )
                     CtrlSquareButton(
                         Icons.Filled.SkipPrevious,
@@ -299,7 +300,7 @@ fun NowPlayingScreen() {
                         if (s.repeatMode == Player.REPEAT_MODE_ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
                         stringResource(R.string.repeat),
                         onClick = { music.cycleRepeat() },
-                        tint = if (s.repeatMode != Player.REPEAT_MODE_OFF) CtrlColors.Accent else CtrlColors.Muted,
+                        tint = if (s.repeatMode != Player.REPEAT_MODE_OFF) CtrlColors.AccentText else CtrlColors.Muted,
                     )
                 }
                 if (!wide) {
@@ -390,7 +391,7 @@ private fun SleepSheet(s: MusicState, onDismiss: () -> Unit) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
             Text(stringResource(R.string.sleep_timer), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             sleepLabel(s)?.let {
-                Text(stringResource(R.string.pausing_x, it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 24.dp))
+                Text(stringResource(R.string.pausing_x, it), style = MaterialTheme.typography.bodyMedium, color = CtrlColors.AccentText, modifier = Modifier.padding(horizontal = 24.dp))
             }
             listOf(5, 10, 15, 30, 45, 60, 90).forEach { m ->
                 SheetOption(pluralStringResource(R.plurals.x_minutes, m, m)) { music.sleepIn(m); onDismiss() }
@@ -435,8 +436,8 @@ private fun QueueList(s: MusicState) {
                     color = CtrlColors.Muted,
                 )
             }
-            if (s.endless) Icon(Icons.Filled.AllInclusive, stringResource(R.string.endless), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 8.dp))
-            TextButton(onClick = { music.clearUpNext() }) {
+            if (s.endless) Icon(Icons.Filled.AllInclusive, stringResource(R.string.endless), tint = CtrlColors.AccentText, modifier = Modifier.padding(end = 8.dp))
+            TextButton(onClick = { music.clearUpNext() }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) {
                 Icon(Icons.Outlined.ClearAll, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.clear))
@@ -491,8 +492,8 @@ private fun QueueList(s: MusicState) {
                     Box(Modifier.size(44.dp).clip(CtrlShapes.Art)) {
                         ArtImage(c.api.coverArtUrl(e.coverArt, 160), Modifier.fillMaxSize())
                         if (current) {
-                            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
-                                Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = MaterialTheme.colorScheme.primary)
+                            Box(Modifier.fillMaxSize().background(CtrlColors.Background.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = CtrlColors.AccentText)
                             }
                         }
                     }
@@ -500,7 +501,7 @@ private fun QueueList(s: MusicState) {
                         Text(
                             e.title,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = if (current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            color = if (current) CtrlColors.AccentText else MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

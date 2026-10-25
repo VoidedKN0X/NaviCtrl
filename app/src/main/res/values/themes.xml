@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Ctrl / Signal: dark only. Bars take the background colour with light icons. -->
-    <style name="Theme.NaviCtrl" parent="android:Theme.Material.NoActionBar">
+    <!-- Ctrl / Signal Light, used while the phone is in light mode (values-night has the dark theme).
+         Bars take the background colour with dark icons. -->
+    <style name="Theme.NaviCtrl" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_bg</item>
         <item name="android:colorBackground">@color/window_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:enforceNavigationBarContrast">false</item>
-        <item name="android:colorAccent">#FFB48CFF</item>
+        <item name="android:colorAccent">#FF6A3BDB</item>
     </style>
 </resources>

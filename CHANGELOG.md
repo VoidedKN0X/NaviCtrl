@@ -4,6 +4,21 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.6.0 (2026-10-25)
+
+### New
+
+- **Light mode that follows the device theme.** NaviCtrl is now light when your phone is in light mode and dark when it's in dark mode, and switches straight away when you change it (or when your phone's dark theme schedule switches it), without restarting the app. There is no theme setting in the app: it always follows the phone. Wallpaper colours (Material You) are still not used.
+- **Signal Light colours:** a warm off-white background (#F5F5F1), white cards and sheets with thin light grey borders, near-black text (#0B0B0D) and grey secondary text (#5C5C64).
+- **The violet accent stays the same in both modes** for everything filled with it: the big card on the Songs tab, main buttons, the selected tab in the bottom bar, switches that are on, PIN cells, the play/pause buttons, your profile square and the lock badge, all with dark content on top.
+- **Violet text and icons are darker in light mode** (#6A3BDB) so they stay readable on white: the slash in the NAVI/CTRL wordmark, the song that's playing, hearts and download marks in lists, links such as the artist name on album pages, "Active" on Servers and accounts, the selected sort option, the shuffle and repeat buttons when on, text fields while you type, loading spinners and the fingerprint key on the lock screen. In dark mode they keep the lighter violet.
+
+### Changed
+
+- **Every screen works in both modes:** the main tabs, album, artist and playlist pages, search, sign-in, settings, the You page, downloads, servers and accounts, menus, sheets, dialogs, the mini player, the now-playing screen (including Up next, lyrics and the sleep timer) and the app lock screen. The now-playing screen follows the phone's theme too; it doesn't stay dark.
+- **Status bar and navigation bar** take the app background in both modes, with light icons in dark mode and dark icons in light mode. The short splash before the app appears matches the mode as well.
+- **Light mode details:** switches that are off have a light grey track with a grey knob; progress bars have a light grey track with a near-black fill (violet for downloads in progress); the floating bottom bar and mini player are white at 92 % with a light grey border; empty PIN cells have a grey outline and the keypad keys are white with a thin border; errors use a deeper red (#D93636).
+
 ## v0.5.0 (2026-10-25)
 
 NaviCtrl gets the new Ctrl / Signal look shared by the whole Ctrl series: near-black and high contrast, one violet accent, square-cornered controls and two new typefaces. Only the look changes; every screen, button and setting still does what it did before.

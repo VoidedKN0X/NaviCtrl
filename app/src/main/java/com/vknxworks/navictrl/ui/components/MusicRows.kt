@@ -91,7 +91,7 @@ fun SongRow(
     ) {
         if (number != null) {
             Box(Modifier.width(32.dp), contentAlignment = Alignment.CenterStart) {
-                if (playing) Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), Modifier.size(20.dp), tint = CtrlColors.Accent)
+                if (playing) Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), Modifier.size(20.dp), tint = CtrlColors.AccentText)
                 else Text(
                     "%02d".format(number),
                     style = CtrlType.Mono,
@@ -105,7 +105,7 @@ fun SongRow(
                     Box(
                         Modifier.fillMaxSize().background(CtrlColors.Background.copy(alpha = 0.6f)),
                         contentAlignment = Alignment.Center,
-                    ) { Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = CtrlColors.Accent) }
+                    ) { Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = CtrlColors.AccentText) }
                 }
             }
         }
@@ -114,17 +114,17 @@ fun SongRow(
             Text(
                 song.title,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                color = if (playing) CtrlColors.Accent else CtrlColors.Text,
+                color = if (playing) CtrlColors.AccentText else CtrlColors.Text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (song.id in offline) {
-                    Icon(Icons.Filled.DownloadDone, stringResource(R.string.downloaded), Modifier.size(14.dp), tint = CtrlColors.Accent)
+                    Icon(Icons.Filled.DownloadDone, stringResource(R.string.downloaded), Modifier.size(14.dp), tint = CtrlColors.AccentText)
                     Spacer(Modifier.width(4.dp))
                 }
                 if (starred) {
-                    Icon(Icons.Filled.Favorite, stringResource(R.string.favourite), Modifier.size(13.dp), tint = CtrlColors.Accent)
+                    Icon(Icons.Filled.Favorite, stringResource(R.string.favourite), Modifier.size(13.dp), tint = CtrlColors.AccentText)
                     Spacer(Modifier.width(4.dp))
                 }
                 Text(
@@ -305,7 +305,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
             Text(
                 action.uppercase(),
                 style = CtrlType.Label,
-                color = CtrlColors.Accent,
+                color = CtrlColors.AccentText,
                 modifier = Modifier.clip(CtrlShapes.Chip).clickable(onClick = onAction).padding(horizontal = 6.dp, vertical = 6.dp),
             )
         }

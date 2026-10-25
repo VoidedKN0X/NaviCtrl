@@ -87,7 +87,7 @@ fun CtrlWordmark(name: String = "NAVI", modifier: Modifier = Modifier) {
     Text(
         buildAnnotatedString {
             append(name)
-            withStyle(SpanStyle(color = CtrlColors.Accent)) { append("/") }
+            withStyle(SpanStyle(color = CtrlColors.AccentText)) { append("/") }
             append("CTRL")
         },
         style = CtrlType.Wordmark,
@@ -259,6 +259,7 @@ fun CtrlHeroCard(
 // ---------- Lists ----------
 
 /** Draws a 1dp list divider along the top edge, inset by [start] and [end]. */
+@Composable
 fun Modifier.topDivider(start: Dp = Gutter, end: Dp = Gutter, color: Color = CtrlColors.Divider): Modifier = drawBehind {
     val y = 0.5.dp.toPx()
     drawLine(color, Offset(start.toPx(), y), Offset(size.width - end.toPx(), y), strokeWidth = 1.dp.toPx())
@@ -267,7 +268,7 @@ fun Modifier.topDivider(start: Dp = Gutter, end: Dp = Gutter, color: Color = Ctr
 /** 8dp status square: accent when active, grey when not. */
 @Composable
 fun StatusDot(active: Boolean, modifier: Modifier = Modifier) {
-    Box(modifier.size(8.dp).clip(CtrlShapes.Dot).background(if (active) CtrlColors.Accent else CtrlColors.Inactive))
+    Box(modifier.size(8.dp).clip(CtrlShapes.Dot).background(if (active) CtrlColors.AccentText else CtrlColors.Inactive))
 }
 
 // ---------- Switch ----------
@@ -366,7 +367,7 @@ fun CtrlChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
 fun CtrlProgressBar(progress: Float, modifier: Modifier = Modifier, accent: Boolean = false, height: Dp = 6.dp) {
     val shape = RoundedCornerShape(height / 2)
     Box(modifier.fillMaxWidth().height(height).clip(shape).background(CtrlColors.ProgressTrack)) {
-        Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(height).clip(shape).background(if (accent) CtrlColors.Accent else CtrlColors.Text))
+        Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(height).clip(shape).background(if (accent) CtrlColors.Accent else CtrlColors.ProgressFill))
     }
 }
 
@@ -378,11 +379,11 @@ fun ctrlTextFieldColors(container: Color = CtrlColors.Surface): TextFieldColors 
     focusedContainerColor = container,
     unfocusedContainerColor = container,
     disabledContainerColor = container,
-    focusedBorderColor = CtrlColors.Accent,
+    focusedBorderColor = CtrlColors.AccentText,
     unfocusedBorderColor = CtrlColors.ControlOutline,
     disabledBorderColor = CtrlColors.Outline,
-    cursorColor = CtrlColors.Accent,
-    focusedLabelColor = CtrlColors.Accent,
+    cursorColor = CtrlColors.AccentText,
+    focusedLabelColor = CtrlColors.AccentText,
     unfocusedLabelColor = CtrlColors.Muted,
     focusedTextColor = CtrlColors.Text,
     unfocusedTextColor = CtrlColors.Text,
@@ -400,10 +401,12 @@ val CtrlFieldShape = RoundedCornerShape(16.dp)
 // ---------- Sheets and dialogs ----------
 
 /** Hairline edge for bottom sheets (26dp top corners). */
+@Composable
 fun Modifier.ctrlSheetBorder(): Modifier =
     border(BorderStroke(1.dp, CtrlColors.Outline), RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
 
 /** Hairline edge for dialogs (26dp corners). */
+@Composable
 fun Modifier.ctrlDialogBorder(): Modifier = border(BorderStroke(1.dp, CtrlColors.Outline), CtrlShapes.Hero)
 
 // ---------- Bottom bar ----------

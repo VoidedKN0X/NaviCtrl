@@ -169,7 +169,7 @@ fun YouScreen() {
                             }
                         },
                         trailing = {
-                            if (status?.scanning == true || scanning) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = CtrlColors.Accent)
+                            if (status?.scanning == true || scanning) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = CtrlColors.AccentText)
                         },
                     )
                 }

@@ -282,10 +282,10 @@ private fun SortSheet(sort: SongSort, asc: Boolean, onDismiss: () -> Unit, onPic
                     Text(
                         stringResource(s.label),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (selected) CtrlColors.Accent else CtrlColors.Text,
+                        color = if (selected) CtrlColors.AccentText else CtrlColors.Text,
                         modifier = Modifier.weight(1f),
                     )
-                    if (selected) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = CtrlColors.Accent)
+                    if (selected) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = CtrlColors.AccentText)
                 }
             }
             CtrlLabel(stringResource(R.string.order), Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp))

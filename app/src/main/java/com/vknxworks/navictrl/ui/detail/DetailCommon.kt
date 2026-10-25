@@ -87,7 +87,7 @@ fun HeroHeader(
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (onSubtitle != null) CtrlColors.Accent else CtrlColors.Muted,
+                    color = if (onSubtitle != null) CtrlColors.AccentText else CtrlColors.Muted,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -111,7 +111,7 @@ fun HeroHeader(
 @Composable
 fun DiscHeader(disc: Int) {
     Row(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(8.dp).clip(CtrlShapes.Dot).background(CtrlColors.Accent))
+        Box(Modifier.size(8.dp).clip(CtrlShapes.Dot).background(CtrlColors.AccentText))
         Spacer(Modifier.width(10.dp))
         CtrlLabel(stringResource(R.string.disc_x, disc))
     }
