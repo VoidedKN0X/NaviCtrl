@@ -206,12 +206,7 @@ fun MessageView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(icon, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            CtrlIconTile(icon)
             Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
             if (body != null) {
                 Text(
@@ -222,7 +217,7 @@ fun MessageView(
                 )
             }
             if (actionLabel != null && onAction != null) {
-                FilledTonalButton(onClick = onAction, shape = CircleShape) { Text(actionLabel) }
+                CtrlButton(actionLabel, onClick = onAction, secondary = true, height = 48.dp)
             }
         }
     }

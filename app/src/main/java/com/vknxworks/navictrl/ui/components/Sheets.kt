@@ -70,6 +70,10 @@ import com.vknxworks.navictrl.data.api.playlist
 import com.vknxworks.navictrl.data.api.playlists
 import com.vknxworks.navictrl.data.api.updatePlaylist
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import com.vknxworks.navictrl.ui.theme.CtrlShapes
+import com.vknxworks.navictrl.ui.theme.CtrlType
+import androidx.compose.material3.ButtonDefaults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
@@ -89,12 +93,12 @@ fun AppContainer.runTask(block: suspend () -> Unit) {
 @Composable
 private fun SheetHeader(artUrl: String?, title: String, subtitle: String?) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(56.dp).clip(MaterialTheme.shapes.small)) { ArtImage(artUrl, Modifier.fillMaxSize()) }
+        Box(Modifier.size(56.dp).clip(CtrlShapes.Control)) { ArtImage(artUrl, Modifier.fillMaxSize()) }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (!subtitle.isNullOrBlank()) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, style = CtrlType.Mono, color = CtrlColors.Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -103,10 +107,10 @@ private fun SheetHeader(artUrl: String?, title: String, subtitle: String?) {
 @Composable
 private fun ActionItem(icon: ImageVector, label: String, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().topDivider(start = 24.dp, end = 24.dp).heightIn(min = 52.dp).clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(icon, null, Modifier.size(20.dp), tint = CtrlColors.Muted)
         Spacer(Modifier.width(20.dp))
         Text(label, style = MaterialTheme.typography.bodyLarge)
     }
@@ -136,7 +140,8 @@ fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = CtrlColors.Surface,
+        modifier = Modifier.ctrlSheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(
@@ -184,7 +189,8 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = CtrlColors.Surface,
+        modifier = Modifier.ctrlSheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(c.api.coverArtUrl(album.coverArt, 160), album.name, listOfNotNull(album.artist, album.year?.toString()).joinToString("  ·  "))
@@ -247,7 +253,8 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = CtrlColors.Surface,
+        modifier = Modifier.ctrlSheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(
@@ -296,11 +303,11 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
         Text(stringResource(R.string.add_x_to, label), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
         ActionItem(Icons.Filled.Add, stringResource(R.string.new_playlist)) { naming = true }
         when (val s = lists.state) {
-            is Load.Loading -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            is Load.Loading -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = CtrlColors.Accent) }
             is Load.Err -> Text(s.message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(24.dp))
             is Load.Ok -> LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(s.value, key = { it.id }) { p ->
@@ -322,16 +329,16 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
 private fun PlaylistPickRow(p: Playlist, onClick: () -> Unit) {
     val c = LocalContext.current.container
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().topDivider(start = 24.dp, end = 24.dp).clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(44.dp).clip(MaterialTheme.shapes.extraSmall)) {
+        Box(Modifier.size(44.dp).clip(CtrlShapes.Art)) {
             ArtImage(c.api.coverArtUrl(p.coverArt, 160), Modifier.fillMaxSize(), placeholderIcon = Icons.AutoMirrored.Filled.QueueMusic)
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(p.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(countLabel(p.songCount, R.plurals.count_songs), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(countLabel(p.songCount, R.plurals.count_songs), style = CtrlType.Mono, color = CtrlColors.Muted)
         }
     }
 }
@@ -348,10 +355,24 @@ fun TextInputDialog(
     var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { OutlinedTextField(text, { text = it }, label = { Text(label) }, singleLine = true, modifier = Modifier.fillMaxWidth()) },
-        confirmButton = { TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank()) { Text(confirm) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
+        text = {
+            OutlinedTextField(
+                text, { text = it },
+                label = { Text(label) },
+                singleLine = true,
+                shape = CtrlFieldShape,
+                colors = ctrlTextFieldColors(container = CtrlColors.Raised),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank(), colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Accent)) { Text(confirm) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Muted)) { Text(stringResource(R.string.cancel)) } },
+        shape = CtrlShapes.Hero,
+        containerColor = CtrlColors.Surface,
+        modifier = Modifier.ctrlDialogBorder(),
     )
 }
 
@@ -359,9 +380,12 @@ fun TextInputDialog(
 fun ConfirmDialog(title: String, body: String, confirm: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(body) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(confirm, color = MaterialTheme.colorScheme.error) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
+        text = { Text(body, style = MaterialTheme.typography.bodyMedium, color = CtrlColors.Muted) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(confirm, color = CtrlColors.Error) } },
+        dismissButton = { TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Muted)) { Text(stringResource(R.string.cancel)) } },
+        shape = CtrlShapes.Hero,
+        containerColor = CtrlColors.Surface,
+        modifier = Modifier.ctrlDialogBorder(),
     )
 }

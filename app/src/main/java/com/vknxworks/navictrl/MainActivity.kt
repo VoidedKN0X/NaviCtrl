@@ -10,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import android.view.WindowManager
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.DisposableEffect
@@ -22,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.vknxworks.navictrl.ui.components.NotificationPermission
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vknxworks.navictrl.data.settings.ThemeChoice
 import com.vknxworks.navictrl.ui.lock.AppLock
 import com.vknxworks.navictrl.ui.lock.AppLockOverlay
 import com.vknxworks.navictrl.ui.lock.ScreenPrivacy
@@ -37,24 +35,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
+        // Ctrl / Signal is dark only: edge to edge with light status and navigation bar icons over the
+        // #08080A background. No contrast scrim on gesture/3-button bars: the window background (#08080A) shows through.
+        window.isNavigationBarContrastEnforced = false
         // Recents shows a blank card until the settings are read (then "Hide in recent apps" decides).
         setRecentsScreenshotEnabled(false)
         val c = container
         setContent {
             val settings by c.settings.settings.collectAsStateWithLifecycle()
-            val dark = when (settings.theme) {
-                ThemeChoice.SYSTEM -> isSystemInDarkTheme()
-                ThemeChoice.LIGHT -> false
-                ThemeChoice.DARK, ThemeChoice.BLACK -> true
-            }
-            // Keep status and navigation bar icons readable when the app theme differs from the system's.
-            DisposableEffect(dark) {
-                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
-                else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
-                onDispose { }
-            }
             val stored by c.settings.stored.collectAsState(initial = null)
             // Until the settings are read, trust the synchronous read made at start-up.
             val lockSetting = stored?.appLock ?: c.lockAtStart
@@ -71,7 +60,7 @@ class MainActivity : ComponentActivity() {
             // kept here and comes back on unlock. Music keeps playing: playback doesn't depend on these screens.
             val locked = lockLocked(lockSetting, c.vault)
             val savedRoot = rememberSaveableStateHolder()
-            NaviCtrlTheme(settings.theme, settings.dynamicColor) {
+            NaviCtrlTheme {
                 Box(Modifier.fillMaxSize()) {
                     // While the PIN is asked again, the app stays underneath (so nothing you typed is lost), hidden
                     // from TalkBack too.

@@ -56,9 +56,7 @@ import com.vknxworks.navictrl.ui.components.formatLength
 import com.vknxworks.navictrl.ui.components.rememberLoader
 import com.vknxworks.navictrl.ui.components.runTask
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
-import com.vknxworks.navictrl.ui.theme.ArtworkTint
 import com.vknxworks.navictrl.ui.theme.Gutter
-import com.vknxworks.navictrl.ui.theme.rememberArtworkColor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -83,9 +81,8 @@ private fun AlbumContent(album: Album) {
     val starred = stars[album.id] ?: (album.starred != null)
     val allOffline = songs.isNotEmpty() && songs.all { it.id in offline }
     val discs = songs.mapNotNull { it.discNumber }.distinct()
-    val seed = rememberArtworkColor(c.api.coverArtUrl(album.coverArt, 300))
 
-    ArtworkTint(seed) {
+    run {
         LazyColumn(
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current),
@@ -161,14 +158,13 @@ fun ArtistScreen(id: String) {
         val starred = stars[artist.id] ?: (artist.starred != null)
         val albums = artist.album.sortedByDescending { it.year ?: 0 }
         val image = info.value?.largeImageUrl?.takeIf { it.isNotBlank() } ?: c.api.coverArtUrl(artist.coverArt ?: "ar-${artist.id}", 1200)
-        val seed = rememberArtworkColor(image)
 
         // Every song by the artist, gathered album by album, for "Shuffle".
         suspend fun allSongs(): List<Song> = coroutineScope {
             albums.map { a -> async { runCatching { c.api.album(a.id).song }.getOrDefault(emptyList()) } }.awaitAll().flatten()
         }
 
-        ArtworkTint(seed) {
+        run {
             androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
                 val cardW = cardWidthFor(maxWidth)
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
@@ -177,7 +173,7 @@ fun ArtistScreen(id: String) {
                             artUrl = image,
                             title = artist.name,
                             meta = countLabel(artist.albumCount.takeIf { it > 0 } ?: albums.size, R.plurals.count_albums),
-                            artShape = androidx.compose.foundation.shape.CircleShape,
+                            artShape = com.vknxworks.navictrl.ui.theme.CtrlShapes.Hero,
                             placeholderIcon = Icons.Filled.Person,
                         ) {
                             CircleIconButton(
@@ -207,8 +203,7 @@ fun ArtistScreen(id: String) {
                                 onClick = { c.runTask { c.music.shuffle(allSongs()) } },
                                 icon = Icons.Filled.Shuffle,
                                 modifier = Modifier.weight(1f),
-                                container = MaterialTheme.colorScheme.secondaryContainer,
-                                content = MaterialTheme.colorScheme.onSecondaryContainer,
+                                secondary = true,
                             )
                         }
                     }

@@ -20,18 +20,17 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.outlined.QueueMusic
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.foundation.layout.size
+import com.vknxworks.navictrl.ui.theme.CtrlColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,7 +64,8 @@ import com.vknxworks.navictrl.music.NowPlayingScreen
 import com.vknxworks.navictrl.ui.auth.SignInScreen
 import com.vknxworks.navictrl.ui.components.LoadingView
 import com.vknxworks.navictrl.ui.components.LocalBottomClearance
-import com.vknxworks.navictrl.ui.components.LocalHazeState
+import com.vknxworks.navictrl.ui.components.CtrlBottomBar
+import com.vknxworks.navictrl.ui.components.TabItem
 import com.vknxworks.navictrl.ui.detail.AlbumScreen
 import com.vknxworks.navictrl.ui.detail.ArtistScreen
 import com.vknxworks.navictrl.ui.detail.FavouritesScreen
@@ -77,8 +77,6 @@ import com.vknxworks.navictrl.ui.settings.DownloadsScreen
 import com.vknxworks.navictrl.ui.settings.SettingsScreen
 import com.vknxworks.navictrl.ui.settings.YouScreen
 import com.vknxworks.navictrl.ui.songs.SongsScreen
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.navictrl.R
 
@@ -111,10 +109,10 @@ fun AppRoot() {
 private data class TopDest(val route: Any, val item: TabItem)
 
 private val topDestinations = listOf(
-    TopDest(SongsRoute, TabItem(R.string.songs, Icons.Outlined.MusicNote, Icons.Filled.MusicNote)),
-    TopDest(FavouritesRoute, TabItem(R.string.favourites, Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite)),
-    TopDest(PlaylistsRoute, TabItem(R.string.playlists, Icons.AutoMirrored.Outlined.QueueMusic, Icons.AutoMirrored.Filled.QueueMusic)),
-    TopDest(SearchRoute, TabItem(R.string.search, Icons.Outlined.Search, Icons.Filled.Search)),
+    TopDest(SongsRoute, TabItem(R.string.songs, Icons.Outlined.MusicNote, Icons.Outlined.MusicNote)),
+    TopDest(FavouritesRoute, TabItem(R.string.favourites, Icons.Outlined.FavoriteBorder, Icons.Outlined.FavoriteBorder)),
+    TopDest(PlaylistsRoute, TabItem(R.string.playlists, Icons.AutoMirrored.Outlined.QueueMusic, Icons.AutoMirrored.Outlined.QueueMusic)),
+    TopDest(SearchRoute, TabItem(R.string.search, Icons.Outlined.Search, Icons.Outlined.Search)),
 )
 
 @Composable
@@ -154,8 +152,15 @@ private fun MainScaffold() {
                             NavigationRailItem(
                                 selected = selected,
                                 onClick = { selectTab(i) },
-                                icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = stringResource(top.item.label)) },
+                                icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = stringResource(top.item.label), modifier = Modifier.size(20.dp)) },
                                 label = { Text(stringResource(top.item.label)) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = CtrlColors.OnAccent,
+                                    selectedTextColor = CtrlColors.Accent,
+                                    indicatorColor = CtrlColors.Accent,
+                                    unselectedIconColor = CtrlColors.Muted,
+                                    unselectedTextColor = CtrlColors.Muted,
+                                ),
                             )
                         }
                         Spacer(Modifier.weight(1f))
@@ -163,7 +168,7 @@ private fun MainScaffold() {
                     Column(Modifier.weight(1f).fillMaxHeight()) {
                         Box(Modifier.weight(1f).fillMaxWidth()) { AppNavHost(navController) }
                         if (!onNowPlaying) {
-                            Box(Modifier.navigationBarsPadding()) { MiniPlayer(onOpen = { navigator.navigate(NowPlayingRoute) }) }
+                            Box(Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp)) { MiniPlayer(onOpen = { navigator.navigate(NowPlayingRoute) }) }
                         }
                     }
                 }
@@ -183,8 +188,8 @@ private fun MainScaffold() {
 
 
 /**
- * Phones: content runs edge to edge and scrolls under a floating glass island.
- * The island shows on the main tabs; pushed screens get the full height.
+ * Phones: content runs edge to edge and scrolls under the floating Signal bar.
+ * The bar shows on the main tabs; pushed screens get the full height.
  */
 @Composable
 private fun PhoneLayout(
@@ -195,19 +200,16 @@ private fun PhoneLayout(
     onSelect: (Int) -> Unit,
     onOpenNowPlaying: () -> Unit,
 ) {
-    val hazeState = rememberHazeState()
     val density = LocalDensity.current
     var overlayHeight by remember { mutableStateOf(0.dp) }
 
     CompositionLocalProvider(
-        LocalHazeState provides hazeState,
         LocalBottomClearance provides if (showTabs) overlayHeight else 0.dp,
     ) {
         Box(Modifier.fillMaxSize()) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .hazeSource(hazeState)
                     .then(if (showTabs) Modifier else Modifier.padding(bottom = overlayHeight)),
             ) {
                 AppNavHost(navController)
@@ -218,7 +220,8 @@ private fun PhoneLayout(
                     .fillMaxWidth()
                     .onSizeChanged { overlayHeight = with(density) { it.height.toDp() } }
                     .navigationBarsPadding()
-                    .padding(bottom = if (showTabs) 12.dp else 4.dp),
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = if (showTabs) 28.dp else 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -228,7 +231,7 @@ private fun PhoneLayout(
                     enter = fadeIn() + slideInVertically { it / 2 },
                     exit = fadeOut() + slideOutVertically { it / 2 },
                 ) {
-                    GlassTabBar(
+                    CtrlBottomBar(
                         items = topDestinations.map { it.item },
                         selectedIndex = selectedIndex,
                         onSelect = onSelect,

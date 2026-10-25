@@ -1,5 +1,13 @@
 package com.vknxworks.navictrl.ui.settings
 
+import androidx.compose.material3.ButtonDefaults
+import com.vknxworks.navictrl.ui.components.CtrlLabel
+import com.vknxworks.navictrl.ui.components.CtrlProgressBar
+import com.vknxworks.navictrl.ui.components.StatusDot
+import com.vknxworks.navictrl.ui.components.topDivider
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import com.vknxworks.navictrl.ui.theme.CtrlShapes
+import com.vknxworks.navictrl.ui.theme.CtrlType
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.outlined.Fingerprint
@@ -46,7 +54,6 @@ import androidx.compose.material.icons.outlined.DownloadForOffline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -67,7 +74,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.download.DownloadStatus
 import com.vknxworks.navictrl.data.settings.AppSettings
-import com.vknxworks.navictrl.data.settings.ThemeChoice
 import com.vknxworks.navictrl.data.settings.TranscodeFormat
 import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.Group
@@ -107,13 +113,6 @@ fun SettingsScreen() {
         topBar = { ScreenTopBar(stringResource(R.string.settings)) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
-            Group(stringResource(R.string.appearance)) {
-                GroupChoice(stringResource(R.string.theme), ThemeChoice.entries.map { it to stringResource(it.label) }, s.theme) { v -> update { it.copy(theme = v) } }
-                GroupSwitch(stringResource(R.string.use_wallpaper_colours), stringResource(R.string.replaces_the_default_colours_with_ones), s.dynamicColor) { v ->
-                    update { it.copy(dynamicColor = v) }
-                }
-            }
-
             PrivacyGroup(s) { t -> update(t) }
 
             // Music controls live in a notification: say so when Android blocks it. Checked again on every return.
@@ -134,7 +133,7 @@ fun SettingsScreen() {
                         Icons.Outlined.NotificationsOff,
                         iconTint = MaterialTheme.colorScheme.error,
                         onClick = { notifications.request() },
-                        trailing = { TextButton(onClick = { notifications.request() }) { Text(stringResource(R.string.allow)) } },
+                        trailing = { TextButton(onClick = { notifications.request() }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Accent)) { Text(stringResource(R.string.allow)) } },
                     )
                 }
             }
@@ -148,7 +147,7 @@ fun SettingsScreen() {
             Text(
                 stringResource(R.string.a_change_to_the_cache_size),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = CtrlColors.Muted,
                 modifier = Modifier.padding(horizontal = Gutter + 4.dp),
             )
 
@@ -269,8 +268,12 @@ fun AccountsScreen() {
                         },
                         trailing = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (isActive) Icon(Icons.Filled.CheckCircle, stringResource(R.string.active), tint = MaterialTheme.colorScheme.primary)
-                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.sign_out_of_this_account)) }
+                                if (isActive) {
+                                    Text(stringResource(R.string.active).uppercase(), style = CtrlType.Label, color = CtrlColors.Accent)
+                                    Spacer(Modifier.width(8.dp))
+                                    StatusDot(active = true)
+                                }
+                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.sign_out_of_this_account), Modifier.size(20.dp), tint = CtrlColors.Muted) }
                             }
                         },
                     )
@@ -311,7 +314,7 @@ fun DownloadsScreen() {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ScreenTopBar(stringResource(R.string.downloads)) {
-                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }) { Text(stringResource(R.string.remove_all)) }
+                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.Accent)) { Text(stringResource(R.string.remove_all)) }
             }
         },
     ) { padding ->
@@ -327,27 +330,26 @@ fun DownloadsScreen() {
         }
         LazyColumn(Modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
             item(key = "summary") {
-                Text(
+                CtrlLabel(
                     pluralStringResource(R.plurals.downloads_summary, done.size, done.size, formatBytes(c.downloads.usedBytes(all))),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = Gutter),
+                    Modifier.padding(horizontal = Gutter),
+                    maxLines = 2,
                 )
             }
             if (pending.isNotEmpty()) {
                 item(key = "pending-h") {
-                    Text(stringResource(R.string.in_progress), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
+                    CtrlLabel(stringResource(R.string.in_progress), Modifier.padding(start = Gutter, top = 20.dp, bottom = 8.dp))
                 }
                 items(pending, key = { "p-${it.song.id}" }) { e ->
-                    Row(Modifier.fillMaxWidth().padding(start = Gutter, end = 4.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().topDivider().padding(start = Gutter, end = 4.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                            Modifier.size(40.dp).clip(CtrlShapes.Badge).background(CtrlColors.Raised),
                             contentAlignment = Alignment.Center,
                         ) {
                             when (e.status) {
                                 DownloadStatus.FAILED -> Icon(Icons.Filled.ErrorOutline, stringResource(R.string.failed), tint = MaterialTheme.colorScheme.error)
-                                DownloadStatus.RUNNING -> CircularProgressIndicator(progress = { e.progress }, modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
-                                else -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                                DownloadStatus.RUNNING -> CircularProgressIndicator(progress = { e.progress }, modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = CtrlColors.Accent, trackColor = CtrlColors.ProgressTrack)
+                                else -> CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp, color = CtrlColors.Muted)
                             }
                         }
                         Spacer(Modifier.width(14.dp))
@@ -359,12 +361,12 @@ fun DownloadsScreen() {
                                     DownloadStatus.RUNNING -> "${(e.progress * 100).toInt()}%"
                                     else -> if (c.settings.settings.value.downloadWifiOnly) stringResource(R.string.waiting_for_wi_fi) else stringResource(R.string.waiting)
                                 },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (e.status == DownloadStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = CtrlType.Mono,
+                                color = if (e.status == DownloadStatus.FAILED) CtrlColors.Error else CtrlColors.Muted,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            if (e.status == DownloadStatus.RUNNING) LinearProgressIndicator(progress = { e.progress }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+                            if (e.status == DownloadStatus.RUNNING) CtrlProgressBar(e.progress, Modifier.padding(top = 6.dp), accent = true)
                         }
                         if (e.status == DownloadStatus.FAILED) IconButton(onClick = { c.downloads.retry(e) }) { Icon(Icons.Filled.Refresh, stringResource(R.string.retry)) }
                         IconButton(onClick = { c.downloads.remove(listOf(e.song.id)) }) { Icon(Icons.Outlined.Delete, stringResource(R.string.cancel)) }
@@ -374,7 +376,7 @@ fun DownloadsScreen() {
             if (done.isNotEmpty()) {
                 val songs = done.map { it.song }
                 item(key = "done-h") {
-                    Text(stringResource(R.string.on_this_phone), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 4.dp))
+                    CtrlLabel(stringResource(R.string.on_this_phone), Modifier.padding(start = Gutter, top = 20.dp, bottom = 4.dp))
                     PlayShuffleRow(onPlay = { c.music.play(songs) }, onShuffle = { c.music.shuffle(songs) })
                 }
                 items(songs.size, key = { "d-${songs[it].id}" }) { i ->

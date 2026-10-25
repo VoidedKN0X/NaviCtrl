@@ -4,6 +4,36 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.5.0 (2026-10-25)
+
+NaviCtrl gets the new Ctrl / Signal look shared by the whole Ctrl series: near-black and high contrast, one violet accent, square-cornered controls and two new typefaces. Only the look changes; every screen, button and setting still does what it did before.
+
+### Changed
+
+- **New colours.** NaviCtrl is now always dark: a near-black background (#08080A), dark grey cards (#141417) with a thin border, off-white text and one violet accent (#B48CFF) for whatever matters most on a screen. The status bar and navigation bar take the same background with light icons, edge to edge.
+- **Album, artist, playlist and now-playing pages no longer take on the colours of the artwork.** The coloured wash behind the cover and the recoloured buttons are gone; every page uses the same background and accent, so the artwork itself stands out.
+- **New fonts.** All text uses Space Grotesk; numbers and small labels (track numbers, times, counts, section headings, the server address) use JetBrains Mono. Both are bundled with the app, so nothing is downloaded. Manrope, the previous font, is removed.
+- **New top bar on the main tabs.** Songs, Favourites, Playlists and Search show the **NAVI/CTRL** wordmark on the left and your profile picture on the right: a square with your initials and a small violet square in its corner while you're signed in. Tapping it opens your profile and settings, as before. Below it each tab has a large bold title.
+- **Sub screens** (Settings, Downloads, Servers and accounts, album, artist and playlist pages) have a square back button next to the title instead of a plain arrow.
+- **Songs tab:** the number of songs in your library is now a large violet card at the top, with the current sort order, and the **Shuffle all** and **Play** buttons inside it. The sort button is a square button in the top bar.
+- **Lists** (songs, albums, artists, playlists, the queue, downloads and menus) are plain rows separated by thin lines. Track numbers and times are in the mono font, and the song that's playing is shown in violet.
+- **New bottom bar.** The frosted, rounded tab bar is replaced by a floating bar with square corners. The selected tab is a violet block with its icon and name; the other tabs show only their icon (TalkBack still reads their names). Tablets and unfolded foldables keep the side rail, in the new colours.
+- **Mini player** is a dark card with square cover art, a violet play/pause button, a next button and a thin violet progress line along the bottom.
+- **Now playing** follows the new design: a square button to close it and one for the menu, the album and file format in small capitals at the top, the cover in a large rounded square, the title in bold with the artist and album below it and the heart next to it, a bar-style seek bar with the played part in violet, times in the mono font, and the controls as shuffle, previous, a large violet play/pause button, next and repeat. Lyrics, Up next and the sleep timer are square-cornered buttons at the bottom.
+- **Album, artist and playlist pages** show the cover in a rounded square (artist pictures too, instead of a circle) with the title in large bold type below it, the artist in violet, and year, genre, song count and length in small mono capitals. Play, Shuffle and the heart, download and menu buttons are square-cornered.
+- **Switches** are a new square-cornered switch: violet with a dark knob when on, grey when off. A whole settings row still turns its switch on and off, and TalkBack still reads it as a switch.
+- **Buttons:** the main button on a screen is violet with dark text; secondary buttons are dark grey with a thin border. Pill-shaped buttons and chips are gone.
+- **Text fields** (sign in, search, playlist names) are dark grey with a thin border that turns violet while you type.
+- **Settings and profile:** grouped settings sit in dark cards with thin lines between rows, under small mono headings. The You page (opened from your profile picture) shows a large violet square with your initials, your name and your server address, and ends with a violet **Support NaviCtrl** button and the line "GOOGLE-FREE · TELEMETRY-FREE · ARM64". The settings row there now has a sliders icon instead of a gear.
+- **Menus, sheets and dialogs** use the dark card colour with rounder corners and a thin border.
+- **App lock screen** is redesigned: a violet square with a lock, "VKNXWORKS · CTRL" in small capitals, a large title, square PIN cells that fill in violet, and a keypad of square-cornered keys at the bottom of the screen in the mono font. When fingerprint unlock is on, the bottom-left key is the fingerprint key (outlined in violet); once you've typed enough digits for a PIN that doesn't unlock on its own, that key becomes **OK** and the fingerprint button moves below the keypad. The delete key is a plain icon. How the lock works is unchanged.
+- **Empty and error screens**, the sign-in screen and the fast-scroll bubble on the Songs tab use the new colours and shapes.
+- **README**: the font licence note now names Space Grotesk and JetBrains Mono.
+
+### Removed
+
+- **The Appearance section in Settings is gone**: the **Theme** choice (Follow system, Dark, Light, Pure black) and **Use wallpaper colours**. NaviCtrl is dark only now, and the colours no longer follow your wallpaper. A theme you picked before is simply ignored.
+
 ## v0.4.5 (2026-10-23)
 
 ### Changed

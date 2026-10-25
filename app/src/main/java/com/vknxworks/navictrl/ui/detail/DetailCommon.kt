@@ -16,26 +16,25 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vknxworks.navictrl.ui.components.ArtImage
-import com.vknxworks.navictrl.ui.nav.LocalNavigator
+import com.vknxworks.navictrl.ui.components.CtrlBackButton
+import com.vknxworks.navictrl.ui.components.CtrlLabel
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import com.vknxworks.navictrl.ui.theme.CtrlShapes
+import com.vknxworks.navictrl.ui.theme.CtrlType
+import androidx.compose.foundation.border
 import com.vknxworks.navictrl.ui.theme.Gutter
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.navictrl.R
@@ -51,79 +50,69 @@ fun HeroHeader(
     subtitle: String? = null,
     onSubtitle: (() -> Unit)? = null,
     meta: String? = null,
-    artShape: Shape = MaterialTheme.shapes.large,
+    artShape: Shape = CtrlShapes.Hero,
     placeholderIcon: ImageVector = Icons.Outlined.MusicNote,
+    label: String? = null,
     actions: @Composable () -> Unit = {},
 ) {
-    val nav = LocalNavigator.current
-    val wash = MaterialTheme.colorScheme.primaryContainer
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(Brush.verticalGradient(0f to wash, 1f to MaterialTheme.colorScheme.background)),
+    Column(
+        Modifier.fillMaxWidth().statusBarsPadding().padding(top = 12.dp),
     ) {
-        Column(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(top = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
-            }
-            Box(
-                Modifier
-                    .widthIn(max = 300.dp)
-                    .fillMaxWidth(0.9f)
-                    .aspectRatio(1f)
-                    .clip(artShape),
-            ) { ArtImage(artUrl, Modifier.fillMaxSize(), placeholderIcon = placeholderIcon) }
-            Spacer(Modifier.height(20.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = Gutter), verticalAlignment = Alignment.CenterVertically) {
+            CtrlBackButton()
+        }
+        Spacer(Modifier.height(20.dp))
+        Box(
+            Modifier
+                .padding(horizontal = Gutter)
+                .widthIn(max = 320.dp)
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .align(Alignment.CenterHorizontally)
+                .clip(artShape)
+                .background(CtrlColors.Surface)
+                .border(1.dp, CtrlColors.Outline, artShape),
+        ) { ArtImage(artUrl, Modifier.fillMaxSize(), placeholderIcon = placeholderIcon) }
+        Spacer(Modifier.height(24.dp))
+        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (!label.isNullOrBlank()) CtrlLabel(label)
             Text(
                 title,
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineLarge,
+                color = CtrlColors.Text,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = Gutter),
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (onSubtitle != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
+                    color = if (onSubtitle != null) CtrlColors.Accent else CtrlColors.Muted,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .padding(top = 4.dp, start = Gutter, end = Gutter)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .then(if (onSubtitle != null) Modifier.clickable(onClick = onSubtitle) else Modifier)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                        .clip(CtrlShapes.Chip)
+                        .then(if (onSubtitle != null) Modifier.clickable(onClick = onSubtitle) else Modifier),
                 )
             }
             if (!meta.isNullOrBlank()) {
-                Text(
-                    meta,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp, start = Gutter, end = Gutter),
-                )
+                Text(meta.uppercase(), style = CtrlType.Mono, color = CtrlColors.Muted)
             }
-            Row(
-                Modifier.padding(top = 16.dp, bottom = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) { actions() }
         }
+        Row(
+            Modifier.padding(start = Gutter, end = Gutter, top = 16.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) { actions() }
     }
 }
 
 /** Heading between discs on multi-disc albums. */
 @Composable
 fun DiscHeader(disc: Int) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
+    Row(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(8.dp).clip(CtrlShapes.Dot).background(CtrlColors.Accent))
         Spacer(Modifier.width(10.dp))
-        Text(stringResource(R.string.disc_x, disc), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        CtrlLabel(stringResource(R.string.disc_x, disc))
     }
 }
