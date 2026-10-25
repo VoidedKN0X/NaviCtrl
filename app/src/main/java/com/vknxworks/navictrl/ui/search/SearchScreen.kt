@@ -1,5 +1,10 @@
 package com.vknxworks.navictrl.ui.search
 
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material.icons.outlined.Search
+import com.vknxworks.navictrl.ui.components.CtrlFieldShape
+import com.vknxworks.navictrl.ui.components.ctrlTextFieldColors
+import com.vknxworks.navictrl.ui.theme.CtrlColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -7,6 +12,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -93,28 +100,23 @@ fun SearchScreen() {
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         TabTitle(stringResource(R.string.search))
-        TextField(
+        OutlinedTextField(
             value = query,
             onValueChange = { query = it },
             placeholder = { Text(stringResource(R.string.songs_albums_artists)) },
-            leadingIcon = { Icon(Icons.Filled.Search, null) },
+            leadingIcon = { Icon(Icons.Outlined.Search, null, Modifier.size(20.dp)) },
             trailingIcon = {
                 if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Close, stringResource(R.string.clear)) }
             },
             singleLine = true,
-            shape = CircleShape,
+            shape = CtrlFieldShape,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-            ),
+            colors = ctrlTextFieldColors(),
             modifier = Modifier.fillMaxWidth().padding(horizontal = Gutter),
         )
         Box(Modifier.fillMaxWidth().padding(horizontal = Gutter + 16.dp, vertical = 4.dp)) {
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = CtrlColors.Accent, trackColor = CtrlColors.ProgressTrack)
         }
         val r = result
         when {

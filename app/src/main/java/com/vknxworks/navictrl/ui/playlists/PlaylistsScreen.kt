@@ -1,5 +1,8 @@
 package com.vknxworks.navictrl.ui.playlists
 
+import com.vknxworks.navictrl.ui.components.CtrlLabel
+import com.vknxworks.navictrl.ui.components.TopBarAction
+import com.vknxworks.navictrl.ui.components.topDivider
 import android.widget.Toast
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -84,7 +87,7 @@ fun PlaylistsScreen() {
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         TabTitle(stringResource(R.string.playlists)) {
-            IconButton(onClick = { creating = true }) { Icon(Icons.Filled.Add, stringResource(R.string.new_playlist)) }
+            TopBarAction(Icons.Filled.Add, stringResource(R.string.new_playlist)) { creating = true }
         }
         LoadContent(loader) { lists ->
             if (lists.isEmpty()) {
@@ -104,11 +107,9 @@ fun PlaylistsScreen() {
             ) {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
                     item(key = "header") {
-                        Text(
+                        CtrlLabel(
                             countLabel(lists.size, R.plurals.count_playlists),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = Gutter, end = Gutter, bottom = 4.dp),
+                            Modifier.padding(start = Gutter, end = Gutter, bottom = 8.dp),
                         )
                     }
                     items(lists, key = { it.id }) { p -> PlaylistRow(p, onMore = { menuFor = p }) }
@@ -138,30 +139,31 @@ private fun PlaylistRow(p: Playlist, onMore: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
+            .topDivider()
             .combinedClickable(onClick = { nav.navigate(PlaylistRoute(p.id)) }, onLongClick = onMore)
             .padding(start = Gutter, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(56.dp).clip(MaterialTheme.shapes.extraSmall)) {
+        Box(Modifier.size(56.dp).clip(com.vknxworks.navictrl.ui.theme.CtrlShapes.Art)) {
             ArtImage(c.api.coverArtUrl(p.coverArt, 160), Modifier.fillMaxSize(), placeholderIcon = Icons.AutoMirrored.Filled.QueueMusic)
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(p.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(p.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 listOfNotNull(
                     countLabel(p.songCount, R.plurals.count_songs),
                     formatLength(p.duration),
                     p.owner?.takeIf { !p.ownedBy(c.api.username) }?.let { stringResource(R.string.by_x, it) },
                 ).joinToString("  ·  "),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = com.vknxworks.navictrl.ui.theme.CtrlType.Mono,
+                color = com.vknxworks.navictrl.ui.theme.CtrlColors.Muted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         IconButton(onClick = onMore) {
-            Icon(Icons.Filled.MoreVert, stringResource(R.string.more_for_x, p.name), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Filled.MoreVert, stringResource(R.string.more_for_x, p.name), Modifier.size(20.dp), tint = com.vknxworks.navictrl.ui.theme.CtrlColors.Muted)
         }
     }
 }

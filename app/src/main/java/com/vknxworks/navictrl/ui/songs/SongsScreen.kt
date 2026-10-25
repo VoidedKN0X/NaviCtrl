@@ -26,12 +26,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +67,19 @@ import com.vknxworks.navictrl.ui.components.LoaderStore
 import com.vknxworks.navictrl.ui.components.LoadingView
 import com.vknxworks.navictrl.ui.components.LocalBottomClearance
 import com.vknxworks.navictrl.ui.components.MessageView
-import com.vknxworks.navictrl.ui.components.PillButton
+import com.vknxworks.navictrl.ui.components.CtrlButton
+import com.vknxworks.navictrl.ui.components.CtrlChip
+import com.vknxworks.navictrl.ui.components.CtrlHeroCard
+import com.vknxworks.navictrl.ui.components.CtrlLabel
+import com.vknxworks.navictrl.ui.components.TopBarAction
+import com.vknxworks.navictrl.ui.components.ctrlSheetBorder
+import com.vknxworks.navictrl.ui.components.topDivider
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import com.vknxworks.navictrl.ui.theme.CtrlType
+import androidx.compose.material.icons.automirrored.outlined.Sort
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.vknxworks.navictrl.ui.components.SongRow
 import com.vknxworks.navictrl.ui.components.SongRowPlaceholder
 import com.vknxworks.navictrl.ui.components.TabTitle
@@ -154,7 +164,7 @@ fun SongsScreen() {
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         TabTitle(stringResource(R.string.songs)) {
-            IconButton(onClick = { sortSheet = true }) { Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.sort_songs)) }
+            TopBarAction(Icons.AutoMirrored.Outlined.Sort, stringResource(R.string.sort_songs)) { sortSheet = true }
         }
         val total = pager.total
         when {
@@ -170,25 +180,41 @@ fun SongsScreen() {
                         contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current),
                     ) {
                         item(key = "header") {
-                            Column(Modifier.fillMaxWidth()) {
+                            // Hero card: the size of your library, with the two ways to start it.
+                            CtrlHeroCard(
+                                Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 16.dp),
+                                label = stringResource(R.string.songs),
+                                trailingLabel = sortDescription(sort, asc),
+                            ) {
+                                val summary = pluralStringResource(R.plurals.songs_sorted, total, NumberFormat.getIntegerInstance().format(total), sortDescription(sort, asc))
                                 Text(
-                                    pluralStringResource(R.plurals.songs_sorted, total, NumberFormat.getIntegerInstance().format(total), sortDescription(sort, asc)),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = Gutter),
+                                    NumberFormat.getIntegerInstance().format(total),
+                                    style = CtrlType.BigNumber,
+                                    color = CtrlColors.OnAccent,
+                                    maxLines = 1,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = summary
+                                    },
                                 )
-                                Row(
-                                    Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    PillButton(stringResource(R.string.shuffle_all), onClick = { c.music.shuffleAll() }, icon = Icons.Filled.Shuffle, modifier = Modifier.weight(1f))
-                                    Spacer(Modifier.width(12.dp))
-                                    PillButton(
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    CtrlButton(
+                                        stringResource(R.string.shuffle_all),
+                                        onClick = { c.music.shuffleAll() },
+                                        icon = Icons.Filled.Shuffle,
+                                        modifier = Modifier.weight(1f),
+                                        height = 52.dp,
+                                        containerColor = CtrlColors.OnAccent,
+                                        contentColor = CtrlColors.Accent,
+                                    )
+                                    Spacer(Modifier.width(10.dp))
+                                    CtrlButton(
                                         stringResource(R.string.play),
                                         onClick = { c.music.playSongList(sort, asc, 0) },
                                         icon = Icons.Filled.PlayArrow,
-                                        container = MaterialTheme.colorScheme.secondaryContainer,
-                                        content = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        height = 52.dp,
+                                        containerColor = Color.Transparent,
+                                        contentColor = CtrlColors.OnAccent,
+                                        borderColor = CtrlColors.OnAccent,
                                     )
                                 }
                             }
@@ -241,13 +267,13 @@ private fun scrollLabel(song: Song, sort: SongSort): String = when (sort) {
 
 @Composable
 private fun SortSheet(sort: SongSort, asc: Boolean, onDismiss: () -> Unit, onPick: (SongSort, Boolean) -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
             Text(stringResource(R.string.sort_songs_by), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             SongSort.entries.forEach { s ->
                 val selected = s == sort
                 Row(
-                    Modifier.fillMaxWidth().clickable {
+                    Modifier.fillMaxWidth().topDivider(start = 24.dp, end = 24.dp).clickable {
                         // Date added reads best newest first; names read best A to Z.
                         onPick(s, if (s == sort) asc else s != SongSort.DATE_ADDED)
                     }.padding(horizontal = 24.dp, vertical = 14.dp),
@@ -256,20 +282,20 @@ private fun SortSheet(sort: SongSort, asc: Boolean, onDismiss: () -> Unit, onPic
                     Text(
                         stringResource(s.label),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        color = if (selected) CtrlColors.Accent else CtrlColors.Text,
                         modifier = Modifier.weight(1f),
                     )
-                    if (selected) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = MaterialTheme.colorScheme.primary)
+                    if (selected) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = CtrlColors.Accent)
                 }
             }
-            Text(stringResource(R.string.order), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 24.dp, top = 12.dp, bottom = 4.dp))
+            CtrlLabel(stringResource(R.string.order), Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp))
             Row(Modifier.padding(horizontal = 24.dp)) {
                 val (first, second) = if (sort == SongSort.DATE_ADDED) stringResource(R.string.newest_first) to stringResource(R.string.oldest_first) else stringResource(R.string.a_to_z) to stringResource(R.string.z_to_a)
                 // For dates, "newest first" is descending.
                 val firstAsc = sort != SongSort.DATE_ADDED
-                FilterChip(selected = asc == firstAsc, onClick = { onPick(sort, firstAsc) }, label = { Text(first) })
+                CtrlChip(first, selected = asc == firstAsc, onClick = { onPick(sort, firstAsc) })
                 Spacer(Modifier.width(8.dp))
-                FilterChip(selected = asc != firstAsc, onClick = { onPick(sort, !firstAsc) }, label = { Text(second) })
+                CtrlChip(second, selected = asc != firstAsc, onClick = { onPick(sort, !firstAsc) })
             }
         }
     }
@@ -325,8 +351,8 @@ fun FastScroller(
                 Modifier
                     .padding(end = 4.dp)
                     .size(width = 6.dp, height = thumbH)
-                    .clip(CircleShape)
-                    .background(if (dragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)),
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(if (dragging) CtrlColors.Accent else CtrlColors.Muted.copy(alpha = 0.6f)),
             )
         }
     }
@@ -337,15 +363,15 @@ fun FastScroller(
                     .align(Alignment.TopEnd)
                     .offset { IntOffset(-with(density) { 56.dp.roundToPx() }, thumbY + with(density) { 8.dp.roundToPx() }) }
                     .size(64.dp)
-                    .clip(RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp, topEnd = 32.dp, bottomEnd = 8.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .clip(RoundedCornerShape(topStart = 22.dp, bottomStart = 22.dp, topEnd = 22.dp, bottomEnd = 6.dp))
+                    .background(CtrlColors.Accent),
                 contentAlignment = Alignment.Center,
             ) {
                 val text = label(index) ?: "…"
                 Text(
                     text,
-                    style = if (text.length <= 2) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = if (text.length <= 2) MaterialTheme.typography.headlineMedium else CtrlType.MonoStrong,
+                    color = CtrlColors.OnAccent,
                 )
             }
         }

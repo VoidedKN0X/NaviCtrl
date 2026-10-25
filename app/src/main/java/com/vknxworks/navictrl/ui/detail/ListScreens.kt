@@ -1,5 +1,10 @@
 package com.vknxworks.navictrl.ui.detail
 
+import com.vknxworks.navictrl.ui.components.CtrlChip
+import com.vknxworks.navictrl.ui.components.ctrlSheetBorder
+import com.vknxworks.navictrl.ui.components.topDivider
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import androidx.compose.foundation.layout.height
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -92,9 +97,7 @@ import com.vknxworks.navictrl.ui.components.rememberPagedLoader
 import com.vknxworks.navictrl.ui.components.runTask
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import com.vknxworks.navictrl.ui.nav.PlaylistRoute
-import com.vknxworks.navictrl.ui.theme.ArtworkTint
 import com.vknxworks.navictrl.ui.theme.Gutter
-import com.vknxworks.navictrl.ui.theme.rememberArtworkColor
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.navictrl.R
@@ -132,9 +135,8 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
     val mine = p.ownedBy(c.api.username)
     val editable = p.songsEditableBy(c.api.username)
     val allOffline = songs.isNotEmpty() && songs.all { it.id in offline }
-    val seed = rememberArtworkColor(c.api.coverArtUrl(p.coverArt, 300))
 
-    ArtworkTint(seed) {
+    run {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
             item(key = "header") {
                 HeroHeader(
@@ -192,7 +194,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
     }
 
     if (menu) {
-        ModalBottomSheet(onDismissRequest = { menu = false }, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+        ModalBottomSheet(onDismissRequest = { menu = false }, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
             Column(Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
                 MenuRow(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { menu = false; c.music.playNext(songs) }
                 MenuRow(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { menu = false; c.music.enqueue(songs) }
@@ -228,10 +230,10 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
 @Composable
 private fun MenuRow(icon: ImageVector, label: String, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().topDivider(start = 24.dp, end = 24.dp).clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(icon, null, Modifier.size(20.dp), tint = CtrlColors.Muted)
         Spacer(Modifier.width(20.dp))
         Text(label, style = MaterialTheme.typography.bodyLarge)
     }
@@ -249,13 +251,14 @@ fun FavouritesScreen() {
     // Hearts changed anywhere (including here) refresh the list.
     val overrides by c.stars.overrides.collectAsStateWithLifecycle()
     LaunchedEffect(overrides) { if (overrides.isNotEmpty()) { delay(800); loader.reload(silent = true) } }
-    // A main tab: big title, no back arrow, content scrolls under the glass island.
+    // A main tab: big title, no back arrow, content scrolls under the floating bottom bar.
     run {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             TabTitle(stringResource(R.string.favourites))
             LazyRow(contentPadding = PaddingValues(horizontal = Gutter), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(FavTab.entries) { t -> FilterChip(selected = t == tab, onClick = { tab = t }, label = { Text(stringResource(t.label)) }) }
+                items(FavTab.entries) { t -> CtrlChip(stringResource(t.label), selected = t == tab, onClick = { tab = t }) }
             }
+            Spacer(Modifier.height(12.dp))
             LoadContent(loader) { starred ->
                 val bottom = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)
                 when (tab) {

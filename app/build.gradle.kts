@@ -22,8 +22,8 @@ android {
         minSdk = 33
         targetSdk = 36
         // Bump both to publish a new release (see CHANGELOG.md).
-        versionCode = 29
-        versionName = "0.4.5"
+        versionCode = 30
+        versionName = "0.5.0"
         // 64-bit ARM phones only (arm64-v8a), like every Ctrl app.
         ndk { abiFilters += listOf("arm64-v8a") }
 
@@ -132,6 +132,4 @@ dependencies {
     implementation(libs.media3.datasource.okhttp)
     implementation(libs.media3.session)
     implementation(libs.androidx.concurrent.futures) // futures for Media3 callbacks
-    implementation(libs.androidx.palette)
-    implementation(libs.haze)
 }

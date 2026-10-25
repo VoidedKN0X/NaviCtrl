@@ -1,5 +1,14 @@
 package com.vknxworks.navictrl.ui.auth
 
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.border
+import com.vknxworks.navictrl.ui.components.CtrlBackButton
+import com.vknxworks.navictrl.ui.components.CtrlFieldShape
+import com.vknxworks.navictrl.ui.components.CtrlLabel
+import com.vknxworks.navictrl.ui.components.CtrlWordmark
+import com.vknxworks.navictrl.ui.components.ctrlTextFieldColors
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import com.vknxworks.navictrl.ui.theme.CtrlShapes
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -134,10 +143,12 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(Modifier.height(48.dp)) {
-                if (onCancel != null) IconButton(onClick = onCancel) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
+            Box(Modifier.height(48.dp), contentAlignment = Alignment.CenterStart) {
+                if (onCancel != null) CtrlBackButton(onClick = onCancel) else CtrlWordmark()
             }
-            Text(if (onCancel == null) "NaviCtrl" else stringResource(R.string.add_a_server), style = MaterialTheme.typography.displaySmall)
+            Spacer(Modifier.height(12.dp))
+            CtrlLabel("VKNXWORKS · CTRL")
+            Text(if (onCancel == null) "NaviCtrl" else stringResource(R.string.add_a_server), style = MaterialTheme.typography.displayLarge)
             Text(
                 stringResource(R.string.sign_in_to_your_navidrome_server),
                 style = MaterialTheme.typography.bodyLarge,
@@ -153,7 +164,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             )
             if (address.trim().startsWith("http://", ignoreCase = true)) {
                 Row(
-                    Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer).padding(14.dp),
+                    Modifier.fillMaxWidth().clip(CtrlShapes.Button).background(CtrlColors.Surface).border(1.dp, CtrlColors.Outline, CtrlShapes.Button).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Outlined.LockOpen, null, tint = MaterialTheme.colorScheme.error)
@@ -186,7 +197,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             )
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
             if (busy) {
-                Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp)) }
+                Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp), color = CtrlColors.Accent) }
             } else {
                 PillButton(stringResource(R.string.sign_in), onClick = ::submit, enabled = canSubmit, modifier = Modifier.fillMaxWidth())
             }
@@ -218,7 +229,7 @@ private fun Field(
     visual: VisualTransformation = VisualTransformation.None,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    TextField(
+    OutlinedTextField(
         value = value,
         onValueChange = onChange,
         label = { Text(label) },
@@ -229,15 +240,8 @@ private fun Field(
         keyboardActions = actions,
         visualTransformation = visual,
         trailingIcon = trailing,
-        shape = MaterialTheme.shapes.medium,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-        ),
+        shape = CtrlFieldShape,
+        colors = ctrlTextFieldColors(),
         modifier = modifier.fillMaxWidth(),
     )
 }

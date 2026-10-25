@@ -15,12 +15,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.ui.text.font.FontWeight
+import com.vknxworks.navictrl.ui.theme.CtrlColors
+import com.vknxworks.navictrl.ui.theme.CtrlShapes
+import com.vknxworks.navictrl.ui.theme.CtrlType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
@@ -78,6 +83,7 @@ fun SongRow(
     Row(
         modifier
             .fillMaxWidth()
+            .topDivider()
             .heightIn(min = 64.dp)
             .combinedClickable(onClick = onClick, onLongClick = { menu = true })
             .padding(start = Gutter, end = 4.dp, top = 6.dp, bottom = 6.dp),
@@ -85,21 +91,21 @@ fun SongRow(
     ) {
         if (number != null) {
             Box(Modifier.width(32.dp), contentAlignment = Alignment.CenterStart) {
-                if (playing) Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                if (playing) Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), Modifier.size(20.dp), tint = CtrlColors.Accent)
                 else Text(
-                    "$number",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "%02d".format(number),
+                    style = CtrlType.Mono,
+                    color = CtrlColors.Muted,
                 )
             }
         } else {
-            Box(Modifier.size(48.dp).clip(MaterialTheme.shapes.extraSmall)) {
+            Box(Modifier.size(48.dp).clip(CtrlShapes.Art)) {
                 ArtImage(c.api.coverArtUrl(song.coverArt, 160), Modifier.fillMaxSize())
                 if (playing) {
                     Box(
-                        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)),
+                        Modifier.fillMaxSize().background(CtrlColors.Background.copy(alpha = 0.6f)),
                         contentAlignment = Alignment.Center,
-                    ) { Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = MaterialTheme.colorScheme.primary) }
+                    ) { Icon(Icons.Filled.GraphicEq, stringResource(R.string.playing), tint = CtrlColors.Accent) }
                 }
             }
         }
@@ -107,18 +113,18 @@ fun SongRow(
         Column(Modifier.weight(1f)) {
             Text(
                 song.title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                color = if (playing) CtrlColors.Accent else CtrlColors.Text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (song.id in offline) {
-                    Icon(Icons.Filled.DownloadDone, stringResource(R.string.downloaded), Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.DownloadDone, stringResource(R.string.downloaded), Modifier.size(14.dp), tint = CtrlColors.Accent)
                     Spacer(Modifier.width(4.dp))
                 }
                 if (starred) {
-                    Icon(Icons.Filled.Favorite, stringResource(R.string.favourite), Modifier.size(13.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.Favorite, stringResource(R.string.favourite), Modifier.size(13.dp), tint = CtrlColors.Accent)
                     Spacer(Modifier.width(4.dp))
                 }
                 Text(
@@ -131,10 +137,10 @@ fun SongRow(
             }
         }
         song.duration?.takeIf { it > 0 && number != null }?.let {
-            Text(formatClock(it * 1000L), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(formatClock(it * 1000L), style = CtrlType.Mono, color = CtrlColors.Muted)
         }
         IconButton(onClick = { menu = true }) {
-            Icon(Icons.Filled.MoreVert, stringResource(R.string.more_for_x, song.title), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Outlined.MoreVert, stringResource(R.string.more_for_x, song.title), Modifier.size(20.dp), tint = CtrlColors.Muted)
         }
     }
     if (menu) SongActionsSheet(song, onDismiss = { menu = false }, extra = extraActions)
@@ -144,14 +150,14 @@ fun SongRow(
 @Composable
 fun SongRowPlaceholder() {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = Gutter, vertical = 6.dp),
+        Modifier.fillMaxWidth().topDivider().heightIn(min = 64.dp).padding(horizontal = Gutter, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(48.dp).clip(MaterialTheme.shapes.extraSmall).background(MaterialTheme.colorScheme.surfaceContainerHigh))
+        Box(Modifier.size(48.dp).clip(CtrlShapes.Art).background(CtrlColors.Raised))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Box(Modifier.fillMaxWidth(0.6f).height(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh))
-            Box(Modifier.fillMaxWidth(0.4f).height(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer))
+            Box(Modifier.fillMaxWidth(0.6f).height(12.dp).clip(CtrlShapes.Dot).background(CtrlColors.Raised))
+            Box(Modifier.fillMaxWidth(0.4f).height(10.dp).clip(CtrlShapes.Dot).background(CtrlColors.Surface))
         }
     }
 }
@@ -162,19 +168,19 @@ fun AlbumCard(album: Album, modifier: Modifier = Modifier, width: Dp? = null) {
     val c = LocalContext.current.container
     val nav = LocalNavigator.current
     var menu by remember { mutableStateOf(false) }
-    val shape = MaterialTheme.shapes.small
+    val shape = CtrlShapes.Card
     Column(
         (if (width != null) modifier.width(width) else modifier.fillMaxWidth())
             .clip(shape)
             .combinedClickable(onClick = { nav.album(album.id) }, onLongClick = { menu = true }),
     ) {
-        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(shape)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(shape).border(1.dp, CtrlColors.Outline, shape)) {
             ArtImage(c.api.coverArtUrl(album.coverArt, 300), Modifier.fillMaxSize(), placeholderText = album.name)
         }
         Text(
             album.name,
             modifier = Modifier.padding(top = 8.dp, start = 2.dp, end = 2.dp),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -182,7 +188,7 @@ fun AlbumCard(album: Album, modifier: Modifier = Modifier, width: Dp? = null) {
             listOfNotNull(album.artist, album.year?.toString()).joinToString("  ·  "),
             modifier = Modifier.padding(horizontal = 2.dp),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = CtrlColors.Muted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -197,14 +203,14 @@ fun AlbumRow(album: Album) {
     val nav = LocalNavigator.current
     var menu by remember { mutableStateOf(false) }
     Row(
-        Modifier.fillMaxWidth().combinedClickable(onClick = { nav.album(album.id) }, onLongClick = { menu = true })
+        Modifier.fillMaxWidth().topDivider().combinedClickable(onClick = { nav.album(album.id) }, onLongClick = { menu = true })
             .padding(horizontal = Gutter, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(56.dp).clip(MaterialTheme.shapes.extraSmall)) { ArtImage(c.api.coverArtUrl(album.coverArt, 160), Modifier.fillMaxSize()) }
+        Box(Modifier.size(56.dp).clip(CtrlShapes.Art)) { ArtImage(c.api.coverArtUrl(album.coverArt, 160), Modifier.fillMaxSize()) }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(album.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(album.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 listOfNotNull(album.artist, album.year?.toString(), countLabel(album.songCount, R.plurals.count_songs)).joinToString("  ·  "),
                 style = MaterialTheme.typography.bodySmall,
@@ -222,17 +228,17 @@ fun ArtistRow(artist: Artist) {
     val c = LocalContext.current.container
     val nav = LocalNavigator.current
     Row(
-        Modifier.fillMaxWidth().combinedClickable(onClick = { nav.artist(artist.id) }).padding(horizontal = Gutter, vertical = 8.dp),
+        Modifier.fillMaxWidth().topDivider().combinedClickable(onClick = { nav.artist(artist.id) }).padding(horizontal = Gutter, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(52.dp).clip(CircleShape)) {
+        Box(Modifier.size(52.dp).clip(CtrlShapes.Control)) {
             ArtImage(c.api.coverArtUrl(artist.coverArt ?: "ar-${artist.id}", 160), Modifier.fillMaxSize(), placeholderIcon = Icons.Filled.Person)
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(artist.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(artist.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (artist.albumCount > 0) {
-                Text(countLabel(artist.albumCount, R.plurals.count_albums), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(countLabel(artist.albumCount, R.plurals.count_albums), style = MaterialTheme.typography.bodySmall, color = CtrlColors.Muted)
             }
         }
     }
@@ -244,10 +250,10 @@ fun ArtistTile(artist: Artist, size: Dp = 112.dp) {
     val c = LocalContext.current.container
     val nav = LocalNavigator.current
     Column(
-        Modifier.width(size).clip(MaterialTheme.shapes.medium).combinedClickable(onClick = { nav.artist(artist.id) }),
+        Modifier.width(size).clip(CtrlShapes.Button).combinedClickable(onClick = { nav.artist(artist.id) }),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(Modifier.size(size).clip(CircleShape)) {
+        Box(Modifier.size(size).clip(CtrlShapes.Card).border(1.dp, CtrlColors.Outline, CtrlShapes.Card)) {
             ArtImage(c.api.coverArtUrl(artist.coverArt ?: "ar-${artist.id}", 300), Modifier.fillMaxSize(), placeholderIcon = Icons.Filled.Person)
         }
         Text(
@@ -275,35 +281,33 @@ fun PlayShuffleRow(onPlay: () -> Unit, onShuffle: () -> Unit, modifier: Modifier
             onClick = onShuffle,
             icon = Icons.Filled.Shuffle,
             modifier = Modifier.weight(1f),
-            container = MaterialTheme.colorScheme.secondaryContainer,
-            content = MaterialTheme.colorScheme.onSecondaryContainer,
+            secondary = true,
         )
         trailing()
     }
 }
 
-/** Small round icon button with a tinted background, for header actions. */
+/** Square icon button in the Signal style, for header actions. Accent-filled when [active]. */
 @Composable
 fun CircleIconButton(icon: ImageVector, label: String, onClick: () -> Unit, active: Boolean = false) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.size(48.dp).clip(CircleShape)
-            .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Icon(icon, label, tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-    }
+    CtrlSquareButton(icon, label, onClick = onClick, size = 48.dp, shape = CtrlShapes.Button, active = active)
 }
 
-/** Section heading inside scrolling pages. */
+/** Section heading inside scrolling pages: 18sp title, optional mono action on the right. */
 @Composable
 fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? = null, onAction: (() -> Unit)? = null) {
     Row(
-        modifier.fillMaxWidth().padding(start = Gutter, end = 8.dp, top = 20.dp, bottom = 6.dp),
+        modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 24.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.titleLarge, color = CtrlColors.Text, modifier = Modifier.weight(1f))
         if (action != null && onAction != null) {
-            androidx.compose.material3.TextButton(onClick = onAction) { Text(action) }
+            Text(
+                action.uppercase(),
+                style = CtrlType.Label,
+                color = CtrlColors.Accent,
+                modifier = Modifier.clip(CtrlShapes.Chip).clickable(onClick = onAction).padding(horizontal = 6.dp, vertical = 6.dp),
+            )
         }
     }
 }

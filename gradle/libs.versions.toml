@@ -15,8 +15,6 @@ coil = "3.2.0"
 media3 = "1.8.0"
 work = "2.10.2"
 concurrentFutures = "1.2.0"
-palette = "1.0.0"
-haze = "1.6.10"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -46,8 +44,6 @@ media3-datasource = { module = "androidx.media3:media3-datasource", version.ref 
 media3-database = { module = "androidx.media3:media3-database", version.ref = "media3" }
 media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
 media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
-androidx-palette = { module = "androidx.palette:palette-ktx", version.ref = "palette" }
-haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
