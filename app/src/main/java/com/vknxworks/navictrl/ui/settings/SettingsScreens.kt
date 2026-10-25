@@ -75,6 +75,16 @@ import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.download.DownloadStatus
 import com.vknxworks.navictrl.data.settings.AppSettings
 import com.vknxworks.navictrl.data.settings.TranscodeFormat
+import com.vknxworks.navictrl.data.settings.ReplayGainMode
+import com.vknxworks.navictrl.ui.nav.EqualizerRoute
+import androidx.compose.material.icons.outlined.CloudSync
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Equalizer
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
+import androidx.compose.material.icons.outlined.Compress
+import androidx.compose.material.icons.outlined.LinearScale
+import androidx.compose.material.icons.outlined.SwapCalls
 import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.Group
 import com.vknxworks.navictrl.ui.components.GroupChoice
@@ -138,6 +148,21 @@ fun SettingsScreen() {
                 }
             }
 
+            PlaybackGroup(s) { t -> update(t) }
+
+            Group(stringResource(R.string.queue_sync_group), footer = stringResource(R.string.queue_sync_footer)) {
+                GroupSwitch(stringResource(R.string.queue_sync), stringResource(R.string.queue_sync_subtitle), s.queueSync, icon = Icons.Outlined.CloudSync) { v ->
+                    update { it.copy(queueSync = v) }
+                }
+                GroupRow(
+                    stringResource(R.string.queue_sync_resume),
+                    stringResource(R.string.queue_sync_resume_subtitle),
+                    icon = Icons.Outlined.Devices,
+                    showChevron = true,
+                    onClick = { c.music.resumeFromOtherDevice() },
+                )
+            }
+
             Group(stringResource(R.string.streaming), footer = stringResource(R.string.lower_quality_is_converted_on_your)) {
                 GroupChoice(stringResource(R.string.quality_on_wi_fi), STREAM_QUALITY, s.wifiBitrate) { v -> update { it.copy(wifiBitrate = v) } }
                 GroupChoice(stringResource(R.string.quality_on_mobile_data), STREAM_QUALITY, s.mobileBitrate) { v -> update { it.copy(mobileBitrate = v) } }
@@ -161,6 +186,45 @@ fun SettingsScreen() {
             }
 
         }
+    }
+}
+
+private val CROSSFADE: List<Pair<Int, String>>
+    @Composable get() = listOf(0 to stringResource(R.string.off)) + listOf(1, 2, 3, 4, 5, 6, 8, 10, 12).map { it to pluralStringResource(R.plurals.x_seconds, it, it) }
+
+private val PREAMP: List<Pair<Int, String>>
+    @Composable get() = listOf(-6, -3, 0, 3, 6, 9, 12).map { it to stringResource(R.string.x_db, if (it > 0) "+$it" else "$it") }
+
+/** Playback: gapless, crossfade, ReplayGain and the equalizer. */
+@Composable
+private fun PlaybackGroup(s: AppSettings, update: ((AppSettings) -> AppSettings) -> Unit) {
+    val nav = LocalNavigator.current
+    Group(stringResource(R.string.playback), footer = stringResource(R.string.playback_footer)) {
+        GroupSwitch(stringResource(R.string.gapless), stringResource(R.string.gapless_subtitle), s.gapless, icon = Icons.Outlined.LinearScale) { v ->
+            update { it.copy(gapless = v) }
+        }
+        GroupChoice(stringResource(R.string.crossfade), CROSSFADE, s.crossfadeSec, icon = Icons.Outlined.SwapCalls) { v -> update { it.copy(crossfadeSec = v) } }
+        GroupChoice(
+            stringResource(R.string.replaygain),
+            ReplayGainMode.entries.map { it to stringResource(it.label) },
+            s.replayGain,
+            icon = Icons.AutoMirrored.Outlined.VolumeUp,
+        ) { v -> update { it.copy(replayGain = v) } }
+        if (s.replayGain != ReplayGainMode.OFF) {
+            GroupChoice(stringResource(R.string.replaygain_preamp), PREAMP, s.replayGainPreamp, icon = Icons.Outlined.Equalizer, fallbackLabel = stringResource(R.string.x_db, "${s.replayGainPreamp}")) { v ->
+                update { it.copy(replayGainPreamp = v) }
+            }
+            GroupSwitch(stringResource(R.string.replaygain_clipping), stringResource(R.string.replaygain_clipping_subtitle), s.preventClipping, icon = Icons.Outlined.Compress) { v ->
+                update { it.copy(preventClipping = v) }
+            }
+        }
+        GroupRow(
+            stringResource(R.string.equalizer),
+            stringResource(if (s.eqEnabled) R.string.eq_on else R.string.off),
+            icon = Icons.Outlined.GraphicEq,
+            showChevron = true,
+            onClick = { nav.navigate(EqualizerRoute) },
+        )
     }
 }
 

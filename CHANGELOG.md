@@ -4,6 +4,24 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.7.0 (2026-10-25)
+
+### New
+
+- **Play queue sync between devices.** NaviCtrl now saves your queue, the song that's playing and how far into it you are on your Navidrome server (Subsonic's saved play queue, the same one other Subsonic apps use). It saves a moment after the song changes, when you pause, when you leave the app, and every 30 seconds while music plays. Long queues are saved in full on servers that accept it (OpenSubsonic form posts, as Navidrome does); others get the songs around the one that's playing.
+- **Continue from another device.** When NaviCtrl starts and the queue on your server is different from the one on the phone, it asks whether to **Continue here** or **Keep this queue**, showing the song, the position, how many songs the queue has, and which device or app saved it and when. Queues saved by NaviCtrl on another phone show that phone's model. Continuing replaces the queue here and starts at the same song and position; keeping it saves your own queue to the server again the next time it changes. NaviCtrl doesn't overwrite the server's queue before you've answered.
+- **Resume from another device** in **Settings > Other devices** and in the now-playing menu looks for the queue on your server straight away (also when sync is off), and says so when there's no other queue.
+- **Sync the play queue** switch in **Settings > Other devices**, on by default. With it off, nothing is saved on the server and you're not asked at start.
+- **Gapless playback** (**Settings > Playback**, on by default): the next song is loaded 30 seconds ahead, so it follows without a pause, also when streaming. Downloaded songs work the same.
+- **Crossfade** (**Settings > Playback**): off by default, or 1 to 12 seconds. The end of a song fades out and the next one fades in when it follows on its own. It's skipped when you pick or skip a song, on repeat one, and, while gapless playback is on, between songs that run on from the same album (the next track or the first track of the next disc), so live and concept albums play through untouched.
+- **ReplayGain** (**Settings > Playback**): Off (the default), **Track** (every song equally loud) or **Album** (keeps the loudness differences within an album). It uses the ReplayGain values your server reads from the files (OpenSubsonic), falling back to the track value when there's no album value and the other way round. Songs without any values play at their own loudness, unless the server suggests a gain for them. **Preamp** adds −6 to +12 dB, and **Prevent clipping** (on by default) never raises a song so far that its loudest moment would distort. Songs are turned down with the player's volume and, where the phone supports it, raised with Android's loudness enhancer.
+- **Equalizer** (**Settings > Playback > Equalizer**): the phone's own equalizer on NaviCtrl's playback, with its built-in presets or **Custom** band levels you set with a slider per band (changes are heard while you drag), and **Bass boost** with a strength slider when the phone has it. It's off until you turn on **Use the equalizer**, and works on the speaker, headphones, Bluetooth and in the car. Phones without an equalizer show a message instead.
+
+### Changed
+
+- **Android permission:** NaviCtrl now asks Android for "change your audio settings" (granted at install, no question), which the equalizer and bass boost need.
+- **README**: queue sync, gapless playback, crossfade, ReplayGain and the equalizer are listed under Features.
+
 ## v0.6.0 (2026-10-25)
 
 ### New

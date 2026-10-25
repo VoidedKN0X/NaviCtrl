@@ -347,4 +347,51 @@
     <string name="notifications_are_blocked_summary">Android isn\'t letting NaviCtrl show notifications, so the music controls on the notification and lock screen stay hidden. Tap Allow to turn them on.</string>
     <string name="notifications_footer">The music controls show in a notification. Android 13 and newer only shows them once you allow notifications for NaviCtrl.</string>
     <string name="allow">Allow</string>
+
+    <!-- Playback: gapless, crossfade, ReplayGain, equalizer -->
+    <string name="playback">Playback</string>
+    <string name="playback_footer">ReplayGain uses the loudness values your server reads from the music files (OpenSubsonic). Songs without them play as they are.</string>
+    <string name="gapless">Gapless playback</string>
+    <string name="gapless_subtitle">Loads the next song ahead so it follows without a pause. Crossfade is skipped between songs that run on from the same album.</string>
+    <string name="crossfade">Crossfade</string>
+    <plurals name="x_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="replaygain">ReplayGain</string>
+    <string name="replaygain_track">Track: every song equally loud</string>
+    <string name="replaygain_album">Album: keeps the loudness differences within an album</string>
+    <string name="replaygain_preamp">Preamp</string>
+    <string name="x_db">%1$s dB</string>
+    <string name="replaygain_clipping">Prevent clipping</string>
+    <string name="replaygain_clipping_subtitle">Never raises a song so far that its loudest moment would distort</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="eq_on">On</string>
+    <string name="eq_use">Use the equalizer</string>
+    <string name="eq_use_subtitle">Changes are heard straight away, also on Bluetooth and in the car</string>
+    <string name="eq_footer">The equalizer and bass boost are the phone's own, so the presets and bands depend on your phone.</string>
+    <string name="eq_presets">Presets</string>
+    <string name="eq_custom">Custom</string>
+    <string name="eq_bands">Bands</string>
+    <string name="eq_unavailable">No equalizer on this phone</string>
+    <string name="eq_unavailable_body">Android doesn't offer an equalizer that NaviCtrl can use on this phone.</string>
+    <string name="bass_boost">Bass boost</string>
+    <string name="bass_boost_strength">Strength</string>
+    <string name="bass_boost_footer">Only while the equalizer is on.</string>
+
+    <!-- Play queue sync between devices -->
+    <string name="queue_sync_group">Other devices</string>
+    <string name="queue_sync">Sync the play queue</string>
+    <string name="queue_sync_subtitle">Saves your queue, song and position on your server, and offers to continue a queue saved by another device</string>
+    <string name="queue_sync_footer">Uses your server's saved play queue, the same one other Subsonic apps and devices use. It's only stored on your own server.</string>
+    <string name="queue_sync_resume">Resume from another device</string>
+    <string name="queue_sync_resume_subtitle">Look for the queue saved on your server now</string>
+    <string name="queue_sync_nothing">No other queue on your server</string>
+    <string name="queue_sync_offer_title">Continue from another device?</string>
+    <string name="queue_sync_offer_at">At %1$s</string>
+    <string name="queue_sync_offer_from">Saved by %1$s</string>
+    <string name="queue_sync_offer_from_when">Saved by %1$s on %2$s</string>
+    <string name="queue_sync_unknown_app">another app</string>
+    <string name="queue_sync_continue">Continue here</string>
+    <string name="queue_sync_keep">Keep this queue</string>
 </resources>

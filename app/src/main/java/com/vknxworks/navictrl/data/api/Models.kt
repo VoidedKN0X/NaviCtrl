@@ -40,6 +40,35 @@ data class Song(
     val userRating: Int? = null,
     val playCount: Long? = null,
     val isDir: Boolean = false,
+    /** OpenSubsonic: ReplayGain values in dB (gains) and linear (peaks). Missing on servers or files without them. */
+    val replayGain: ReplayGain? = null,
+)
+
+/** OpenSubsonic ReplayGain data for a song. Every field is optional. */
+@Serializable
+data class ReplayGain(
+    val trackGain: Double? = null,
+    val albumGain: Double? = null,
+    val trackPeak: Double? = null,
+    val albumPeak: Double? = null,
+    val baseGain: Double? = null,
+    /** Gain the server suggests for files without ReplayGain tags. */
+    val fallbackGain: Double? = null,
+) {
+    val isEmpty: Boolean get() = trackGain == null && albumGain == null && fallbackGain == null
+}
+
+/** The play queue saved on the server (getPlayQueue), shared between the user's devices and apps. */
+@Serializable
+data class PlayQueue(
+    val current: String? = null,
+    /** Milliseconds into the current song. */
+    val position: Long = 0,
+    val username: String? = null,
+    val changed: String? = null,
+    /** The app (Subsonic client name) that saved it. */
+    val changedBy: String? = null,
+    val entry: List<Song> = emptyList(),
 )
 
 @Serializable
@@ -167,6 +196,10 @@ data class NativeSong(
     val starredAt: String? = null,
     val rating: Int? = null,
     val playCount: Long? = null,
+    val rgTrackGain: Double? = null,
+    val rgAlbumGain: Double? = null,
+    val rgTrackPeak: Double? = null,
+    val rgAlbumPeak: Double? = null,
 ) {
     fun toSong() = Song(
         id = id,
@@ -188,6 +221,7 @@ data class NativeSong(
         starred = if (starred) (starredAt ?: "1") else null,
         userRating = rating,
         playCount = playCount,
+        replayGain = ReplayGain(rgTrackGain, rgAlbumGain, rgTrackPeak, rgAlbumPeak).takeUnless { it.isEmpty },
     )
 }
 

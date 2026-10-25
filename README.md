@@ -19,6 +19,9 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Background playback** with lock screen and Bluetooth controls
 - **Synced lyrics**, sleep timer, and a mix of similar songs started from any song
 - **Up next queue** you can reorder; your last queue comes back after a restart
+- **Play queue sync between devices**: your queue, song and position are saved on your server, and NaviCtrl offers to continue a queue saved on another device or app (with where and when it was saved), or on request with **Resume from another device**
+- **Gapless playback**, **crossfade** (up to 12 seconds, skipped between songs that run on from the same album) and **ReplayGain** (track or album, with preamp and clipping prevention)
+- **Equalizer** with your phone's presets or your own band levels, and bass boost
 - **Downloads** for offline listening, and a cache of played songs
 - **Scrobbling** to Last.fm and ListenBrainz through Navidrome
 - **Album and artist pages**, search, and **Add to playlist** from any song or album

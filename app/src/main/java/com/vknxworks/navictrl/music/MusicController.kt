@@ -16,7 +16,10 @@ import com.vknxworks.navictrl.cacheTag
 import com.vknxworks.navictrl.data.api.ApiJson
 import com.vknxworks.navictrl.data.api.Song
 import com.vknxworks.navictrl.data.api.SongSort
+import com.vknxworks.navictrl.data.api.PlayQueue
+import com.vknxworks.navictrl.data.api.playQueue
 import com.vknxworks.navictrl.data.api.randomSongs
+import com.vknxworks.navictrl.data.api.savePlayQueue
 import com.vknxworks.navictrl.data.api.similarSongs
 import com.vknxworks.navictrl.data.api.streamUrl
 import com.vknxworks.navictrl.ui.components.friendlyMessage
@@ -60,6 +63,14 @@ data class MusicState(
 ) {
     val hasMedia: Boolean get() = current != null
 }
+
+/** A queue saved on the server by another device or app that differs from what's here. */
+data class RemoteQueueOffer(
+    val accountKey: String,
+    val queue: PlayQueue,
+    val index: Int,
+    val current: Song,
+)
 
 @Serializable
 private data class SavedQueue(val accountKey: String, val songs: List<Song>, val index: Int, val positionMs: Long)
@@ -138,6 +149,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying) touched = true
                 if (!isPlaying) saveQueueSoon()
             }
         })
@@ -150,8 +162,13 @@ class MusicController(private val context: Context, private val c: AppContainer)
         if (polling) return
         polling = true
         scope.launch {
+            var ticks = 0
             while (true) {
-                if (controller?.isPlaying == true) refresh()
+                if (controller?.isPlaying == true) {
+                    refresh()
+                    // Every 30 seconds while playing, the server's copy of the queue gets the new position.
+                    if (++ticks >= 60) { ticks = 0; saveQueueSoon() }
+                }
                 delay(500)
             }
         }
@@ -194,6 +211,14 @@ class MusicController(private val context: Context, private val c: AppContainer)
             putString("artistId", song.artistId)
             putString("coverArt", song.coverArt)
             putInt("duration", song.duration ?: 0)
+            // OpenSubsonic ReplayGain values for the player service; left out when the server has none.
+            song.replayGain?.let { rg ->
+                rg.trackGain?.let { putDouble(MusicService.RG_TRACK_GAIN, it) }
+                rg.albumGain?.let { putDouble(MusicService.RG_ALBUM_GAIN, it) }
+                rg.trackPeak?.let { putDouble(MusicService.RG_TRACK_PEAK, it) }
+                rg.albumPeak?.let { putDouble(MusicService.RG_ALBUM_PEAK, it) }
+                rg.fallbackGain?.let { putDouble(MusicService.RG_FALLBACK_GAIN, it) }
+            }
         }
         return MediaItem.Builder()
             .setMediaId(song.id)
@@ -269,6 +294,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
             start = 0
         }
         continuation = more
+        touched = true
         val mc = controller()
         mc.setMediaItems(list.map(::mediaItem), start, 0)
         mc.prepare()
@@ -312,6 +338,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
     }
 
     fun enqueue(songs: List<Song>) = launch {
+        touched = true
         if (songs.isEmpty()) return@launch
         val mc = controller()
         val wasEmpty = mc.mediaItemCount == 0
@@ -323,6 +350,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
     }
 
     fun playNext(songs: List<Song>) = launch {
+        touched = true
         if (songs.isEmpty()) return@launch
         val mc = controller()
         val wasEmpty = mc.mediaItemCount == 0
@@ -352,12 +380,16 @@ class MusicController(private val context: Context, private val c: AppContainer)
     fun removeAt(index: Int) = launch {
         val mc = controller()
         if (index in 0 until mc.mediaItemCount) mc.removeMediaItem(index)
+        touched = true
+        saveQueueSoon()
         refresh()
     }
     fun move(from: Int, to: Int) = launch {
         val mc = controller()
         if (from == to || from !in 0 until mc.mediaItemCount || to !in 0 until mc.mediaItemCount) return@launch
         mc.moveMediaItem(from, to)
+        touched = true
+        saveQueueSoon()
         refresh()
     }
 
@@ -500,7 +532,114 @@ class MusicController(private val context: Context, private val c: AppContainer)
             withContext(Dispatchers.IO) {
                 runCatching { savedQueueFile.writeText(ApiJson.encodeToString(SavedQueue.serializer(), saved)) }
             }
+            syncToServer(key, songs.map { it.id }, mc.currentMediaItemIndex, mc.currentPosition.coerceAtLeast(0))
         }
+    }
+
+    // ---------- Play queue sync between devices (savePlayQueue / getPlayQueue) ----------
+
+    /** Something was played or changed in this app session, so the server's copy should follow. */
+    private var touched = false
+
+    /** The server's queue was checked (and any offer answered); until then this phone doesn't overwrite it. */
+    private var remoteCheckedFor: String? = null
+    private var lastSynced: Triple<List<String>, Int, Long>? = null
+
+    private val _remoteOffer = MutableStateFlow<RemoteQueueOffer?>(null)
+
+    /** A queue from another device to continue; the app shows it as a question. */
+    val remoteOffer: StateFlow<RemoteQueueOffer?> = _remoteOffer.asStateFlow()
+
+    /** How this phone signs the queues it saves, so other devices can say where a queue came from. */
+    val deviceName: String = "${SubsonicClientName} (${android.os.Build.MODEL.trim().ifBlank { "Android" }.take(40)})"
+
+    private suspend fun syncToServer(accountKey: String, ids: List<String>, index: Int, positionMs: Long) {
+        if (!c.settings.settings.value.queueSync || !touched || ids.isEmpty()) return
+        // The check at start failed (offline): what you've started playing here since then wins.
+        if (remoteCheckedFor != accountKey && _remoteOffer.value == null && startCheckFor == accountKey) remoteCheckedFor = accountKey
+        if (remoteCheckedFor != accountKey || _remoteOffer.value != null) return
+        val session = c.sessions.active.value ?: return
+        if (session.account.key != accountKey) return
+        val now = Triple(ids, index, positionMs / 5000)
+        if (now == lastSynced) return
+        runCatching { session.client.savePlayQueue(ids, index, positionMs, deviceName) }
+            .onSuccess { lastSynced = now }
+    }
+
+    /** Saves straight away (the app is going to the background). */
+    fun saveNow() {
+        if (controller == null) return
+        scope.launch {
+            val mc = controller ?: return@launch
+            val key = c.sessions.active.value?.account?.key ?: return@launch
+            val ids = (0 until mc.mediaItemCount).map { mc.getMediaItemAt(it).mediaId }
+            syncToServer(key, ids, mc.currentMediaItemIndex, mc.currentPosition.coerceAtLeast(0))
+        }
+    }
+
+    /**
+     * Looks at the queue saved on the server. When it differs from the one here (and, unless
+     * [manual], wasn't saved by this phone), it's offered in [remoteOffer]. Returns false when
+     * there's nothing to continue.
+     */
+    private suspend fun checkRemote(manual: Boolean): Boolean {
+        val session = c.sessions.active.value ?: return false
+        val key = session.account.key
+        val mc = controller()
+        val remote = try {
+            session.client.playQueue()
+        } catch (e: Throwable) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (manual) throw e
+            // Offline or the server is down: look again later, and don't overwrite its queue meanwhile.
+            return false
+        }
+        if (c.sessions.active.value?.account?.key != key) return false
+        val offer = remote?.let { q ->
+            val idx = q.entry.indexOfFirst { it.id == q.current }.coerceAtLeast(0)
+            val current = q.entry[idx]
+            val localId = mc.currentMediaItem?.mediaId
+            val samePlace = localId == current.id && kotlin.math.abs(mc.currentPosition - q.position) < 15_000
+            val ours = q.changedBy == deviceName
+            when {
+                samePlace -> null
+                ours && !manual && mc.mediaItemCount > 0 -> null
+                else -> RemoteQueueOffer(key, q, idx, current)
+            }
+        }
+        _remoteOffer.value = offer
+        if (offer == null) remoteCheckedFor = key
+        return offer != null
+    }
+
+    /** "Resume from another device": checks the server now, even with sync off. */
+    fun resumeFromOtherDevice() = launch {
+        if (!checkRemote(manual = true)) {
+            Toast.makeText(context, str(R.string.queue_sync_nothing), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Continue the offered queue here: it replaces this phone's queue at the same song and position. */
+    fun acceptRemote() = launch {
+        val offer = _remoteOffer.value ?: return@launch
+        _remoteOffer.value = null
+        remoteCheckedFor = offer.accountKey
+        if (c.sessions.active.value?.account?.key != offer.accountKey) return@launch
+        val mc = controller()
+        continuation = null
+        unshuffled = null
+        touched = true
+        mc.setMediaItems(offer.queue.entry.map(::mediaItem), offer.index, offer.queue.position.coerceAtLeast(0))
+        mc.prepare()
+        mc.play()
+        refresh()
+    }
+
+    /** Keep this phone's queue; it's saved to the server again the next time it changes. */
+    fun declineRemote() {
+        val offer = _remoteOffer.value ?: return
+        _remoteOffer.value = null
+        remoteCheckedFor = offer.accountKey
     }
 
     private suspend fun restoreQueue(mc: MediaController, autoplay: Boolean) {
@@ -520,10 +659,19 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val mc = controller()
         restoreQueue(mc, autoplay = false)
         refresh()
+        // Once per account and app start: is there a queue from another device to continue?
+        val key = c.sessions.active.value?.account?.key
+        if (key != null && key != startCheckFor) {
+            startCheckFor = key
+            if (c.settings.settings.value.queueSync) checkRemote(manual = false) else remoteCheckedFor = key
+        }
     }
+
+    private var startCheckFor: String? = null
 
     companion object {
         private const val QUEUE_FILE = "queue.json"
+        private const val SubsonicClientName = com.vknxworks.navictrl.data.api.SubsonicClient.CLIENT
 
         /** Deletes the saved queue if it belongs to [accountKey] (called on sign-out). */
         fun forgetSavedQueue(context: Context, accountKey: String) {
@@ -536,6 +684,11 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     /** Called when switching accounts: the old account's queue can't play on the new one. */
     fun reset() {
+        touched = false
+        lastSynced = null
+        remoteCheckedFor = null
+        startCheckFor = null
+        _remoteOffer.value = null
         val mc = controller ?: return
         mc.stop()
         mc.clearMediaItems()

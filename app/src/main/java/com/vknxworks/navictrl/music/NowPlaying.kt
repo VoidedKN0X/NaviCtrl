@@ -104,6 +104,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.automirrored.outlined.QueueMusic
 import androidx.compose.material.icons.automirrored.outlined.Subject
 import androidx.compose.material.icons.outlined.Bedtime
+import androidx.compose.material.icons.outlined.Devices
 import com.vknxworks.navictrl.ui.components.rememberLoader
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import kotlin.math.roundToInt
@@ -345,7 +346,10 @@ fun NowPlayingScreen() {
         SongActionsSheet(
             song,
             onDismiss = { menu = false },
-            extra = listOf(SongAction(stringResource(R.string.stop_and_clear_the_queue), Icons.Filled.Stop) { music.stop(); nav.back() }),
+            extra = listOf(
+                SongAction(stringResource(R.string.queue_sync_resume), Icons.Outlined.Devices) { music.resumeFromOtherDevice() },
+                SongAction(stringResource(R.string.stop_and_clear_the_queue), Icons.Filled.Stop) { music.stop(); nav.back() },
+            ),
         )
     }
 }

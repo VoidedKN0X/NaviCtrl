@@ -39,6 +39,11 @@ enum class TranscodeFormat(val param: String, val label: String) {
     AAC("aac", "AAC"),
 }
 
+/** Which ReplayGain value evens out the loudness. */
+enum class ReplayGainMode(@StringRes val label: Int) {
+    OFF(R.string.off), TRACK(R.string.replaygain_track), ALBUM(R.string.replaygain_album),
+}
+
 data class AppSettings(
     /** kbps; 0 = original files. */
     val wifiBitrate: Int = 0,
@@ -63,6 +68,24 @@ data class AppSettings(
     val hideScreenshots: Boolean = false,
     /** Hide in recent apps: the recent-apps view shows a blank card. Screenshots still work. */
     val hideRecents: Boolean = false,
+    /** Save the play queue on the server and offer to continue one saved by another device. */
+    val queueSync: Boolean = true,
+    /** Load the next song ahead so it follows without a gap; also keeps crossfade off between album tracks. */
+    val gapless: Boolean = true,
+    /** Seconds the end of a song fades out (and the next fades in); 0 = off. */
+    val crossfadeSec: Int = 0,
+    val replayGain: ReplayGainMode = ReplayGainMode.OFF,
+    /** dB added to the ReplayGain value. */
+    val replayGainPreamp: Int = 0,
+    /** Never raise a song so far that its loudest moment would clip. */
+    val preventClipping: Boolean = true,
+    val eqEnabled: Boolean = false,
+    /** Index of the phone's equalizer preset; -1 = your own band levels in [eqBands]. */
+    val eqPreset: Int = -1,
+    /** Band levels in millibels, one per band. Empty = flat. */
+    val eqBands: List<Int> = emptyList(),
+    /** Bass boost strength, 0 (off) to 1000. */
+    val bassBoost: Int = 0,
 )
 
 class SettingsRepository(private val context: Context, scope: CoroutineScope) {
@@ -86,6 +109,16 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val hideScreens = booleanPreferencesKey("hide_screens")
         val hideScreenshots = booleanPreferencesKey("hide_screenshots")
         val hideRecents = booleanPreferencesKey("hide_recents")
+        val queueSync = booleanPreferencesKey("queue_sync")
+        val gapless = booleanPreferencesKey("gapless")
+        val crossfade = intPreferencesKey("crossfade_sec")
+        val replayGain = stringPreferencesKey("replay_gain")
+        val preamp = intPreferencesKey("replay_gain_preamp")
+        val preventClipping = booleanPreferencesKey("prevent_clipping")
+        val eqEnabled = booleanPreferencesKey("eq_enabled")
+        val eqPreset = intPreferencesKey("eq_preset")
+        val eqBands = stringPreferencesKey("eq_bands")
+        val bassBoost = intPreferencesKey("bass_boost")
         /** Left over from the optional stats removed in 0.2.3; deleted at start and on every save. */
         val legacy = listOf(booleanPreferencesKey("usage_stats"), booleanPreferencesKey("usage_stats_asked"))
     }
@@ -120,6 +153,16 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.IMMEDIATELY),
         hideScreenshots = this[K.hideScreenshots] ?: this[K.hideScreens] ?: false,
         hideRecents = this[K.hideRecents] ?: this[K.hideScreens] ?: false,
+        queueSync = this[K.queueSync] ?: true,
+        gapless = this[K.gapless] ?: true,
+        crossfadeSec = (this[K.crossfade] ?: 0).coerceIn(0, 12),
+        replayGain = enumOr(this[K.replayGain], ReplayGainMode.OFF),
+        replayGainPreamp = (this[K.preamp] ?: 0).coerceIn(-15, 15),
+        preventClipping = this[K.preventClipping] ?: true,
+        eqEnabled = this[K.eqEnabled] ?: false,
+        eqPreset = this[K.eqPreset] ?: -1,
+        eqBands = this[K.eqBands]?.split(',')?.mapNotNull { it.trim().toIntOrNull() }.orEmpty(),
+        bassBoost = (this[K.bassBoost] ?: 0).coerceIn(0, 1000),
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -142,6 +185,16 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.lockTimeout] = s.lockTimeout.name
             p[K.hideScreenshots] = s.hideScreenshots
             p[K.hideRecents] = s.hideRecents
+            p[K.queueSync] = s.queueSync
+            p[K.gapless] = s.gapless
+            p[K.crossfade] = s.crossfadeSec
+            p[K.replayGain] = s.replayGain.name
+            p[K.preamp] = s.replayGainPreamp
+            p[K.preventClipping] = s.preventClipping
+            p[K.eqEnabled] = s.eqEnabled
+            p[K.eqPreset] = s.eqPreset
+            p[K.eqBands] = s.eqBands.joinToString(",")
+            p[K.bassBoost] = s.bassBoost
             p.remove(K.hideScreens)
             K.legacy.forEach { p.remove(it) }
         }
