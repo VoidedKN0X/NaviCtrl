@@ -157,7 +157,10 @@ fun ArtistScreen(id: String) {
         var bioOpen by remember { mutableStateOf(false) }
         val starred = stars[artist.id] ?: (artist.starred != null)
         val albums = artist.album.sortedByDescending { it.year ?: 0 }
-        val image = info.value?.largeImageUrl?.takeIf { it.isNotBlank() } ?: c.api.coverArtUrl(artist.coverArt ?: "ar-${artist.id}", 1200)
+        // An artist picture link from the server is only used when it points at the server itself; otherwise
+        // (e.g. an outside image site) the picture comes through the server's own artwork endpoint.
+        val image = info.value?.largeImageUrl?.takeIf { it.isNotBlank() && c.api.isOwnServer(it) }
+            ?: c.api.coverArtUrl(artist.coverArt ?: "ar-${artist.id}", 1200)
 
         // Every song by the artist, gathered album by album, for "Shuffle".
         suspend fun allSongs(): List<Song> = coroutineScope {

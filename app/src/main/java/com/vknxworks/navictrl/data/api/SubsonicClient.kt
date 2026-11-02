@@ -67,6 +67,9 @@ class SubsonicClient(
         return b.build().toString()
     }
 
+    /** True when [url] points at this server's host (artwork links from the server may point elsewhere). */
+    fun isOwnServer(url: String): Boolean = url.toHttpUrlOrNull()?.host?.equals(base.host, ignoreCase = true) == true
+
     /** Calls an endpoint and returns the inner subsonic-response object. */
     suspend fun call(endpoint: String, params: List<Pair<String, Any?>> = emptyList(), client: String = CLIENT): JsonObject = withContext(Dispatchers.IO) {
         val req = Request.Builder().url(restUrl(endpoint, params, freshAuth = true, client = client)).get().build()

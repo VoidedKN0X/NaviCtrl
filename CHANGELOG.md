@@ -4,6 +4,20 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.7.3 (2026-11-02)
+
+A small privacy fix, plus a security policy and clearer install help for the project.
+
+### Security
+
+- **Artist pictures only come from your own server.** On an artist page, NaviCtrl used the picture link your server passed on from Last.fm or similar sites as is, so the phone could fetch that picture straight from an outside website, which then saw your IP address. NaviCtrl now only uses such a link when it points at your own Navidrome server; otherwise it asks your server for the artist picture, as it already did for every other picture. No password or sign-in was ever sent to those sites.
+
+### Project
+
+- **SECURITY.md** explains how to report a security problem privately, which versions get fixes, and how releases are signed (with the signing certificate fingerprint).
+- **Issue forms** for bug reports and feature requests, which ask for the details needed to help (NaviCtrl, Android and Navidrome versions) and remind you to leave out server addresses and passwords. Security problems are pointed to the private report page instead.
+- **README:** clearer install steps for people new to GitHub (which file to tap on the Releases page), a new **Is it safe to install?** section with the signing fingerprint and what every permission is for, a **How NaviCtrl is made** section, the full Ctrl series list, and the empty Screenshots section removed.
+
 ## v0.7.2 (2026-11-02)
 
 ### Fixed

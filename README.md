@@ -30,10 +30,6 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **App lock** with its own PIN and optional fingerprint unlock; your server password stays encrypted while the app is locked, and music and downloads that are already running carry on
 - **Hide in screenshots** and **Hide in recent apps**, two separate switches, both off by default
 
-## Screenshots
-
-Coming soon.
-
 ## Requirements
 
 - Android 13 or newer, on a 64-bit ARM phone (nearly every phone from the last several years)
@@ -42,8 +38,8 @@ Coming soon.
 
 ## Install
 
-1. Download the latest `.apk` file from the [Releases page](https://github.com/VoidedKN0X/NaviCtrl/releases/latest).
-2. Open it on your phone. Android may ask you to allow installing apps from your browser or file manager.
+1. On your phone, open the [latest release](https://github.com/VoidedKN0X/NaviCtrl/releases/latest), scroll down to **Assets** and tap the file that ends in `.apk` (for example `NaviCtrl-v0.7.3.apk`) to download it. The "Source code" zip and tar.gz files are not the app; you don't need them.
+2. Open the downloaded file. Android may ask you to allow installing apps from your browser or file manager.
 3. Updates install over the old version. Your settings and login are kept.
 
 **Automatic updates:** on your phone, tap one of the buttons below.
@@ -54,6 +50,32 @@ Coming soon.
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/VoidedKN0X/NaviCtrl"><img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="80"></a> <a href="https://voidedkn0x.github.io/CtrlF-Droid/"><img src=".github/assets/badge_ctrlf-droid.png" alt="Get it from our F-Droid repo" height="80"></a>
 
 If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X/NaviCtrl` in Obtainium by hand.
+
+## Is it safe to install?
+
+- **Open source.** All of NaviCtrl's code is in this repo, under the GPL-3.0 license. Anyone can read it.
+- **Built by GitHub, not on a personal computer.** Every release on the Releases page is built by [the build workflow](.github/workflows/build.yml) on GitHub Actions, straight from the code in this repo.
+- **Always signed with the same key.** Android refuses to install an update that's signed with a different key, so nobody else can publish an update over your copy. The [CtrlF-Droid repo](https://voidedkn0x.github.io/CtrlF-Droid/) only accepts APKs signed with this key too. The SHA-256 fingerprint of the signing certificate is:
+
+  ```
+  20:78:6F:26:52:F1:D3:27:F8:FC:C1:8B:3D:D5:43:06:6F:AD:33:34:90:E2:3B:FE:00:34:93:09:A1:10:FE:FC
+  ```
+
+  Advanced users can compare it with [AppVerifier](https://github.com/soupslurpr/AppVerifier).
+
+**Permissions** NaviCtrl asks for, and why:
+
+| Permission | What it's for |
+| --- | --- |
+| Internet | Talking to your Navidrome server (music, artwork, lyrics, your library) |
+| Network state | Picking the Wi-Fi or mobile data streaming quality, and waiting for Wi-Fi for downloads when you ask |
+| Notifications | The playback notification with its controls (Android asks you first) |
+| Foreground service and media playback service | Keeping music playing while NaviCtrl is in the background |
+| Wake lock | Keeping music and downloads going while the screen is off |
+| Change audio settings | The equalizer and bass boost on NaviCtrl's own playback |
+| Use biometrics | Optional fingerprint unlock for the app lock |
+
+NaviCtrl can't read your files, contacts, location or microphone. See [Privacy](#privacy) for what it sends and where.
 
 ## Getting started
 
@@ -93,6 +115,10 @@ The sign-in screen and the lock and PIN screens are always kept out of screensho
 
 **Telemetry-free.** NaviCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to your own Navidrome server: cover art, lyrics and similar songs all come through it, and scrobbles to Last.fm and ListenBrainz are sent by Navidrome, not by the app. Your password is stored encrypted on the phone (and with your app PIN while the app lock is on), because Navidrome's music API needs it to sign every request; it's only ever sent to your server: as a salted hash for music requests, and as is (over your server's connection) when signing in to Navidrome's own API for the Songs tab and admin features.
 
+## How NaviCtrl is made
+
+NaviCtrl is a one-person project by VoidedKN0X (VKNXWorks). Much of the code is written with the help of AI (Claude, by Anthropic). I decide what the app does, review the changes and use the app myself. Every change is listed in the [changelog](CHANGELOG.md), and you can read every line of code here.
+
 ## Build from source
 
 You need [Android Studio](https://developer.android.com/studio), or JDK 17 and the Android SDK.
@@ -113,7 +139,9 @@ Or open the folder in Android Studio and press **Run** with your phone connected
 
 ## Support the project
 
-NaviCtrl is free and open source. If it's useful to you, tap **Support NaviCtrl** under **About** on the You page (tap your profile picture) to sponsor development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Found a problem or have an idea? Tap **Report a bug** in the same section, or [open an issue](https://github.com/VoidedKN0X/NaviCtrl/issues). Starring the repo helps too.
+NaviCtrl is free and open source. If it's useful to you, tap **Support NaviCtrl** under **About** on the You page (tap your profile picture) to sponsor development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Found a problem or have an idea? Tap **Report a bug** in the same section, or [open an issue](https://github.com/VoidedKN0X/NaviCtrl/issues/new/choose) and pick the bug report or feature request form. Starring the repo helps too.
+
+Found a security problem? Please don't open a public issue; see [SECURITY.md](SECURITY.md).
 
 ## The Ctrl series
 
@@ -135,11 +163,16 @@ Native Android apps for self-hosted services and everyday tools, all with the sa
 | [PaperCtrl](https://github.com/VoidedKN0X/PaperCtrl) | Scan and browse documents on Paperless-ngx |
 | [PrintCtrl](https://github.com/VoidedKN0X/PrintCtrl) | Bambu Lab printers through Bambuddy, and Spoolman spools |
 | [ProxCtrl](https://github.com/VoidedKN0X/ProxCtrl) | Manage your Proxmox VE server |
+| [RideCtrl](https://github.com/VoidedKN0X/RideCtrl) | Offline maintenance, fuel and mod log for your vehicles |
 | [SeerrCtrl](https://github.com/VoidedKN0X/SeerrCtrl) | Request movies and shows on Seerr / Jellyseerr |
+| [SynapseCtrl](https://github.com/VoidedKN0X/SynapseCtrl) | Administer your Matrix Synapse server |
 | [TrueCtrl](https://github.com/VoidedKN0X/TrueCtrl) | Monitor and manage your TrueNAS server |
+| [WrtCtrl](https://github.com/VoidedKN0X/WrtCtrl) | Manage your OpenWrt router |
 
 ## License
 
 NaviCtrl is licensed under the [GNU General Public License v3.0](LICENSE). © VKNXWorks
+
+NaviCtrl is an independent app and isn't made by or affiliated with the Navidrome project.
 
 The [Space Grotesk](https://github.com/floriankarsten/space-grotesk) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) fonts are bundled with the app and licensed under the SIL Open Font License 1.1; see `FONT-LICENSE-SpaceGrotesk.txt` and `FONT-LICENSE-JetBrainsMono.txt`.
