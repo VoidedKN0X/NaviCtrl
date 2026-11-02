@@ -4,6 +4,12 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.7.2 (2026-11-02)
+
+### Fixed
+
+- **Bottom sheets no longer show a stray grey box/outline.** Every sheet that slides up from the bottom (the song, album and playlist menus, Add to playlist, the Songs sort sheet, the favourites playlist menu, choice lists in Settings, and Up next, lyrics and the sleep timer on the now-playing screen) had a thin border that was drawn in the wrong place: a grey rectangle cut across the sheet partway down (often right through the first row) and a loose rounded outline showed near the top of the screen. The border is gone; sheets are now a plain card-coloured panel with rounded top corners, set apart from the screen by the dimmed background behind them, in both light and dark mode. Dialogs keep their thin border, which was always drawn correctly.
+
 ## v0.7.1 (2026-10-25)
 
 ### Fixed

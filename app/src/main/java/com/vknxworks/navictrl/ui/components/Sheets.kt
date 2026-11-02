@@ -141,7 +141,6 @@ fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> 
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = CtrlColors.Surface,
-        modifier = Modifier.ctrlSheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(
@@ -190,7 +189,6 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = CtrlColors.Surface,
-        modifier = Modifier.ctrlSheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(c.api.coverArtUrl(album.coverArt, 160), album.name, listOfNotNull(album.artist, album.year?.toString()).joinToString("  ·  "))
@@ -254,7 +252,6 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = CtrlColors.Surface,
-        modifier = Modifier.ctrlSheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             SheetHeader(
@@ -303,7 +300,7 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit) {
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface) {
         Text(stringResource(R.string.add_x_to, label), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
         ActionItem(Icons.Filled.Add, stringResource(R.string.new_playlist)) { naming = true }
         when (val s = lists.state) {

@@ -72,7 +72,6 @@ import com.vknxworks.navictrl.ui.components.CtrlChip
 import com.vknxworks.navictrl.ui.components.CtrlHeroCard
 import com.vknxworks.navictrl.ui.components.CtrlLabel
 import com.vknxworks.navictrl.ui.components.TopBarAction
-import com.vknxworks.navictrl.ui.components.ctrlSheetBorder
 import com.vknxworks.navictrl.ui.components.topDivider
 import com.vknxworks.navictrl.ui.theme.CtrlColors
 import com.vknxworks.navictrl.ui.theme.CtrlType
@@ -267,7 +266,7 @@ private fun scrollLabel(song: Song, sort: SongSort): String = when (sort) {
 
 @Composable
 private fun SortSheet(sort: SongSort, asc: Boolean, onDismiss: () -> Unit, onPick: (SongSort, Boolean) -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
             Text(stringResource(R.string.sort_songs_by), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             SongSort.entries.forEach { s ->

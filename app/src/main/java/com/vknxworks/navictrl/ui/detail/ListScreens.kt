@@ -1,7 +1,6 @@
 package com.vknxworks.navictrl.ui.detail
 
 import com.vknxworks.navictrl.ui.components.CtrlChip
-import com.vknxworks.navictrl.ui.components.ctrlSheetBorder
 import com.vknxworks.navictrl.ui.components.topDivider
 import com.vknxworks.navictrl.ui.theme.CtrlColors
 import androidx.compose.foundation.layout.height
@@ -194,7 +193,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
     }
 
     if (menu) {
-        ModalBottomSheet(onDismissRequest = { menu = false }, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
+        ModalBottomSheet(onDismissRequest = { menu = false }, containerColor = CtrlColors.Surface) {
             Column(Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
                 MenuRow(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { menu = false; c.music.playNext(songs) }
                 MenuRow(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { menu = false; c.music.enqueue(songs) }

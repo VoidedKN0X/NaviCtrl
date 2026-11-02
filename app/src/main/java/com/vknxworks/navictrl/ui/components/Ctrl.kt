@@ -400,11 +400,6 @@ val CtrlFieldShape = RoundedCornerShape(16.dp)
 
 // ---------- Sheets and dialogs ----------
 
-/** Hairline edge for bottom sheets (26dp top corners). */
-@Composable
-fun Modifier.ctrlSheetBorder(): Modifier =
-    border(BorderStroke(1.dp, CtrlColors.Outline), RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
-
 /** Hairline edge for dialogs (26dp corners). */
 @Composable
 fun Modifier.ctrlDialogBorder(): Modifier = border(BorderStroke(1.dp, CtrlColors.Outline), CtrlShapes.Hero)

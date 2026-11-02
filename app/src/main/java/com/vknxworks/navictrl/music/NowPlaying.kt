@@ -92,7 +92,6 @@ import com.vknxworks.navictrl.ui.components.formatClock
 import com.vknxworks.navictrl.ui.components.CtrlGhostButton
 import com.vknxworks.navictrl.ui.components.CtrlLabel
 import com.vknxworks.navictrl.ui.components.CtrlSquareButton
-import com.vknxworks.navictrl.ui.components.ctrlSheetBorder
 import com.vknxworks.navictrl.ui.components.topDivider
 import com.vknxworks.navictrl.ui.theme.CtrlColors
 import com.vknxworks.navictrl.ui.theme.CtrlShapes
@@ -335,7 +334,7 @@ fun NowPlayingScreen() {
     }
 
     if (!isWideScreen(context) && panel != null) {
-        ModalBottomSheet(onDismissRequest = { panel = null }, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
+        ModalBottomSheet(onDismissRequest = { panel = null }, containerColor = CtrlColors.Surface) {
             Box(Modifier.fillMaxWidth().height(560.dp)) {
                 if (panel == "lyrics") LyricsView(s) else QueueList(s)
             }
@@ -391,7 +390,7 @@ private fun PanelButton(icon: ImageVector, label: String, selected: Boolean = fa
 @Composable
 private fun SleepSheet(s: MusicState, onDismiss: () -> Unit) {
     val music = LocalContext.current.container.music
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface, modifier = Modifier.ctrlSheetBorder()) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
             Text(stringResource(R.string.sleep_timer), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
             sleepLabel(s)?.let {
