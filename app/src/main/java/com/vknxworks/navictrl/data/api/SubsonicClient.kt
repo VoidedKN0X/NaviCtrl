@@ -67,8 +67,13 @@ class SubsonicClient(
         return b.build().toString()
     }
 
-    /** True when [url] points at this server's host (artwork links from the server may point elsewhere). */
-    fun isOwnServer(url: String): Boolean = url.toHttpUrlOrNull()?.host?.equals(base.host, ignoreCase = true) == true
+    /**
+     * True when [url] points at this server: same scheme, host and port (artwork links from the server may
+     * point elsewhere, or at an http:// address of an https server, which the cleartext policy would block).
+     */
+    fun isOwnServer(url: String): Boolean = url.toHttpUrlOrNull()?.let {
+        it.scheme == base.scheme && it.host.equals(base.host, ignoreCase = true) && it.port == base.port
+    } == true
 
     /** Calls an endpoint and returns the inner subsonic-response object. */
     suspend fun call(endpoint: String, params: List<Pair<String, Any?>> = emptyList(), client: String = CLIENT): JsonObject = withContext(Dispatchers.IO) {
