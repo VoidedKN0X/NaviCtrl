@@ -4,6 +4,21 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.8.3 (2026-11-05)
+
+More protection for the PIN screen. NaviCtrl works exactly as before.
+
+### Security
+
+- **No floating windows over the PIN screen.** While the lock screen, choosing or changing the app PIN, the sign-in screen or a "can't be undone" confirmation (Forgot PIN, delete a playlist, remove downloads, sign out) is showing, other apps' floating windows such as chat heads and "draw over other apps" overlays are hidden, so no app can cover or imitate these screens to trick a tap or watch your PIN. They come back as soon as the screen closes, and other screens aren't affected (Android 12+, no prompt).
+- **The PIN and sign-in screens are hidden from apps that read the screen.** On Android 14+, apps that use Android's accessibility features to read other apps' screens can't see the lock, PIN or sign-in screens. Real accessibility tools such as screen readers still work there.
+- **Stricter requests from other apps.** On Android 16+, other apps can only open NaviCtrl's screen and connect to its music player with the requests NaviCtrl declares (opening the app, and media controls such as your watch, car or lock screen), not with made-up requests aimed directly at its parts.
+
+### Project
+
+- **Checked downloads:** every library and plugin the build downloads is now checked against its recorded SHA-256 checksum, and the build stops if one doesn't match.
+- **README:** a "Check a download" note (the APK's SHA-256 in the release notes and `gh attestation verify`), the new permission in the permissions table, and how to update the dependency checksums when building from source.
+
 ## Project updates (2026-11-05)
 
 ### Project

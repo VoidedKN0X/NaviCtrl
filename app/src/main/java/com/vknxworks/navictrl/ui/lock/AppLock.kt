@@ -391,6 +391,7 @@ private fun Modifier.blockTouches(): Modifier =
 
 @Composable
 private fun LegacyLockedScreen() {
+    ShieldScreen()
     val context = LocalContext.current
     val activity = context.findActivity()
     var error by remember { mutableStateOf<String?>(null) }
@@ -706,6 +707,7 @@ private fun PinPadScreen(
     onFingerprint: (() -> Unit)? = null,
     bottom: @Composable () -> Unit,
 ) {
+    ShieldScreen()
     val haptics = LocalHapticFeedback.current
     fun digit(d: Char) {
         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)

@@ -375,6 +375,8 @@ fun TextInputDialog(
 
 @Composable
 fun ConfirmDialog(title: String, body: String, confirm: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    // A confirmation of something that can't be undone: no other app's floating window over it.
+    com.vknxworks.navictrl.ui.lock.ShieldScreen(sensitiveData = false)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, style = MaterialTheme.typography.titleLarge) },

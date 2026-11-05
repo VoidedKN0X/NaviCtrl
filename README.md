@@ -62,6 +62,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
   ```
 
   Advanced users can compare it with [AppVerifier](https://github.com/soupslurpr/AppVerifier).
+- **Check a download:** the release notes list the APK's SHA-256 checksum, so you can compare it with the file you downloaded. With the [GitHub CLI](https://cli.github.com/), `gh attestation verify <apk> -R VoidedKN0X/NaviCtrl` proves the APK was built by this repo's build workflow from the tagged commit. The signing-certificate fingerprint above stays the check that matters for updates.
 
 **Permissions** NaviCtrl asks for, and why:
 
@@ -74,6 +75,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 | Wake lock | Keeping music and downloads going while the screen is off |
 | Change audio settings | The equalizer and bass boost on NaviCtrl's own playback |
 | Use biometrics | Optional fingerprint unlock for the app lock |
+| Hide other apps' floating windows | Hiding other apps' floating windows (chat heads, overlays) over the PIN screen, sign-in and "can't be undone" confirmations, so nothing can cover them. No prompt, and nothing changes on other screens |
 | Music and audio (optional) | **Music on this phone**: playing the songs stored on the phone, only asked for when you choose it |
 | Run at startup | Picking up downloads that were still waiting when the phone restarted (they start after you unlock NaviCtrl) |
 
@@ -110,6 +112,8 @@ Two more switches in the same section work with or without the app lock, and are
 - **Hide in recent apps**: the recent-apps view shows a blank card instead of NaviCtrl. Screenshots still work.
 
 The sign-in screen and the lock and PIN screens are always kept out of screenshots and recordings, whatever these switches say.
+
+While the lock, PIN or sign-in screen or a "can't be undone" confirmation is showing, other apps' floating windows (chat heads, overlays) are hidden so nothing can cover it, and on Android 14+ apps that read the screen through accessibility can't see the PIN, lock or sign-in screen; real accessibility tools such as screen readers still work.
 
 ## Tips and troubleshooting
 
@@ -150,6 +154,8 @@ You need [Android Studio](https://developer.android.com/studio), or JDK 17 and t
 3. The APK is in `app/build/outputs/apk/debug/`. Copy it to your phone and install it.
 
 Or open the folder in Android Studio and press **Run** with your phone connected.
+
+**Dependency verification:** every library and plugin the build downloads is checked against its SHA-256 checksum in `gradle/verification-metadata.xml`, and the build stops if one doesn't match. When you change a dependency, a plugin or the Gradle version, run the **Dependency verification metadata** workflow (Actions tab, **Run workflow**), decode the file it prints, check the diff and commit it together with the change.
 
 ## Support the project
 
