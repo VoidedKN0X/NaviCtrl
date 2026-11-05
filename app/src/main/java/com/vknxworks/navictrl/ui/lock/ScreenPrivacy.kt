@@ -28,14 +28,17 @@ object ScreenPrivacy {
     internal fun remove() { forced = (forced - 1).coerceAtLeast(0) }
 }
 
-/** Keeps the window secure (and [ShieldScreen]) while this is shown (and [active]). */
+/**
+ * Keeps the window secure and the overlay hiding of [ShieldScreen] on while this is shown (and [active]).
+ * Not accessibility-sensitive: password managers that fill through accessibility must keep working here.
+ */
 @Composable
 fun SecureScreen(active: Boolean = true) {
     DisposableEffect(active) {
         if (active) ScreenPrivacy.add()
         onDispose { if (active) ScreenPrivacy.remove() }
     }
-    if (active) ShieldScreen()
+    if (active) ShieldScreen(sensitiveData = false)
 }
 
 /**
