@@ -41,7 +41,11 @@ import java.util.concurrent.TimeUnit
 class AppContainer(val context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /** "Music on this phone": answers requests for the local library inside the app, before any network. */
+    val localServer = com.vknxworks.navictrl.data.local.LocalServer(context)
+
     val http: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(localServer)
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)

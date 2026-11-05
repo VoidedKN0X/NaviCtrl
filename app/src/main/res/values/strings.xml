@@ -394,4 +394,10 @@
     <string name="queue_sync_unknown_app">another app</string>
     <string name="queue_sync_continue">Continue here</string>
     <string name="queue_sync_keep">Keep this queue</string>
+    <!-- Music on this phone -->
+    <string name="music_on_this_phone">Music on this phone</string>
+    <string name="no_server_label">NO SERVER?</string>
+    <string name="use_music_on_this_phone">Use music on this phone</string>
+    <string name="music_on_this_phone_sub">Plays the songs stored on this phone, with favourites, playlists and search, without a Navidrome server. You can add a server later in Settings.</string>
+    <string name="music_permission_denied">NaviCtrl needs the Music and audio permission to play the songs on this phone. Tap the button again to open its permissions.</string>
 </resources>

@@ -39,8 +39,16 @@ data class Account(
     val isAdmin: Boolean = false,
 ) {
     val key: String get() = "$serverUrl|$username"
-    val serverName: String get() = Uri.parse(serverUrl).host ?: serverUrl
-    val isEncrypted: Boolean get() = serverUrl.startsWith("https://", ignoreCase = true)
+
+    /** "Music on this phone" instead of a Navidrome server. */
+    val isLocal: Boolean get() = com.vknxworks.navictrl.data.local.LocalServer.isLocal(serverUrl)
+    val serverName: String get() = if (isLocal) str(R.string.music_on_this_phone) else Uri.parse(serverUrl).host ?: serverUrl
+
+    /** The address to show: the server's, or "On this phone". */
+    val displayUrl: String get() = if (isLocal) str(R.string.on_this_phone) else serverUrl
+
+    /** Nothing leaves the phone for the local library, so it never counts as an unencrypted connection. */
+    val isEncrypted: Boolean get() = isLocal || serverUrl.startsWith("https://", ignoreCase = true)
 }
 
 /**
@@ -260,6 +268,30 @@ class SessionManager(
         }
     }
 
+    /**
+     * Adds (or switches to) "Music on this phone": the songs stored on the phone, played without a server. Needs the
+     * music permission, which the sign-in screen asks for first.
+     */
+    suspend fun signInLocal(): Account {
+        val lib = com.vknxworks.navictrl.data.local.LocalServer
+        _accounts.value.firstOrNull { it.isLocal }?.let { existing ->
+            context.appDataStore.edit { it[activeKey] = existing.key }
+            activate(existing)
+            return existing
+        }
+        val client = SubsonicClient(lib.BASE_URL, lib.USER, lib.PASSWORD, http)
+        val account = Account(
+            serverUrl = client.baseUrl,
+            username = lib.USER,
+            passwordEnc = storePassword(lib.PASSWORD),
+            serverVersion = null,
+            isAdmin = false,
+        )
+        persist(_accounts.value.filterNot { it.key == account.key } + account, account.key)
+        activate(account, client)
+        return account
+    }
+
     private fun Throwable.isTlsProblem(): Boolean {
         var t: Throwable? = this
         while (t != null) {
@@ -296,7 +328,7 @@ class SessionManager(
     private fun clientFor(acc: Account): SubsonicClient? {
         val password = passwordOf(acc) ?: return null
         // Reconnects always use the saved address and scheme; never switch an https account to http.
-        CleartextPolicy.allowServer(acc.serverUrl)
+        if (!acc.isLocal) CleartextPolicy.allowServer(acc.serverUrl)
         return SubsonicClient(acc.serverUrl, acc.username, password, http)
     }
 

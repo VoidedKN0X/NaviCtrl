@@ -33,6 +33,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -105,6 +106,34 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             } finally {
                 busy = false
             }
+        }
+    }
+
+    // "Music on this phone": the songs stored on the phone, without a server. Needs the music permission first.
+    var musicDenied by remember { mutableStateOf(false) }
+    fun useThisPhone() {
+        busy = true
+        error = null
+        scope.launch {
+            try {
+                c.sessions.signInLocal()
+                onDone()
+            } catch (e: Throwable) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                error = e.friendlyMessage()
+            } finally {
+                busy = false
+            }
+        }
+    }
+    val musicPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            musicDenied = false
+            useThisPhone()
+        } else {
+            musicDenied = true
         }
     }
 
@@ -205,6 +234,36 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                 stringResource(R.string.your_password_is_stored_encrypted_on),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            CtrlLabel(stringResource(R.string.no_server_label))
+            com.vknxworks.navictrl.ui.components.CtrlButton(
+                stringResource(R.string.use_music_on_this_phone),
+                onClick = {
+                    if (c.localServer.hasPermission()) {
+                        useThisPhone()
+                    } else if (musicDenied) {
+                        com.vknxworks.navictrl.ui.lock.AppLock.expectReturn()
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.fromParts("package", context.packageName, null))
+                                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        }
+                    } else {
+                        com.vknxworks.navictrl.ui.lock.AppLock.expectReturn()
+                        musicPermission.launch(android.Manifest.permission.READ_MEDIA_AUDIO)
+                    }
+                },
+                icon = Icons.Outlined.PhoneAndroid,
+                secondary = true,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                stringResource(if (musicDenied) R.string.music_permission_denied else R.string.music_on_this_phone_sub),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (musicDenied) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

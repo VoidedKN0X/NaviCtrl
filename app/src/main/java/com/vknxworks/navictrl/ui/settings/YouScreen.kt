@@ -127,7 +127,7 @@ fun YouScreen() {
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(acc.username, style = MaterialTheme.typography.headlineSmall, color = CtrlColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(acc.serverUrl, style = CtrlType.Mono, color = CtrlColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(acc.displayUrl, style = CtrlType.Mono, color = CtrlColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val sub = listOfNotNull(acc.serverName, acc.serverVersion?.let { stringResource(R.string.navidrome_x, it.substringBefore(' ')) }).joinToString("  ·  ")
                     if (sub.isNotBlank()) Text(sub, style = CtrlType.Mono, color = CtrlColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -146,7 +146,7 @@ fun YouScreen() {
             val status = scan.value
             Group(stringResource(R.string.server), footer = status?.lastScan?.let { stringResource(R.string.last_scanned_x, com.vknxworks.navictrl.ui.components.formatDate(it).orEmpty()) }) {
                 GroupRow(
-                    acc.serverUrl,
+                    acc.displayUrl,
                     listOfNotNull(
                         if (acc.isEncrypted) null else stringResource(R.string.not_encrypted_http),
                         status?.let { pluralStringResource(R.plurals.library_files, it.count.toInt(), NumberFormat.getIntegerInstance().format(it.count)) },

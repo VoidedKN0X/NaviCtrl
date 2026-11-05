@@ -33,7 +33,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 ## Requirements
 
 - Android 13 or newer, on a 64-bit ARM phone (nearly every phone from the last several years)
-- A Navidrome server
+- A Navidrome server, or music stored on the phone (**Use music on this phone** on the sign-in screen)
 - **Google-free and de-Googled:** no Google Play services, Firebase or other Google services, and the app never contacts Google. It works the same on de-Googled phones (GrapheneOS, CalyxOS, /e/OS, LineageOS without Google apps).
 
 ## Install
@@ -74,10 +74,13 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 | Wake lock | Keeping music and downloads going while the screen is off |
 | Change audio settings | The equalizer and bass boost on NaviCtrl's own playback |
 | Use biometrics | Optional fingerprint unlock for the app lock |
+| Music and audio (optional) | **Music on this phone**: playing the songs stored on the phone, only asked for when you choose it |
 
-NaviCtrl can't read your files, contacts, location or microphone. See [Privacy](#privacy) for what it sends and where.
+NaviCtrl can't read your contacts, location or microphone, or any of your files other than music (and those only after you choose Music on this phone). See [Privacy](#privacy) for what it sends and where.
 
 ## Getting started
+
+No server? Tap **Use music on this phone** on the sign-in screen to play the songs stored on the phone. Favourites, playlists and play counts for them are kept on the phone.
 
 1. Enter your Navidrome address, e.g. `https://music.example.com`.
 2. Sign in with your Navidrome username and password.

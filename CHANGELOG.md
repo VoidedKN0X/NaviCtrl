@@ -4,6 +4,22 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.8.0 (2026-11-05)
+
+NaviCtrl can now play the music stored on your phone, without a Navidrome server.
+
+### New
+
+- **Music on this phone.** The sign-in screen has a new **Use music on this phone** button. It asks for the Music and audio permission, then shows the songs on your phone in every tab: all songs (sorted by title, date added, artist or album), albums and artists with their artwork, favourites, playlists and search. Songs play straight from the phone's storage, so there is no streaming, transcoding or playback cache for them.
+- **Favourites, ratings, play counts and playlists for your own music** are kept in NaviCtrl's private storage on the phone. Recently played and most played albums work from those play counts.
+- **Both at once:** you can add "Music on this phone" next to your Navidrome servers and switch between them in Settings, like between servers. The sign-in screen in Settings also offers it.
+- Recordings, ringtones and notification sounds are left out of the library; only music files are shown.
+
+### Changed
+
+- The account list and the You page show "On this phone" instead of an address for the music on this phone, and never mark it as unencrypted (nothing leaves the phone).
+- **New permission: Music and audio** (`READ_MEDIA_AUDIO`). It's only asked for when you tap **Use music on this phone**; NaviCtrl works with your servers without it.
+
 ## Project updates (2026-11-03)
 
 ### Project

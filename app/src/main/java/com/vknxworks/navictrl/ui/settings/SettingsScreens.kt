@@ -322,7 +322,7 @@ fun AccountsScreen() {
                     val isActive = a.key == active?.account?.key
                     GroupRow(
                         a.username,
-                        if (a.isEncrypted) a.serverUrl else stringResource(R.string.x_not_encrypted_http, a.serverUrl),
+                        if (a.isEncrypted) a.displayUrl else stringResource(R.string.x_not_encrypted_http, a.serverUrl),
                         onClick = if (isActive) null else {
                             {
                                 c.music.reset()

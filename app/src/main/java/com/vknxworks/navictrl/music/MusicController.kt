@@ -247,7 +247,10 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val local = c.downloads.completedFile(song.id)
         val s = c.settings.settings.value
         val kbps = if (c.isOnCellular()) s.mobileBitrate else s.wifiBitrate
-        val uri = local?.let { Uri.fromFile(it).toString() } ?: client.streamUrl(song.id, kbps, s.format.param)
+        val uri = local?.let { Uri.fromFile(it).toString() }
+            // Music on this phone plays the file itself: no transcoding, no playback cache.
+            ?: if (com.vknxworks.navictrl.data.local.LocalServer.isLocal(client.baseUrl)) com.vknxworks.navictrl.data.local.LocalServer.contentUri(song.id).toString()
+            else client.streamUrl(song.id, kbps, s.format.param)
         val extras = Bundle().apply {
             putString("albumId", song.albumId)
             putString("artistId", song.artistId)
