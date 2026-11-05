@@ -4,6 +4,20 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.8.1 (2026-11-05)
+
+A security and privacy check of the whole app and its repo. NaviCtrl works exactly as before.
+
+### Security
+
+- **Release builds no longer write debug or info messages to the phone's log**, from NaviCtrl or from the libraries it uses (such as the music player). NaviCtrl itself never logged your password, server address or what you play, and now nothing from its libraries ends up there either.
+
+### Project
+
+- **Build checks:** every build now verifies that the Gradle wrapper is an official Gradle release, and checks that no Google Play services, Firebase, ML Kit, Play Core or Tink library has made it into the app.
+- **Repo:** signing keys, keystore settings and Google service files are ignored by git, so they can't be committed by accident.
+- **README:** the permissions table now also lists **Run at startup** (picking up waiting downloads after a restart), the Privacy section lists every place NaviCtrl connects to and says it's Google-free with no update check, and the Ctrl series list has every app in the series, including CallCtrl, ClockCtrl, ContactCtrl, DateCtrl, LijnCtrl, MailCtrl, RecorderCtrl and TextCtrl.
+
 ## v0.8.0 (2026-11-05)
 
 NaviCtrl can now play the music stored on your phone, without a Navidrome server.
