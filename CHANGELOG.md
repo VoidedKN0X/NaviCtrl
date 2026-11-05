@@ -4,6 +4,14 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.8.2 (2026-11-05)
+
+A small security fix. NaviCtrl works exactly as before, including plain HTTP to your own Navidrome servers on your home network or over Tailscale.
+
+### Security
+
+- **A redirect can no longer move an unencrypted connection to another server.** Plain HTTP is only used for a Navidrome server address you chose after the "unencrypted" warning. Until now that check looked only at the address a request started at, so if your server (or something between you and it) answered with a redirect to a different address, NaviCtrl followed it over plain HTTP. Every step of a redirect now has to be an address you allowed for HTTP; otherwise the request stops with the "blocked an unencrypted connection" error. Redirects within your own servers, and redirects up to HTTPS, keep working.
+
 ## v0.8.1 (2026-11-05)
 
 A security and privacy check of the whole app and its repo. NaviCtrl works exactly as before.
