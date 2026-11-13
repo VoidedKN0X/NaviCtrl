@@ -22,8 +22,8 @@ android {
         minSdk = 35
         targetSdk = 36
         // Bump both to publish a new release (see CHANGELOG.md).
-        versionCode = 43
-        versionName = "0.8.7"
+        versionCode = 44
+        versionName = "0.9.0"
         // 64-bit ARM phones only (arm64-v8a), like every Ctrl app.
         ndk { abiFilters += listOf("arm64-v8a") }
 
@@ -80,6 +80,10 @@ android {
         includeInBundle = false
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     lint {
         abortOnError = false
         checkReleaseBuilds = false
@@ -132,4 +136,6 @@ dependencies {
     implementation(libs.media3.datasource.okhttp)
     implementation(libs.media3.session)
     implementation(libs.androidx.concurrent.futures) // futures for Media3 callbacks
+
+    testImplementation(libs.junit)
 }

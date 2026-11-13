@@ -12,6 +12,7 @@ import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.appDataStore
 import com.vknxworks.navictrl.data.auth.SessionManager
 import com.vknxworks.navictrl.data.download.DownloadRepository
+import com.vknxworks.navictrl.data.lyrics.LyricsRepository
 import com.vknxworks.navictrl.data.net.CleartextPolicy
 import com.vknxworks.navictrl.data.net.RedirectGuard
 import com.vknxworks.navictrl.data.library.StarStore
@@ -51,11 +52,10 @@ class AppContainer(val context: Context) {
         .writeTimeout(60, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .addInterceptor { chain ->
-            chain.proceed(
-                chain.request().newBuilder()
-                    .header("User-Agent", "NaviCtrl/${BuildConfig.VERSION_NAME} (Android)")
-                    .build()
-            )
+            val req = chain.request()
+            // Requests that name NaviCtrl their own way (LRCLIB asks for the project's address) keep it.
+            if (req.header("User-Agent") != null) chain.proceed(req)
+            else chain.proceed(req.newBuilder().header("User-Agent", "NaviCtrl/${BuildConfig.VERSION_NAME} (Android)").build())
         }
         // Plain HTTP only to the user's own server (after they chose it), and never via a redirect
         // from an HTTPS request.
@@ -75,6 +75,7 @@ class AppContainer(val context: Context) {
     val sessions = SessionManager(context, http, vault, appScope)
     val stars = StarStore(context, sessions, appScope)
     val downloads = DownloadRepository(context, appScope, sessions, settings, http)
+    val lyrics = LyricsRepository(context, http, sessions, settings)
     val music by lazy { MusicController(context, this) }
 
     private val _playlistEdits = MutableStateFlow(0)
@@ -96,7 +97,7 @@ class AppContainer(val context: Context) {
 
     /**
      * Signs out of the account [key] and clears what the app kept for it on the phone apart from
-     * downloads: its songs in the playback cache, cached artwork and its saved queue.
+     * downloads: its songs in the playback cache, cached artwork and lyrics, and its saved queue.
      */
     suspend fun signOut(key: String) {
         sessions.signOut(key)
@@ -109,6 +110,7 @@ class AppContainer(val context: Context) {
                 }
             }
             runCatching { MusicController.forgetSavedQueue(context, key) }
+            runCatching { lyrics.forgetAccount(key) }
             runCatching {
                 SingletonImageLoader.get(context).let { loader ->
                     loader.memoryCache?.clear()
@@ -145,6 +147,7 @@ class AppContainer(val context: Context) {
         if (MusicService.running) runCatching { music.reset() }
         val keys = sessions.accounts.value.map { it.key }
         downloads.deleteEverything()
+        runCatching { lyrics.forgetEverything() }
         sessions.forgetAllAccounts()
         withContext(Dispatchers.IO) {
             runCatching { playbackCache?.let { cache -> cache.keys.toList().forEach(cache::removeResource) } }

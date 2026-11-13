@@ -162,8 +162,21 @@ data class StructuredLyrics(
     val line: List<LyricLine> = emptyList(),
 )
 
-/** Lyrics ready to show: lines with an optional start time in ms. */
-data class Lyrics(val synced: Boolean, val lines: List<LyricLine>)
+/** Where a song's lyrics came from. */
+@Serializable
+enum class LyricsSource { SERVER, LRCLIB }
+
+/**
+ * Lyrics ready to show: lines with an optional start time in ms, sorted by time when [synced].
+ * [instrumental] marks a song LRCLIB knows has no words (then [lines] is empty).
+ */
+@Serializable
+data class Lyrics(
+    val synced: Boolean,
+    val lines: List<LyricLine>,
+    val source: LyricsSource = LyricsSource.SERVER,
+    val instrumental: Boolean = false,
+)
 
 @Serializable
 data class ScanStatus(val scanning: Boolean = false, val count: Long = 0, val folderCount: Long = 0, val lastScan: String? = null)

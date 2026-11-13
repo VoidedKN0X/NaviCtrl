@@ -85,6 +85,7 @@ import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.Compress
 import androidx.compose.material.icons.outlined.LinearScale
 import androidx.compose.material.icons.outlined.SwapCalls
+import androidx.compose.material.icons.automirrored.outlined.Subject
 import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.Group
 import com.vknxworks.navictrl.ui.components.GroupChoice
@@ -105,6 +106,9 @@ import androidx.compose.ui.res.pluralStringResource
 private val STREAM_QUALITY: List<Pair<Int, String>>
     @Composable get() = listOf(0 to stringResource(R.string.original_files)) +
         listOf(320, 256, 192, 128, 96).map { it to stringResource(R.string.x_kbps, it) }
+private val DOWNLOAD_LIMITS: List<Pair<Int, String>>
+    @Composable get() = listOf(0 to stringResource(R.string.no_limit)) +
+        listOf(1, 2, 4, 8, 16, 32, 64).map { it * 1024 to stringResource(R.string.x_gb, it) }
 private val CACHE_SIZES: List<Pair<Int, String>>
     @Composable get() = listOf(0 to stringResource(R.string.off), 512 to stringResource(R.string.x_mb, 512)) +
         listOf(1, 2, 4, 8).map { it * 1024 to stringResource(R.string.x_gb, it) }
@@ -176,9 +180,19 @@ fun SettingsScreen() {
                 modifier = Modifier.padding(horizontal = Gutter + 4.dp),
             )
 
-            Group(stringResource(R.string.downloads)) {
+            Group(stringResource(R.string.downloads), footer = stringResource(R.string.downloads_settings_footer)) {
                 GroupChoice(stringResource(R.string.download_quality), STREAM_QUALITY, s.downloadBitrate) { v -> update { it.copy(downloadBitrate = v) } }
+                if (s.downloadBitrate > 0) {
+                    GroupChoice(stringResource(R.string.download_format), TranscodeFormat.entries.map { it to it.label }, s.downloadFormat) { v -> update { it.copy(downloadFormat = v) } }
+                }
+                GroupChoice(stringResource(R.string.download_limit), DOWNLOAD_LIMITS, s.downloadLimitMb, fallbackLabel = stringResource(R.string.x_mb, s.downloadLimitMb)) { v -> update { it.copy(downloadLimitMb = v) } }
                 GroupSwitch(stringResource(R.string.download_on_wi_fi_only), checked = s.downloadWifiOnly) { v -> update { it.copy(downloadWifiOnly = v) } }
+            }
+
+            Group(stringResource(R.string.lyrics), footer = stringResource(R.string.lyrics_online_footer)) {
+                GroupSwitch(stringResource(R.string.lyrics_online), stringResource(R.string.lyrics_online_subtitle), s.lyricsOnline, icon = Icons.AutoMirrored.Outlined.Subject) { v ->
+                    update { it.copy(lyricsOnline = v) }
+                }
             }
 
             Group(stringResource(R.string.listening_history), footer = stringResource(R.string.navidrome_passes_plays_on_to_last)) {
@@ -399,6 +413,16 @@ fun DownloadsScreen() {
                     Modifier.padding(horizontal = Gutter),
                     maxLines = 2,
                 )
+                val limitMb = c.settings.settings.collectAsStateWithLifecycle().value.downloadLimitMb
+                if (limitMb > 0) {
+                    val usedAll = all.filter { it.status == DownloadStatus.DONE }.sumOf { it.bytes }
+                    CtrlLabel(
+                        stringResource(R.string.download_limit_used, formatBytes(usedAll), formatBytes(limitMb * 1024L * 1024L)),
+                        Modifier.padding(start = Gutter, end = Gutter, top = 6.dp),
+                        maxLines = 2,
+                    )
+                    CtrlProgressBar((usedAll.toFloat() / (limitMb * 1024f * 1024f)).coerceIn(0f, 1f), Modifier.padding(start = Gutter, end = Gutter, top = 6.dp))
+                }
             }
             if (pending.isNotEmpty()) {
                 item(key = "pending-h") {

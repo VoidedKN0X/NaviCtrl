@@ -400,4 +400,24 @@
     <string name="use_music_on_this_phone">Use music on this phone</string>
     <string name="music_on_this_phone_sub">Plays the songs stored on this phone, with favourites, playlists and search, without a Navidrome server. You can add a server later in Settings.</string>
     <string name="music_permission_denied">NaviCtrl needs the Music and audio permission to play the songs on this phone. Tap the button again to open its permissions.</string>
+    <!-- Lyrics: server first, LRCLIB when the server has none -->
+    <string name="lyrics_from_server">FROM YOUR SERVER</string>
+    <string name="lyrics_from_lrclib">FROM LRCLIB.NET</string>
+    <string name="lyrics_search_again">Search again</string>
+    <string name="lyrics_instrumental">Instrumental</string>
+    <string name="lyrics_instrumental_body">LRCLIB lists this song as having no words.</string>
+    <string name="lyrics_none_online">Neither your server nor LRCLIB has lyrics for this song. NaviCtrl looks again in a week, or tap Search again.</string>
+    <string name="lyrics_jump_here">Play from this line</string>
+    <string name="lyrics_online">Find lyrics online (LRCLIB)</string>
+    <string name="lyrics_online_subtitle">When your server has no lyrics for a song, look them up on lrclib.net</string>
+    <string name="lyrics_online_footer">Only the song\'s title, artist, album and length are sent to lrclib.net, a free, open lyrics database. Nothing about you or your server. Lyrics are kept on the phone, so each song is looked up once. Never used for music on this phone.</string>
+    <!-- Downloads -->
+    <string name="downloads_settings_footer">Downloads that lose their connection carry on where they stopped once the phone is back online.</string>
+    <string name="download_format">Download format</string>
+    <string name="download_limit">Space for downloads</string>
+    <string name="no_limit">No limit</string>
+    <string name="download_limit_reached">Not enough room: downloads may use %1$s (Settings &gt; Downloads)</string>
+    <string name="download_limit_used">%1$s of %2$s used</string>
+    <string name="show_downloaded_only">Show downloaded songs only</string>
+    <string name="show_all_songs">Show all songs</string>
 </resources>

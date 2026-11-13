@@ -68,6 +68,9 @@ import com.vknxworks.navictrl.ui.components.LoadingView
 import com.vknxworks.navictrl.ui.components.LocalBottomClearance
 import com.vknxworks.navictrl.ui.components.MessageView
 import com.vknxworks.navictrl.ui.components.CtrlButton
+import com.vknxworks.navictrl.ui.components.CtrlSquareButton
+import com.vknxworks.navictrl.data.download.DownloadStatus
+import androidx.compose.material.icons.outlined.DownloadForOffline
 import com.vknxworks.navictrl.ui.components.CtrlChip
 import com.vknxworks.navictrl.ui.components.CtrlHeroCard
 import com.vknxworks.navictrl.ui.components.CtrlLabel
@@ -163,10 +166,18 @@ fun SongsScreen() {
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         TabTitle(stringResource(R.string.songs)) {
+            CtrlSquareButton(
+                Icons.Outlined.DownloadForOffline,
+                stringResource(if (settings.downloadedOnly) R.string.show_all_songs else R.string.show_downloaded_only),
+                onClick = { scope.launch { c.settings.update { it.copy(downloadedOnly = !it.downloadedOnly) } } },
+                active = settings.downloadedOnly,
+            )
+            Spacer(Modifier.width(8.dp))
             TopBarAction(Icons.AutoMirrored.Outlined.Sort, stringResource(R.string.sort_songs)) { sortSheet = true }
         }
         val total = pager.total
         when {
+            settings.downloadedOnly -> DownloadedSongs(sort, asc)
             total < 0 && pager.error != null -> ErrorView(pager.error!!) { refreshCount++ }
             total < 0 -> LoadingView()
             total == 0 -> MessageView(Icons.Outlined.MusicNote, stringResource(R.string.no_songs_yet), stringResource(R.string.once_navidrome_has_scanned_your_music))
@@ -246,6 +257,66 @@ fun SongsScreen() {
             scope.launch { c.settings.update { it.copy(songSort = newSort, songSortAscending = newAsc) } }
         }
     }
+}
+
+/** The Songs tab with "Downloaded only" on: the songs saved on the phone for this account, sorted the same way. */
+@Composable
+private fun DownloadedSongs(sort: SongSort, asc: Boolean) {
+    val c = LocalContext.current.container
+    val all by c.downloads.entries.collectAsStateWithLifecycle()
+    val songs = remember(all, sort, asc) { sortDownloaded(c.downloads.forActive(all).filter { it.status == DownloadStatus.DONE }.map { it.song }, sort, asc) }
+    if (songs.isEmpty()) {
+        MessageView(Icons.Outlined.DownloadForOffline, stringResource(R.string.no_downloads), stringResource(R.string.download_songs_albums_or_playlists_from))
+        return
+    }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
+        item(key = "header") {
+            CtrlHeroCard(
+                Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, bottom = 16.dp),
+                label = stringResource(R.string.downloaded),
+                trailingLabel = sortDescription(sort, asc),
+            ) {
+                Text(NumberFormat.getIntegerInstance().format(songs.size), style = CtrlType.BigNumber, color = CtrlColors.OnAccent, maxLines = 1)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    CtrlButton(
+                        stringResource(R.string.shuffle),
+                        onClick = { c.music.shuffle(songs) },
+                        icon = Icons.Filled.Shuffle,
+                        modifier = Modifier.weight(1f),
+                        height = 52.dp,
+                        containerColor = CtrlColors.OnAccent,
+                        contentColor = CtrlColors.Accent,
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    CtrlButton(
+                        stringResource(R.string.play),
+                        onClick = { c.music.play(songs) },
+                        icon = Icons.Filled.PlayArrow,
+                        height = 52.dp,
+                        containerColor = Color.Transparent,
+                        contentColor = CtrlColors.OnAccent,
+                        borderColor = CtrlColors.OnAccent,
+                    )
+                }
+            }
+        }
+        items(songs.size, key = { "dl-${songs[it].id}" }) { i ->
+            SongRow(songs[i], onClick = { c.music.play(songs, i) })
+        }
+    }
+}
+
+/** Sorts downloaded songs on the phone like the server sorts the full list. */
+internal fun sortDownloaded(songs: List<Song>, sort: SongSort, asc: Boolean): List<Song> {
+    val byText = Comparator<String?> { a, b -> String.CASE_INSENSITIVE_ORDER.compare(a.orEmpty(), b.orEmpty()) }
+    val inAlbum = compareBy<Song>({ it.discNumber ?: 0 }, { it.track ?: 0 })
+    val cmp: Comparator<Song> = when (sort) {
+        SongSort.TITLE -> compareBy(byText) { it.title }
+        SongSort.ARTIST -> compareBy<Song, String?>(byText) { it.artist }.thenBy(byText) { it.album }.then(inAlbum)
+        SongSort.ALBUM -> compareBy<Song, String?>(byText) { it.album }.then(inAlbum)
+        SongSort.DATE_ADDED -> compareBy { isoToEpochMs(it.created) ?: 0L }
+    }
+    return songs.sortedWith(if (asc) cmp else cmp.reversed())
 }
 
 private fun sortDescription(sort: SongSort, asc: Boolean): String = when (sort) {

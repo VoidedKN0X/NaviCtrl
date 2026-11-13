@@ -81,7 +81,19 @@ import com.vknxworks.navictrl.MainActivity
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.api.StarKind
 import com.vknxworks.navictrl.data.api.coverArtUrl
-import com.vknxworks.navictrl.data.api.lyrics
+import com.vknxworks.navictrl.data.api.LyricLine
+import com.vknxworks.navictrl.data.api.Lyrics
+import com.vknxworks.navictrl.data.api.LyricsSource
+import com.vknxworks.navictrl.ui.components.ErrorView
+import com.vknxworks.navictrl.ui.components.friendlyMessage
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.layout.PaddingValues
+import android.os.SystemClock
+import kotlin.coroutines.cancellation.CancellationException
 import com.vknxworks.navictrl.ui.components.ArtImage
 import com.vknxworks.navictrl.ui.components.Load
 import com.vknxworks.navictrl.ui.components.MessageView
@@ -104,7 +116,6 @@ import androidx.compose.material.icons.automirrored.outlined.QueueMusic
 import androidx.compose.material.icons.automirrored.outlined.Subject
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.Devices
-import com.vknxworks.navictrl.ui.components.rememberLoader
 import com.vknxworks.navictrl.ui.nav.LocalNavigator
 import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource
@@ -523,31 +534,102 @@ private fun QueueList(s: MusicState) {
 private fun LyricsView(s: MusicState) {
     val c = LocalContext.current.container
     val song = s.current ?: return
-    val loader = rememberLoader("lyrics-${song.id}") { c.api.lyrics(song) }
-    val lyrics = loader.value
-    if (lyrics == null || lyrics.lines.isEmpty()) {
-        MessageView(
-            Icons.Outlined.MusicNote,
-            if (loader.state is Load.Loading) stringResource(R.string.looking_for_lyrics) else stringResource(R.string.no_lyrics_for_this_song),
-            if (loader.state is Load.Loading) null else stringResource(R.string.navidrome_reads_lyrics_from_the_files),
-        )
-        return
+    val settings by c.settings.settings.collectAsStateWithLifecycle()
+    // Goes up with "Search again", which skips the cache.
+    var searches by remember(song.id) { mutableIntStateOf(0) }
+    val load by produceState<Load<Lyrics?>>(Load.Loading, song.id, searches) {
+        value = Load.Loading
+        value = try {
+            Load.Ok(c.lyrics.lyrics(song, refresh = searches > 0))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Load.Err(e.friendlyMessage())
+        }
     }
-    val currentIndex = if (lyrics.synced) lyrics.lines.indexOfLast { (it.start ?: Long.MAX_VALUE) <= s.positionMs } else -1
+    val lyrics = when (val l = load) { is Load.Ok -> l.value; else -> null }
+    val session by c.sessions.active.collectAsStateWithLifecycle()
+    val local = session?.account?.isLocal == true
+
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.lyrics), style = MaterialTheme.typography.titleLarge)
+                lyrics?.let {
+                    Text(
+                        stringResource(if (it.source == LyricsSource.LRCLIB) R.string.lyrics_from_lrclib else R.string.lyrics_from_server),
+                        style = CtrlType.Mono,
+                        color = CtrlColors.Muted,
+                    )
+                }
+            }
+            if (load !is Load.Loading) {
+                TextButton(onClick = { searches++ }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) {
+                    Icon(Icons.Outlined.Refresh, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.lyrics_search_again))
+                }
+            }
+        }
+        when {
+            load is Load.Loading -> MessageView(Icons.Outlined.MusicNote, stringResource(R.string.looking_for_lyrics))
+            load is Load.Err -> ErrorView((load as Load.Err).message, Modifier.weight(1f)) { searches++ }
+            lyrics?.instrumental == true -> MessageView(Icons.Outlined.MusicNote, stringResource(R.string.lyrics_instrumental), stringResource(R.string.lyrics_instrumental_body))
+            lyrics == null || lyrics.lines.isEmpty() -> MessageView(
+                Icons.Outlined.MusicNote,
+                stringResource(R.string.no_lyrics_for_this_song),
+                stringResource(if (settings.lyricsOnline && !local) R.string.lyrics_none_online else R.string.navidrome_reads_lyrics_from_the_files),
+            )
+            else -> LyricLines(lyrics, s.positionMs) { c.music.seekTo(it) }
+        }
+    }
+}
+
+/**
+ * The lines of [lyrics]. Synced lyrics follow playback: the current line is highlighted and kept
+ * about a third of the way down (unless you scrolled in the last few seconds), and tapping a line
+ * jumps there. Plain lyrics just scroll.
+ */
+@Composable
+private fun LyricLines(lyrics: Lyrics, positionMs: Long, onSeek: (Long) -> Unit) {
+    val currentIndex = if (lyrics.synced) currentLyricIndex(lyrics.lines, positionMs) else -1
     val listState = rememberLazyListState()
-    LaunchedEffect(currentIndex) { if (currentIndex > 2) listState.animateScrollToItem(currentIndex - 2) }
-    LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 12.dp)) {
-        itemsIndexed(lyrics.lines) { i, line ->
+    var userScrollAt by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(listState) {
+        listState.interactionSource.interactions.collect { if (it is DragInteraction.Start || it is DragInteraction.Stop) userScrollAt = SystemClock.elapsedRealtime() }
+    }
+    LaunchedEffect(currentIndex) {
+        if (currentIndex < 0 || SystemClock.elapsedRealtime() - userScrollAt < 4_000) return@LaunchedEffect
+        val viewport = listState.layoutInfo.viewportSize.height
+        listState.animateScrollToItem(currentIndex, scrollOffset = -(viewport / 3))
+    }
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 160.dp),
+    ) {
+        itemsIndexed(lyrics.lines, key = { i, _ -> i }) { i, line ->
             val active = i == currentIndex
+            val start = line.start
             Text(
                 line.value.ifBlank { "♪" },
                 style = MaterialTheme.typography.headlineSmall,
-                color = if (active || !lyrics.synced) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                color = when {
+                    !lyrics.synced -> MaterialTheme.colorScheme.onSurface
+                    active -> CtrlColors.AccentText
+                    i < currentIndex -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clickable(enabled = line.start != null) { line.start?.let { c.music.seekTo(it) } },
+                    .clip(CtrlShapes.Badge)
+                    .then(if (lyrics.synced && start != null) Modifier.clickable(onClickLabel = stringResource(R.string.lyrics_jump_here)) { onSeek(start) } else Modifier)
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
             )
         }
     }
 }
+
+/** The line being sung at [positionMs]: the last one that has started, or -1 before the first. */
+internal fun currentLyricIndex(lines: List<LyricLine>, positionMs: Long): Int =
+    lines.indexOfLast { (it.start ?: Long.MAX_VALUE) <= positionMs }

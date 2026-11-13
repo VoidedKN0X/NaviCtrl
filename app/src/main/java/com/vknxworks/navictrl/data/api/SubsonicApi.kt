@@ -1,5 +1,8 @@
 package com.vknxworks.navictrl.data.api
 
+import com.vknxworks.navictrl.data.lyrics.LrcParser
+import com.vknxworks.navictrl.data.lyrics.LyricsLookup
+import com.vknxworks.navictrl.data.lyrics.LyricsResolver
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -91,23 +94,23 @@ suspend fun SubsonicClient.scrobble(id: String, submission: Boolean, timeMs: Lon
     call("scrobble", listOf("id" to id, "submission" to submission, "time" to timeMs))
 }
 
-/** Synced lyrics when the server has them (OpenSubsonic), otherwise plain lyrics by artist and title. */
-suspend fun SubsonicClient.lyrics(song: Song): Lyrics? {
-    val structured = runCatching {
-        get("getLyricsBySongId", "lyricsList", LyricsList.serializer(), listOf("id" to song.id)).structuredLyrics
-    }.getOrDefault(emptyList())
-    val best = structured.firstOrNull { it.synced && it.line.isNotEmpty() } ?: structured.firstOrNull { it.line.isNotEmpty() }
-    if (best != null) {
-        return Lyrics(
-            synced = best.synced,
-            lines = best.line.map { l -> l.copy(start = l.start?.let { (it - best.offset).coerceAtLeast(0) }) },
-        )
+/**
+ * The server's lyrics for [song]: OpenSubsonic getLyricsBySongId (structured, synced lines) when the
+ * server advertises the songLyrics extension, otherwise the classic getLyrics by artist and title
+ * (plain text, which some servers fill with LRC; that is read as synced). Errors throw.
+ */
+suspend fun SubsonicClient.serverLyrics(song: Song): LyricsLookup {
+    if ("songLyrics" in extensions()) {
+        val structured = get("getLyricsBySongId", "lyricsList", LyricsList.serializer(), listOf("id" to song.id)).structuredLyrics
+        return LyricsResolver.fromStructured(structured)?.let { LyricsLookup.Found(it) } ?: LyricsLookup.None
     }
-    val plain = runCatching {
-        get("getLyrics", "lyrics", LegacyLyrics.serializer(), listOf("artist" to song.artist, "title" to song.title)).value
-    }.getOrNull()
-    if (plain.isNullOrBlank()) return null
-    return Lyrics(false, plain.lines().map { LyricLine(null, it) })
+    val artist = song.artist?.takeIf { it.isNotBlank() } ?: return LyricsLookup.None
+    val plain = try {
+        get("getLyrics", "lyrics", LegacyLyrics.serializer(), listOf("artist" to artist, "title" to song.title)).value
+    } catch (e: ApiException) {
+        if (e.code == 70) null else throw e
+    }
+    return LrcParser.parse(plain, LyricsSource.SERVER)?.let { LyricsLookup.Found(it) } ?: LyricsLookup.None
 }
 
 /** The play queue saved on the server, or null when there is none. */
@@ -140,16 +143,25 @@ suspend fun SubsonicClient.savePlayQueue(ids: List<String>, currentIndex: Int, p
     return window.size
 }
 
-/** True when the server takes API parameters in a POST body (OpenSubsonic formPost). Asked once per sign-in. */
+/** True when the server takes API parameters in a POST body (OpenSubsonic formPost). */
 private suspend fun SubsonicClient.supportsFormPost(): Boolean {
     formPost?.let { return it }
-    val names = runCatching {
+    return ("formPost" in extensions()).also { formPost = it }
+}
+
+/** The OpenSubsonic extensions the server advertises. Asked once per sign-in; empty on plain Subsonic servers. */
+suspend fun SubsonicClient.extensions(): Set<String> {
+    extensionNames?.let { return it }
+    val names = try {
         val r = call("getOpenSubsonicExtensions")
         val list = r["openSubsonicExtensions"]
-        if (list == null) emptyList()
-        else ApiJson.decodeFromJsonElement(kotlinx.serialization.builtins.ListSerializer(Extension.serializer()), list).map { it.name }
-    }.getOrDefault(emptyList())
-    return ("formPost" in names).also { formPost = it }
+        if (list == null) emptySet()
+        else ApiJson.decodeFromJsonElement(kotlinx.serialization.builtins.ListSerializer(Extension.serializer()), list).map { it.name }.toSet()
+    } catch (e: ApiException) {
+        // Not an OpenSubsonic server: it answers with an error. Network trouble isn't remembered.
+        emptySet()
+    }
+    return names.also { extensionNames = it }
 }
 
 suspend fun SubsonicClient.scanStatus(): ScanStatus = get("getScanStatus", "scanStatus", ScanStatus.serializer())

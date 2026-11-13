@@ -52,6 +52,14 @@ data class AppSettings(
     /** kbps for downloads; 0 = original files. */
     val downloadBitrate: Int = 0,
     val downloadWifiOnly: Boolean = true,
+    /** Format for transcoded downloads (when [downloadBitrate] isn't 0). */
+    val downloadFormat: TranscodeFormat = TranscodeFormat.MP3,
+    /** MB that downloads may take up on the phone; 0 = no limit. */
+    val downloadLimitMb: Int = 0,
+    /** The Songs tab only shows downloaded songs. */
+    val downloadedOnly: Boolean = false,
+    /** Look for lyrics on LRCLIB when the server has none (server accounts only). */
+    val lyricsOnline: Boolean = true,
     /** MB of streamed music to keep on the phone; 0 = off. Takes effect after a restart. */
     val cacheMb: Int = 1024,
     val scrobble: Boolean = true,
@@ -95,6 +103,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val format = stringPreferencesKey("format")
         val downloadBitrate = intPreferencesKey("download_bitrate")
         val wifiOnly = booleanPreferencesKey("download_wifi_only")
+        val downloadFormat = stringPreferencesKey("download_format")
+        val downloadLimit = intPreferencesKey("download_limit_mb")
+        val downloadedOnly = booleanPreferencesKey("downloaded_only")
+        val lyricsOnline = booleanPreferencesKey("lyrics_online")
         val cache = intPreferencesKey("cache_mb")
         val scrobble = booleanPreferencesKey("scrobble")
         val theme = stringPreferencesKey("theme")
@@ -141,6 +153,11 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         format = enumOr(this[K.format], TranscodeFormat.MP3),
         downloadBitrate = this[K.downloadBitrate] ?: 0,
         downloadWifiOnly = this[K.wifiOnly] ?: true,
+        // Before 0.9.0 downloads used the streaming format; that stays until another is picked.
+        downloadFormat = enumOr(this[K.downloadFormat] ?: this[K.format], TranscodeFormat.MP3),
+        downloadLimitMb = (this[K.downloadLimit] ?: 0).coerceAtLeast(0),
+        downloadedOnly = this[K.downloadedOnly] ?: false,
+        lyricsOnline = this[K.lyricsOnline] ?: true,
         cacheMb = this[K.cache] ?: 1024,
         scrobble = this[K.scrobble] ?: true,
         theme = enumOr(this[K.theme], ThemeChoice.SYSTEM),
@@ -173,6 +190,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.format] = s.format.name
             p[K.downloadBitrate] = s.downloadBitrate
             p[K.wifiOnly] = s.downloadWifiOnly
+            p[K.downloadFormat] = s.downloadFormat.name
+            p[K.downloadLimit] = s.downloadLimitMb
+            p[K.downloadedOnly] = s.downloadedOnly
+            p[K.lyricsOnline] = s.lyricsOnline
             p[K.cache] = s.cacheMb
             p[K.scrobble] = s.scrobble
             p[K.theme] = s.theme.name

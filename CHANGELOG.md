@@ -4,6 +4,24 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.9.0 (2026-11-13)
+
+Lyrics from the internet when your server has none, and more control over downloads.
+
+### New
+
+- **Lyrics found online.** When your Navidrome server has no lyrics for a song, NaviCtrl now looks them up on [LRCLIB](https://lrclib.net), a free, open lyrics database, and prefers synced lyrics that follow the music. Your server always comes first: synced lyrics from the song's tags or .lrc file (on servers that offer them), then its plain lyrics. Only the song's title, artist, album and length are sent to LRCLIB, nothing about you or your server. It's on by default and can be turned off under **Settings > Lyrics > Find lyrics online (LRCLIB)**. Music on this phone never goes online.
+- **Lyrics are kept on the phone**, so each song is looked up once and shows straight away next time, even offline. When nothing was found, NaviCtrl looks again after a week. **Search again** at the top of the lyrics looks right away (for example after adding lyrics on your server).
+- **The lyrics screen says where lyrics came from** (your server or LRCLIB), and songs LRCLIB knows have no words show as **Instrumental**.
+- **Downloaded only** in the Songs tab: the new download button next to Sort shows just the songs saved on the phone, sorted the same way, with Play and Shuffle. Tap it again for your whole library.
+- **Space for downloads** in **Settings > Downloads**: pick how much room downloads may use (1 to 64 GB, or no limit). The Downloads page shows how much of it is used, and a download that doesn't fit says so instead of filling the phone.
+- **Download format**: when downloads are converted to a lower quality, you can now pick MP3, Opus or AAC for them separately from streaming. It starts out as your streaming format.
+
+### Changed
+
+- **Synced lyrics follow the song more smoothly:** the line being sung is highlighted and kept a third of the way down the screen, lines already sung fade out, and if you scroll through the lyrics yourself they stay where you put them for a few seconds. Tap any line to play from there.
+- **Downloads carry on where they stopped.** When the connection drops (leaving Wi-Fi, a tunnel, the server restarting), the part already saved is kept and the download continues from there once the phone is back online, instead of failing and starting again. Original-quality downloads resume mid-file; converted ones start that song again, because the server converts them on the fly.
+- On servers that don't support OpenSubsonic, NaviCtrl no longer asks for synced lyrics it can't get, and plain lyrics that contain LRC timestamps now play synced.
 ## v0.8.7 (2026-11-13)
 
 ### Security

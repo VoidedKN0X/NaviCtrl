@@ -84,6 +84,9 @@ class SubsonicClient(
     /** Whether the server takes parameters in a POST body (OpenSubsonic formPost); null until asked. */
     @Volatile var formPost: Boolean? = null
 
+    /** The OpenSubsonic extensions the server advertises; null until asked (see extensions()). */
+    @Volatile var extensionNames: Set<String>? = null
+
     /** Like [call], but every parameter (auth included) goes in a form-encoded POST body (OpenSubsonic formPost). */
     suspend fun callForm(endpoint: String, params: List<Pair<String, Any?>>, client: String = CLIENT): JsonObject = withContext(Dispatchers.IO) {
         val salt = newSalt()

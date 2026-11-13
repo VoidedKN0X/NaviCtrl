@@ -17,12 +17,13 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Favourites tab** for songs, albums and artists
 - **Playlists tab** with your playlists and the ones shared on your server: play, shuffle or download them, make new ones, rename or delete your own, and remove songs
 - **Background playback** with lock screen and Bluetooth controls
-- **Synced lyrics**, sleep timer, and a mix of similar songs started from any song
+- **Synced lyrics** that follow the song (tap a line to jump there), from your server or, when it has none, from [LRCLIB](https://lrclib.net); kept on the phone so each song is looked up once
+- **Sleep timer**, and a mix of similar songs started from any song
 - **Up next queue** you can reorder; your last queue comes back after a restart
 - **Play queue sync between devices**: your queue, song and position are saved on your server, and NaviCtrl offers to continue a queue saved on another device or app (with where and when it was saved), or on request with **Resume from another device**
 - **Gapless playback**, **crossfade** (up to 12 seconds, skipped between songs that run on from the same album) and **ReplayGain** (track or album, with preamp and clipping prevention)
 - **Equalizer** with your phone's presets or your own band levels, and bass boost
-- **Downloads** for offline listening, and a cache of played songs
+- **Downloads** of songs, albums and playlists for offline listening, original or converted (MP3, Opus or AAC at the bitrate you pick), with Wi-Fi only, a space limit, resume after a dropped connection, and a **Downloaded only** view in the Songs tab; plus a cache of played songs
 - **Scrobbling** to Last.fm and ListenBrainz through Navidrome
 - **Album and artist pages**, search, and **Add to playlist** from any song or album
 - **Scan for new music** on your server from the app (admin accounts)
@@ -68,7 +69,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 
 | Permission | What it's for |
 | --- | --- |
-| Internet | Talking to your Navidrome server (music, artwork, lyrics, your library) |
+| Internet | Talking to your Navidrome server (music, artwork, lyrics, your library), and looking up lyrics on LRCLIB when your server has none (can be turned off) |
 | Network state | Picking the Wi-Fi or mobile data streaming quality, and waiting for Wi-Fi for downloads when you ask |
 | Notifications | The playback notification with its controls (Android asks you first) |
 | Foreground service and media playback service | Keeping music playing while NaviCtrl is in the background |
@@ -123,9 +124,10 @@ While the lock, PIN or sign-in screen or a "can't be undone" confirmation is sho
 
 ## Privacy
 
-**Telemetry-free.** NaviCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to your own Navidrome server: cover art, lyrics and similar songs all come through it, and scrobbles to Last.fm and ListenBrainz are sent by Navidrome, not by the app. Your password is stored encrypted on the phone (and with your app PIN while the app lock is on), because Navidrome's music API needs it to sign every request; it's only ever sent to your server: as a salted hash for music requests, and as is (over your server's connection) when signing in to Navidrome's own API for the Songs tab and admin features.
+**Telemetry-free.** NaviCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It talks to your own Navidrome server, and to one other service only for lyrics your server doesn't have (see below): cover art, similar songs and your server's lyrics all come through your server, and scrobbles to Last.fm and ListenBrainz are sent by Navidrome, not by the app. Your password is stored encrypted on the phone (and with your app PIN while the app lock is on), because Navidrome's music API needs it to sign every request; it's only ever sent to your server: as a salted hash for music requests, and as is (over your server's connection) when signing in to Navidrome's own API for the Songs tab and admin features.
 
 - **Servers:** only the Navidrome servers you sign in to. A redirect to another server never gets your sign-in, and plain HTTP is only used for a server you chose after the "unencrypted" warning. **Music on this phone** never goes online.
+- **Lyrics from LRCLIB:** when your server has no lyrics for a song, NaviCtrl asks [LRCLIB](https://lrclib.net) (a free, open lyrics database, no account). It sends only the song's title, artist, album and length, with a User-Agent naming NaviCtrl and this repo, as LRCLIB asks; never your server address, username or anything else about you. Each song is looked up once (the answer, including "none found" for a week, is kept on the phone). Turn it off under **Settings > Lyrics > Find lyrics online (LRCLIB)**. Music on this phone never uses it.
 - **Links:** the Support, Report a bug, Source code and Licence rows in About open in your browser only when you tap them; the app itself doesn't contact GitHub.
 - **No update check:** NaviCtrl never checks for updates by itself; Obtainium or the F-Droid client does that if you use one.
 - **Other apps** can't control playback or browse your library through NaviCtrl's music service; only NaviCtrl and the phone's own media controls (notification, lock screen, Bluetooth, car) can.
