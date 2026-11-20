@@ -107,9 +107,10 @@ fun AppRoot() {
                         starsFor = accountKey
                     }
                 }
-                // An encrypted file with your own data can't be opened: say so instead of showing empty lists.
-                val unreadable by c.dataUnreadable.collectAsStateWithLifecycle()
-                if (unreadable) UnreadableData() else MainScaffold()
+                // An encrypted file with your own data that can't be opened no longer stops the whole app:
+                // browsing, streaming and playback don't need it. The pages that show that data say what
+                // happened instead (UnreadableData below).
+                MainScaffold()
             }
         }
     }
@@ -119,18 +120,22 @@ fun AppRoot() {
  * The download list, or the favourites and playlists kept for music on this phone, are encrypted and can't be
  * opened: the key in the phone's secure storage is gone or changed, or the file is damaged. Nothing was deleted
  * or changed: say so, offer to try again, and only start empty when asked to, keeping the unreadable files aside.
+ *
+ * Shown where that data is used (the Downloads page, "Downloaded only" on the Songs tab, and Favourites and
+ * Playlists of music on this phone), not over the whole app: the rest keeps working.
  */
 @Composable
-private fun UnreadableData() {
+internal fun UnreadableData(modifier: Modifier = Modifier) {
     val c = LocalContext.current.container
     var confirm by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+    // On a tab the floating bar and mini player lie over the bottom of the page: keep "Start empty" above them.
+    Box(modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current)) {
         MessageView(
             Icons.Outlined.Lock,
             stringResource(R.string.unreadable_title),
             stringResource(R.string.unreadable_body),
             actionLabel = stringResource(R.string.unreadable_retry),
-            // In the app's own scope: this screen goes away as soon as the files open, which mustn't stop the work halfway.
+            // In the app's own scope: this message goes away as soon as the files open, which mustn't stop the work halfway.
             onAction = { c.appScope.launch { c.retryUnreadableData() } },
         )
         TextButton(onClick = { confirm = true }, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)) {
@@ -147,6 +152,26 @@ private fun UnreadableData() {
             confirm = false
             c.appScope.launch { c.startEmptyData() }
         }
+    }
+}
+
+/**
+ * Favourites and Playlists of "Music on this phone" come from `local_library.json`. When that file is encrypted
+ * and can't be opened, these pages say so instead of showing none; for a server account they are never affected.
+ */
+@Composable
+private fun LocalLibraryData(content: @Composable () -> Unit) {
+    val c = LocalContext.current.container
+    val session by c.sessions.active.collectAsStateWithLifecycle()
+    val unreadable by c.localServer.unreadable.collectAsStateWithLifecycle()
+    if (unreadable && session?.account?.isLocal == true) {
+        // What this page loaded while the file couldn't be opened is an empty list: drop it, so the page loads
+        // again as soon as the file opens ("Try again") or was set aside ("Start empty").
+        val loaded: com.vknxworks.navictrl.ui.components.LoaderStore = androidx.lifecycle.viewmodel.compose.viewModel()
+        loaded.map.clear()
+        UnreadableData(Modifier.statusBarsPadding())
+    } else {
+        content()
     }
 }
 
@@ -292,14 +317,14 @@ private fun PhoneLayout(
 private fun AppNavHost(navController: NavHostController) {
     NavHost(navController, startDestination = SongsRoute) {
         composable<SongsRoute> { SongsScreen() }
-        composable<PlaylistsRoute> { PlaylistsScreen() }
+        composable<PlaylistsRoute> { LocalLibraryData { PlaylistsScreen() } }
         composable<SearchRoute> { SearchScreen() }
         composable<YouRoute> { YouScreen() }
 
         composable<AlbumRoute> { AlbumScreen(it.toRoute<AlbumRoute>().id) }
         composable<ArtistRoute> { ArtistScreen(it.toRoute<ArtistRoute>().id) }
         composable<PlaylistRoute> { PlaylistScreen(it.toRoute<PlaylistRoute>().id) }
-        composable<FavouritesRoute> { FavouritesScreen() }
+        composable<FavouritesRoute> { LocalLibraryData { FavouritesScreen() } }
         composable<NowPlayingRoute> { NowPlayingScreen() }
         composable<DownloadsRoute> { DownloadsScreen() }
         composable<SettingsRoute> { SettingsScreen() }

@@ -141,8 +141,14 @@ class DownloadRepository(
     }
 
     fun enqueue(songs: List<Song>) {
-        // The list can't be opened, so a new download couldn't be saved in it either.
-        if (_unreadable.value) return
+        // The list can't be opened, so a new download couldn't be saved in it either. Say so: the rest of the
+        // app keeps working now, so the download buttons can be reached.
+        if (_unreadable.value) {
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                android.widget.Toast.makeText(context, str(R.string.unreadable_download_blocked), android.widget.Toast.LENGTH_LONG).show()
+            }
+            return
+        }
         val key = activeKey() ?: return
         val wifiOnly = settings.settings.value.downloadWifiOnly
         val fresh = songs.distinctBy { it.id }.filter { s -> _entries.value.none { it.song.id == s.id && it.accountKey == key && it.status != DownloadStatus.FAILED } }
@@ -162,6 +168,8 @@ class DownloadRepository(
     fun retry(entry: DownloadEntry) = enqueue(listOf(entry.song))
 
     fun remove(ids: Collection<String>) {
+        // The list can't be opened: it isn't known which files belong to what, so nothing is removed.
+        if (_unreadable.value) return
         val key = activeKey() ?: return
         val wm = WorkManager.getInstance(context)
         ids.forEach { wm.cancelUniqueWork(workName(key, it)) }
@@ -205,6 +213,10 @@ class DownloadRepository(
         // The worker may start the process cold; wait until saved state is read.
         loaded.first { it }
         sessions.loaded.first { it }
+        // The list is encrypted and can't be opened right now: nothing of it is known and nothing may be written
+        // to it, so no file is touched either. Try again later; this download is picked up once the list opens
+        // ("Try again"), and ends below when it's no longer in the list ("Start empty").
+        if (_unreadable.value) return Outcome.RETRY
         // NaviCtrl restarted while the app lock is on: the password stays sealed until you unlock, so wait.
         if (sessions.isLocked && sessions.active.value == null) return Outcome.RETRY
         sessions.ready.first { it }

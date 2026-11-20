@@ -422,6 +422,8 @@
     <string name="show_all_songs">Show all songs</string>
     <string name="unreadable_title">Can\'t open your saved data</string>
     <string name="unreadable_body">The list of your downloads, and the favourites and playlists of music on this phone, are stored encrypted on this phone, and the key that opens them is missing from the phone\'s secure storage or no longer matches. Nothing has been deleted or changed. Try again first; restarting the phone can help too.</string>
+    <string name="unreadable_download_blocked">Your download list can\'t be opened, so nothing new can be downloaded. Open Downloads to see what you can do.</string>
+    <string name="unreadable_downloads_row">Can\'t be opened: tap to see why</string>
     <string name="unreadable_retry">Try again</string>
     <string name="unreadable_start_empty">Start empty</string>
     <string name="unreadable_start_empty_title">Start empty?</string>

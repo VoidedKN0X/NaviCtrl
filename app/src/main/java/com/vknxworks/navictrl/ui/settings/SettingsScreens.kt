@@ -382,6 +382,8 @@ fun AccountsScreen() {
 fun DownloadsScreen() {
     val c = LocalContext.current.container
     val all by c.downloads.entries.collectAsStateWithLifecycle()
+    // The download list is encrypted and can't be opened.
+    val unreadable by c.downloads.unreadable.collectAsStateWithLifecycle()
     var clearing by remember { mutableStateOf(false) }
     val mine = c.downloads.forActive(all)
     val done = mine.filter { it.status == DownloadStatus.DONE }
@@ -392,10 +394,16 @@ fun DownloadsScreen() {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ScreenTopBar(stringResource(R.string.downloads)) {
-                if (mine.isNotEmpty()) TextButton(onClick = { clearing = true }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) { Text(stringResource(R.string.remove_all)) }
+                if (mine.isNotEmpty() && !unreadable) TextButton(onClick = { clearing = true }, colors = ButtonDefaults.textButtonColors(contentColor = CtrlColors.AccentText)) { Text(stringResource(R.string.remove_all)) }
             }
         },
     ) { padding ->
+        // Not "no downloads": say what happened, with "Try again" and "Start empty". Only the pages that show
+        // downloads say it; the rest of the app keeps working.
+        if (unreadable) {
+            com.vknxworks.navictrl.ui.nav.UnreadableData(Modifier.padding(padding))
+            return@Scaffold
+        }
         if (mine.isEmpty()) {
             Box(Modifier.padding(padding).fillMaxSize()) {
                 MessageView(

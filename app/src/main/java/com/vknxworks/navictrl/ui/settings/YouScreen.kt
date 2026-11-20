@@ -102,6 +102,8 @@ fun YouScreen() {
     var confirmSignOut by remember { mutableStateOf(false) }
     val mine = c.downloads.forActive(downloads)
     val ready = mine.count { it.status == DownloadStatus.DONE }
+    // The download list can't be opened: the row says so instead of "nothing saved"; its page explains.
+    val downloadsUnreadable by c.downloads.unreadable.collectAsStateWithLifecycle()
     fun open(url: String) {
         runCatching { com.vknxworks.navictrl.ui.lock.AppLock.expectReturn(); context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)) }
     }
@@ -136,7 +138,7 @@ fun YouScreen() {
             Group {
                 GroupRow(
                     stringResource(R.string.downloads),
-                    if (ready == 0) stringResource(R.string.keep_music_on_this_phone_for) else pluralStringResource(R.plurals.downloads_ready, ready, ready, formatBytes(c.downloads.usedBytes(downloads))),
+                    if (downloadsUnreadable) stringResource(R.string.unreadable_downloads_row) else if (ready == 0) stringResource(R.string.keep_music_on_this_phone_for) else pluralStringResource(R.plurals.downloads_ready, ready, ready, formatBytes(c.downloads.usedBytes(downloads))),
                     icon = Icons.Outlined.Download,
                     showChevron = true,
                     onClick = { nav.navigate(DownloadsRoute) },

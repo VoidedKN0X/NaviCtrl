@@ -266,6 +266,12 @@ private fun DownloadedSongs(sort: SongSort, asc: Boolean) {
     val c = LocalContext.current.container
     val all by c.downloads.entries.collectAsStateWithLifecycle()
     val songs = remember(all, sort, asc) { sortDownloaded(c.downloads.forActive(all).filter { it.status == DownloadStatus.DONE }.map { it.song }, sort, asc) }
+    // The download list is encrypted and can't be opened: not "no downloads".
+    val unreadable by c.downloads.unreadable.collectAsStateWithLifecycle()
+    if (unreadable) {
+        com.vknxworks.navictrl.ui.nav.UnreadableData()
+        return
+    }
     if (songs.isEmpty()) {
         MessageView(Icons.Outlined.DownloadForOffline, stringResource(R.string.no_downloads), stringResource(R.string.download_songs_albums_or_playlists_from))
         return

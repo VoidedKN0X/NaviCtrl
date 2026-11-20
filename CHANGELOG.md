@@ -4,6 +4,15 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing here had been run on a phone when it was pushed.
+
+### Changed
+
+- **Saved data that can't be opened no longer blocks the whole app.** Since 0.10.0 the list of your downloads and, for **Music on this phone**, your favourites, ratings, play counts and playlists are encrypted on the phone. When one of them couldn't be opened (the key in the phone's secure storage was lost, or the file was damaged) NaviCtrl showed "Can't open your saved data" over everything, so you couldn't browse or play music either. Now that message, with the same **Try again** and **Start empty** (and the same question before starting empty), only appears where the data is used: on the **Downloads** page and under **Downloaded only** on the Songs tab for the download list, and on the **Favourites** and **Playlists** tabs of Music on this phone for its saved favourites and playlists. Everything else (songs, albums, artists, search, streaming, the queue, lyrics) works as usual, and a server account is not affected by a problem with the file of Music on this phone. The Downloads row on the You page says "Can't be opened: tap to see why" instead of a count.
+- **What stays exactly as careful as before while a file can't be opened:** nothing is deleted, renamed or written over until you choose **Start empty** (which still only sets the unreadable files aside). A song you downloaded earlier streams from your server instead of playing from the phone, and can't be played offline until the list opens again. Tapping **Download** shows a short notice instead of starting a download, because it couldn't be saved in the list, and **Remove download** does nothing. A download that Android restarts in the background waits and tries again later, without touching any file; it carries on once the list opens, and ends if you start empty. For Music on this phone, hearts, ratings, play counts and playlist changes made while its file can't be opened are not kept.
+
 ## v0.10.0 (2026-11-20)
 
 **This release encrypts some of what the app stores on the phone. An older version cannot read it afterwards, so export or back up anything you need before you update (details below).** Built and checked by CI only: nothing in this release had been run on a phone when it was published.
