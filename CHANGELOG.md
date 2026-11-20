@@ -4,6 +4,24 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: none of this has been run on a phone yet.
+
+### Security
+
+- **What NaviCtrl keeps about your listening is now encrypted on the phone.** Four kinds of files in the app's private storage held readable text: the list of your downloads with every song's title, artist and album (`downloads.json`), the saved play queue with the same details (`queue.json`), cached lyrics (`cache/lyrics`), and, for **Music on this phone**, your favourites, ratings, play counts and playlists (`local_library.json`). They are now encrypted with AES-256-GCM. The key is 32 random bytes kept in the app's private folder (`data.key`), itself encrypted by a key in the phone's secure hardware (Android Keystore; StrongBox when the phone has it) that can't be copied off the phone. It needs no PIN or fingerprint, so downloads and music keep working in the background. This protects those files when they are copied off the phone; it does not protect against someone who can use the unlocked phone or a compromised app while it runs, and it works the same with the app lock on or off.
+- **What is not encrypted, and why.** Downloaded songs and half-finished downloads (the player opens the files directly), the playback cache of streamed songs and its small index database (Media3 reads and writes them itself, in pieces, while playing), and cached cover art (it is downloaded again when needed) stay as they were. Their file names are hashes or numbers, not titles. Also unchanged: your settings and the list of accounts (the passwords in it were already encrypted), and the small database Android's WorkManager keeps for queued downloads. Songs in the phone's own music library are not NaviCtrl's files.
+- **Moving to the encrypted files is automatic and can't lose them.** The first time a file from before this version is read, it is copied in encrypted form to a temporary file, written to disk, read back, decrypted and compared with the original, and only then put in the original's place in one step. If anything goes wrong, or the app is stopped halfway, the original file stays in use and it is tried again the next time. The download list is done at the first start, the saved queue the first time it is restored, a lyric the next time its song is shown, and the file for music on this phone the first time that library is used. On a phone where the secure hardware doesn't work, the files simply stay as they were.
+- **If the key is ever lost** (for example the phone's secure storage was reset), NaviCtrl does not start empty and does not overwrite your download list or the favourites and playlists of music on this phone: it shows "Can't open your saved data" with **Try again**. **Start empty** is there for when that doesn't help: what can't be opened is renamed (`downloads.json.unreadable`, `local_library.json.unreadable`), not deleted, and downloaded songs stay on the phone without being listed. The saved queue and cached lyrics are only conveniences: ones that can't be opened are dropped and made again (the queue at the next save, lyrics by looking them up again).
+- **Don't go back to an older version.** NaviCtrl 0.9.1 and older can't read the encrypted files: they show no downloads and, for music on this phone, no favourites, ratings, play counts or playlists, and they write new, empty files over the encrypted ones the next time something changes (for music on this phone that is the next song you play). NaviCtrl has no export for these, so going back loses them; the songs themselves, and everything on your Navidrome server, are not affected.
+
+### Changed
+
+- **Less writing to storage while downloading.** The download list used to be saved again for every step of a download's progress bar (about every 256 KB). That progress was never read back (after a restart a download shows as waiting again), so it is now only kept in memory; the list is still saved when a download starts, finishes or fails.
+- **The download list is saved to a temporary file, written to disk and then moved into place**, so an interrupted save can't leave a half-written list.
+- **The saved queue is written to a temporary file and then moved into place**, so a save that is interrupted can no longer leave a half-written queue behind.
+
 ## v0.9.1 (2026-11-20)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

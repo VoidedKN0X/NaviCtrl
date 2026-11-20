@@ -26,6 +26,11 @@ import com.vknxworks.navictrl.data.api.SearchResult
 import com.vknxworks.navictrl.data.api.Song
 import com.vknxworks.navictrl.data.api.Starred
 import com.vknxworks.navictrl.data.api.SubsonicUser
+import com.vknxworks.navictrl.data.crypto.DataKeyStore
+import com.vknxworks.navictrl.data.crypto.SealedFile
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -55,9 +60,10 @@ import java.util.Locale
  * "Music on this phone": a Navidrome look-alike that answers inside the app, so every screen of NaviCtrl works with
  * the songs stored on the phone. Requests to [HOST] never reach the network: this interceptor answers them from
  * Android's media library (MediaStore). Favourites, ratings, play counts and playlists are kept in a small file in
- * the app's private storage. Playback reads the files directly (see [contentUri]).
+ * the app's private storage, encrypted at rest with the app's data key. Playback reads the files directly (see
+ * [contentUri]).
  */
-class LocalServer(private val context: Context) : Interceptor {
+class LocalServer(private val context: Context, private val keys: DataKeyStore) : Interceptor {
 
     // ---------- Library ----------
 
@@ -162,23 +168,104 @@ class LocalServer(private val context: Context) : Interceptor {
         val nextPlaylist: Int = 1,
     )
 
-    private val stateFile get() = AtomicFile(File(context.filesDir, "local_library.json"))
+    private val stateFile get() = AtomicFile(File(context.filesDir, STATE_FILE))
     @Volatile private var stateCache: State? = null
 
+    private val _unreadable = MutableStateFlow(false)
+
+    /**
+     * The saved favourites, ratings, play counts and playlists are encrypted and can't be opened (the key in the
+     * phone's secure storage is gone or changed, or the file is damaged). The file is left exactly as it is,
+     * nothing is written over it ([change] does nothing), and the app says so instead of showing none.
+     */
+    val unreadable: StateFlow<Boolean> = _unreadable.asStateFlow()
+
     private fun state(): State = stateCache ?: synchronized(lock) {
-        stateCache ?: (runCatching { ApiJson.decodeFromString(State.serializer(), String(stateFile.readFully(), Charsets.UTF_8)) }.getOrNull() ?: State()).also { stateCache = it }
+        stateCache ?: loadState().also { stateCache = it }
+    }
+
+    /**
+     * Reads the state file. It is encrypted at rest with the app's data key; a file from before encryption is
+     * read as it is and then replaced by its encrypted copy ([SealedFile.sealInPlace]). Called with [lock] held,
+     * from the threads that answer requests (never the main thread: the first read asks the Keystore for the key).
+     */
+    private fun loadState(): State {
+        val bytes = runCatching { stateFile.readFully() }.getOrNull()
+        if (bytes == null) {
+            _unreadable.value = false
+            return State()
+        }
+        val plain = if (SealedFile.isSealed(bytes)) {
+            val key = keys.get(create = false)
+            val opened = if (key == null) null else try {
+                SealedFile.open(key, bytes)
+            } catch (e: Exception) {
+                null
+            }
+            if (opened == null) {
+                _unreadable.value = true
+                return State()
+            }
+            opened
+        } else {
+            // From before encryption: seal it now. On any failure it stays the ordinary file it was.
+            val key = keys.get(create = true)
+            if (key != null) {
+                val file = File(context.filesDir, STATE_FILE)
+                SealedFile.sealInPlace(key, file, File(context.filesDir, "$STATE_FILE.seal.tmp"))
+            }
+            bytes
+        }
+        _unreadable.value = false
+        return runCatching { ApiJson.decodeFromString(State.serializer(), String(plain, Charsets.UTF_8)) }.getOrNull() ?: State()
     }
 
     private fun change(f: (State) -> State) = synchronized(lock) {
-        val next = f(state())
+        val current = state()
+        // Never over a file that couldn't be opened: it stays on disk until it opens again or is set aside.
+        if (_unreadable.value) return@synchronized
+        val next = f(current)
         stateCache = next
+        val plain = ApiJson.encodeToString(State.serializer(), next).toByteArray(Charsets.UTF_8)
+        // Encrypted when there's a data key; the ordinary file otherwise, as before.
+        val key = keys.get(create = true)
+        val sealed = if (key == null) null else SealedFile.sealChecked(key, plain)
         val file = stateFile
         val out = runCatching { file.startWrite() }.getOrNull() ?: return@synchronized
         try {
-            out.write(ApiJson.encodeToString(State.serializer(), next).toByteArray(Charsets.UTF_8))
+            out.write(sealed ?: plain)
             file.finishWrite(out)
         } catch (e: Exception) {
             file.failWrite(out)
+        }
+    }
+
+    /** "Try again" after [unreadable]: reads the state file once more. Never on the main thread. */
+    fun reloadState() {
+        synchronized(lock) {
+            stateCache = null
+            state()
+        }
+    }
+
+    /**
+     * "Start empty" after [unreadable]: the file that can't be opened is renamed to `local_library.json.unreadable`
+     * (kept, not deleted) and the library starts without favourites, ratings, play counts and playlists. Does
+     * nothing when the file opens. Never on the main thread.
+     */
+    fun setStateAside() {
+        synchronized(lock) {
+            stateCache = null
+            state()
+            if (!_unreadable.value) return
+            val file = File(context.filesDir, STATE_FILE)
+            var aside = File(context.filesDir, "$STATE_FILE.unreadable")
+            if (aside.exists()) aside = File(context.filesDir, "$STATE_FILE.unreadable." + System.currentTimeMillis())
+            val moved = runCatching { !file.exists() || file.renameTo(aside) }.getOrDefault(false)
+            if (moved) {
+                stateCache = null
+                _unreadable.value = false
+            }
         }
     }
 
@@ -559,6 +646,7 @@ class LocalServer(private val context: Context) : Interceptor {
         const val PASSWORD = "local"
         private const val UNKNOWN_ALBUM = "Unknown album"
         private const val UNKNOWN_ARTIST = "Unknown artist"
+        private const val STATE_FILE = "local_library.json"
 
         fun isLocal(baseUrl: String?): Boolean = baseUrl?.let { Uri.parse(it).host.equals(HOST, ignoreCase = true) } == true
 

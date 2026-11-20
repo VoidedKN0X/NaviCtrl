@@ -4,6 +4,15 @@
 
 Gradle checks every library and plugin download against the sha256 checksums in `gradle/verification-metadata.xml` (checksums only, no PGP). When a dependency, plugin or the Gradle version changes, start the "Dependency verification metadata" workflow (`gh api -X POST repos/VoidedKN0X/NaviCtrl/actions/workflows/verification-metadata.yml/dispatches -f ref=main`), take the file from the job log (between the BEGIN/END markers: `base64 -d | gunzip`), check the diff (only Maven Central, Google Maven and Gradle Plugin Portal artifacts the build uses) and commit it in the same push. Never turn verification off or make it lenient to get a build through.
 
+## Encryption at rest
+
+- Sealed with AES-256-GCM (`data/crypto/SealedFile`, marker `NAVICTRL-REST1`) under the data key (`DataKeyStore`: 32 random bytes in `filesDir/data.key`, wrapped by the Keystore key `navictrl_data_at_rest` through `KeystoreWrapper`/`KeystoreAes`; no user authentication, so downloads and music work in the background): `filesDir/downloads.json` (through `SealedStore`), `filesDir/local_library.json` (`LocalServer`, still written with `AtomicFile`), `filesDir/queue.json` (`MusicController`) and `cacheDir/lyrics/**.json` (`LyricsRepository`). `KeystoreCrypto` (the password key) and the app-lock vault are separate and untouched.
+- Not sealed, on purpose: downloaded songs and `.part` files in `filesDir/music/`, Media3's `SimpleCache` in `cacheDir/media` and its database (the player reads them directly), Coil's cache, DataStore settings and accounts, WorkManager's database.
+- Readers must accept both sealed and ordinary files (`SealedFile.isSealed`). Without a data key the app reads and writes ordinary files as before.
+- Never delete or overwrite a file of the user's own data that can't be opened (`downloads.json`, `local_library.json`), never replace an existing `data.key`, and never create a Keystore key on the decrypt path (`KeystoreAes.existing`). An ordinary file only becomes a sealed one through `SealedFile.sealInPlace` (temp file, sync, read back, compare, atomic rename). When one of those two can't be opened nothing is written to it, `AppContainer.dataUnreadable` goes on and `AppRoot` shows the "Can't open your saved data" screen ("Try again", and "Start empty", which renames the files to `*.unreadable`). The queue and lyrics are caches: one that can't be opened counts as missing and is replaced.
+- All of this reads the disk and may ask the Keystore: never on the main thread (`MusicController` runs on the main thread, so its queue file work stays inside `withContext(Dispatchers.IO)`; `LocalServer` runs on the request threads).
+- `SealedFileTest` covers the format, the migration step, the key rules and `SealedStore` (`./gradlew :app:testDebugUnitTest`; CI doesn't run unit tests).
+
 ## Releasing
 
 - A release is published only when `versionName` in `app/build.gradle.kts` is bumped. Bump `versionCode` by 1 at the same time.

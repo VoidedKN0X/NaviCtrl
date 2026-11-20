@@ -22,6 +22,8 @@ import com.vknxworks.navictrl.data.api.randomSongs
 import com.vknxworks.navictrl.data.api.savePlayQueue
 import com.vknxworks.navictrl.data.api.similarSongs
 import com.vknxworks.navictrl.data.api.streamUrl
+import com.vknxworks.navictrl.data.crypto.DataKeyStore
+import com.vknxworks.navictrl.data.crypto.SealedFile
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -584,7 +586,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
         if (kept.isEmpty()) return
         val saved = SavedQueue(key, kept, (index - from).coerceIn(0, kept.lastIndex), positionMs.coerceAtLeast(0))
         withContext(Dispatchers.IO) {
-            runCatching { savedQueueFile.writeText(ApiJson.encodeToString(SavedQueue.serializer(), saved)) }
+            runCatching { writeSavedQueue(savedQueueFile, c.dataKeys, saved) }
         }
     }
 
@@ -697,9 +699,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
     private suspend fun restoreQueue(mc: MediaController, autoplay: Boolean) {
         if (mc.mediaItemCount > 0) return
         val key = c.sessions.active.value?.account?.key ?: return
-        val saved = withContext(Dispatchers.IO) {
-            runCatching { ApiJson.decodeFromString(SavedQueue.serializer(), savedQueueFile.readText()) }.getOrNull()
-        } ?: return
+        val saved = withContext(Dispatchers.IO) { readSavedQueue(savedQueueFile, c.dataKeys) } ?: return
         if (saved.accountKey != key || saved.songs.isEmpty()) return
         mc.setMediaItems(saved.songs.map(::mediaItem), saved.index.coerceIn(0, saved.songs.lastIndex), saved.positionMs)
         mc.prepare()
@@ -725,11 +725,52 @@ class MusicController(private val context: Context, private val c: AppContainer)
         private const val QUEUE_FILE = "queue.json"
         private const val SubsonicClientName = com.vknxworks.navictrl.data.api.SubsonicClient.CLIENT
 
-        /** Deletes the saved queue if it belongs to [accountKey] (called on sign-out). */
-        fun forgetSavedQueue(context: Context, accountKey: String) {
+        /** One at a time: reading (which may seal an older file) and saving the queue file. */
+        private val queueFileLock = Any()
+
+        /**
+         * The saved queue, which is encrypted at rest with the app's data key ([keys]). A file from before
+         * encryption is read as it is and sealed now. The saved queue is only a convenience: one that can't be
+         * opened (the key is gone) reads as "no saved queue" and is replaced by the next save. Reads the disk
+         * and may ask the Keystore: never call it on the main thread.
+         */
+        private fun readSavedQueue(file: File, keys: DataKeyStore): SavedQueue? = synchronized(queueFileLock) {
+            if (!file.isFile) return@synchronized null
+            val text = runCatching {
+                val bytes = file.readBytes()
+                if (!SealedFile.isSealed(bytes)) {
+                    val key = keys.get(create = true)
+                    if (key != null) SealedFile.sealInPlace(key, file, File(file.parentFile, file.name + ".seal.tmp"))
+                    String(bytes, Charsets.UTF_8)
+                } else {
+                    val key = keys.get(create = false)
+                    if (key == null) null else String(SealedFile.open(key, bytes), Charsets.UTF_8)
+                }
+            }.getOrNull() ?: return@synchronized null
+            runCatching { ApiJson.decodeFromString(SavedQueue.serializer(), text) }.getOrNull()
+        }
+
+        /** Saves the queue: encrypted when there's a data key, as an ordinary file otherwise. Never on the main thread. */
+        private fun writeSavedQueue(file: File, keys: DataKeyStore, saved: SavedQueue) {
+            val plain = ApiJson.encodeToString(SavedQueue.serializer(), saved).toByteArray(Charsets.UTF_8)
+            val key = keys.get(create = true)
+            val sealed = if (key == null) null else SealedFile.sealChecked(key, plain)
+            synchronized(queueFileLock) {
+                // Written next to the file and then moved over it, so the file is never half-written.
+                val tmp = File(file.parentFile, file.name + ".tmp")
+                tmp.writeBytes(sealed ?: plain)
+                if (!tmp.renameTo(file)) {
+                    tmp.copyTo(file, overwrite = true)
+                    tmp.delete()
+                }
+            }
+        }
+
+        /** Deletes the saved queue if it belongs to [accountKey] (called on sign-out). Never on the main thread. */
+        fun forgetSavedQueue(context: Context, accountKey: String, keys: DataKeyStore) {
             val file = File(context.filesDir, QUEUE_FILE)
             if (!file.exists()) return
-            val owner = runCatching { ApiJson.decodeFromString(SavedQueue.serializer(), file.readText()).accountKey }.getOrNull()
+            val owner = readSavedQueue(file, keys)?.accountKey
             if (owner == null || owner == accountKey) file.delete()
         }
     }

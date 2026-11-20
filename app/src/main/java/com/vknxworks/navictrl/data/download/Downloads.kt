@@ -16,6 +16,8 @@ import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.api.downloadUrl
 import com.vknxworks.navictrl.data.api.streamUrl
 import com.vknxworks.navictrl.data.auth.SessionManager
+import com.vknxworks.navictrl.data.crypto.DataKeyStore
+import com.vknxworks.navictrl.data.crypto.SealedStore
 import com.vknxworks.navictrl.data.settings.SettingsRepository
 import com.vknxworks.navictrl.ui.components.friendlyMessage
 import kotlinx.coroutines.CoroutineScope
@@ -53,19 +55,33 @@ data class DownloadEntry(
     val error: String? = null,
 )
 
-/** Songs saved for offline listening. Each runs as its own WorkManager job so downloads survive the app closing. */
+/**
+ * Songs saved for offline listening. Each runs as its own WorkManager job so downloads survive the app closing.
+ * The list (`downloads.json`: every song's title, artist and album) is encrypted at rest with the app's data
+ * key ([SealedStore]); the music files themselves are ordinary files, because the player opens them directly.
+ */
 class DownloadRepository(
     private val context: Context,
     private val scope: CoroutineScope,
     private val sessions: SessionManager,
     private val settings: SettingsRepository,
     private val http: OkHttpClient,
+    keys: DataKeyStore,
 ) {
     private val index = File(context.filesDir, "downloads.json")
+    private val store = SealedStore(index, keys)
     private val root = File(context.filesDir, "music").apply { mkdirs() }
     private val _entries = MutableStateFlow<List<DownloadEntry>>(emptyList())
     val entries: StateFlow<List<DownloadEntry>> = _entries.asStateFlow()
     private val loaded = MutableStateFlow(false)
+
+    private val _unreadable = MutableStateFlow(false)
+
+    /**
+     * The list is encrypted and can't be opened (the key in the phone's secure storage is gone or changed, or
+     * the file is damaged). It is left exactly as it is, nothing is written over it, and the app says so.
+     */
+    val unreadable: StateFlow<Boolean> = _unreadable.asStateFlow()
 
     /** Ids of finished downloads for the signed-in account, for the small "offline" marks on rows. */
     val completedIds: StateFlow<Set<String>> = combine(_entries, sessions.active) { list, session ->
@@ -74,11 +90,31 @@ class DownloadRepository(
     }.stateIn(scope, SharingStarted.Eagerly, emptySet())
 
     init {
-        scope.launch(Dispatchers.IO) {
-            val saved = runCatching { ApiJson.decodeFromString(ListSerializer(DownloadEntry.serializer()), index.readText()) }.getOrNull().orEmpty()
+        scope.launch(Dispatchers.IO) { load() }
+    }
+
+    /** Reads the list (off the main thread: the first read asks the Keystore for the data key). */
+    private fun load() {
+        val bytes = synchronized(index) { store.read() }
+        if (bytes != null) {
+            val saved = runCatching { ApiJson.decodeFromString(ListSerializer(DownloadEntry.serializer()), String(bytes, Charsets.UTF_8)) }.getOrNull().orEmpty()
             // Anything interrupted mid-download is queued again by WorkManager; show it as waiting.
             _entries.value = saved.map { if (it.status == DownloadStatus.RUNNING) it.copy(status = DownloadStatus.QUEUED, progress = 0f) else it }
-            loaded.value = true
+        }
+        _unreadable.value = store.unreadable
+        loaded.value = true
+    }
+
+    /** "Try again" after [unreadable]: reads the list once more. */
+    suspend fun reload() = withContext(Dispatchers.IO) { load() }
+
+    /**
+     * "Start empty" after [unreadable]: the list that can't be opened is renamed to `downloads.json.unreadable`
+     * (kept, not deleted) and the list starts empty. The music files stay where they are.
+     */
+    suspend fun setAside() = withContext(Dispatchers.IO) {
+        synchronized(index) {
+            if (store.setAside()) _unreadable.value = false
         }
     }
 
@@ -105,6 +141,8 @@ class DownloadRepository(
     }
 
     fun enqueue(songs: List<Song>) {
+        // The list can't be opened, so a new download couldn't be saved in it either.
+        if (_unreadable.value) return
         val key = activeKey() ?: return
         val wifiOnly = settings.settings.value.downloadWifiOnly
         val fresh = songs.distinctBy { it.id }.filter { s -> _entries.value.none { it.song.id == s.id && it.accountKey == key && it.status != DownloadStatus.FAILED } }
@@ -144,6 +182,11 @@ class DownloadRepository(
     /** "Forgot PIN?" in the app lock: every download of every account, its files and anything still queued. */
     suspend fun deleteEverything() = withContext(Dispatchers.IO) {
         WorkManager.getInstance(context).cancelAllWorkByTag(TAG)
+        // Everything goes on purpose here, also a list that couldn't be opened.
+        synchronized(index) {
+            store.clear()
+            _unreadable.value = store.unreadable
+        }
         update { emptyList() }
         root.listFiles()?.forEach { it.deleteRecursively() }
     }
@@ -254,7 +297,9 @@ class DownloadRepository(
                         if (read - lastReport > 256 * 1024) {
                             lastReport = read
                             val p = if (total > 0) (read.toFloat() / total).coerceIn(0f, 1f) else 0f
-                            mark(accountKey, song.id) { it.copy(progress = p) }
+                            // Only shown, never read back from disk (after a restart the download shows as waiting
+                            // again), so the list isn't encrypted and saved for every step of the progress bar.
+                            _entries.update { list -> list.map { if (it.song.id == song.id && it.accountKey == accountKey) it.copy(progress = p) else it } }
                             onProgress(p)
                         }
                     }
@@ -279,7 +324,8 @@ class DownloadRepository(
         val snapshot = _entries.value
         scope.launch(Dispatchers.IO) {
             synchronized(index) {
-                runCatching { index.writeText(ApiJson.encodeToString(ListSerializer(DownloadEntry.serializer()), snapshot)) }
+                // Encrypted when there's a data key; nothing is written while the list can't be opened.
+                runCatching { store.write(ApiJson.encodeToString(ListSerializer(DownloadEntry.serializer()), snapshot).toByteArray(Charsets.UTF_8)) }
             }
         }
     }

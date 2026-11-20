@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.QueueMusic
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import com.vknxworks.navictrl.ui.theme.CtrlColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -62,7 +64,10 @@ import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.music.MiniPlayer
 import com.vknxworks.navictrl.music.NowPlayingScreen
 import com.vknxworks.navictrl.ui.auth.SignInScreen
+import com.vknxworks.navictrl.ui.components.ConfirmDialog
 import com.vknxworks.navictrl.ui.components.LoadingView
+import com.vknxworks.navictrl.ui.components.MessageView
+import kotlinx.coroutines.launch
 import com.vknxworks.navictrl.ui.components.LocalBottomClearance
 import com.vknxworks.navictrl.ui.components.CtrlBottomBar
 import com.vknxworks.navictrl.ui.components.TabItem
@@ -102,8 +107,45 @@ fun AppRoot() {
                         starsFor = accountKey
                     }
                 }
-                MainScaffold()
+                // An encrypted file with your own data can't be opened: say so instead of showing empty lists.
+                val unreadable by c.dataUnreadable.collectAsStateWithLifecycle()
+                if (unreadable) UnreadableData() else MainScaffold()
             }
+        }
+    }
+}
+
+/**
+ * The download list, or the favourites and playlists kept for music on this phone, are encrypted and can't be
+ * opened: the key in the phone's secure storage is gone or changed, or the file is damaged. Nothing was deleted
+ * or changed: say so, offer to try again, and only start empty when asked to, keeping the unreadable files aside.
+ */
+@Composable
+private fun UnreadableData() {
+    val c = LocalContext.current.container
+    var confirm by remember { mutableStateOf(false) }
+    Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+        MessageView(
+            Icons.Outlined.Lock,
+            stringResource(R.string.unreadable_title),
+            stringResource(R.string.unreadable_body),
+            actionLabel = stringResource(R.string.unreadable_retry),
+            // In the app's own scope: this screen goes away as soon as the files open, which mustn't stop the work halfway.
+            onAction = { c.appScope.launch { c.retryUnreadableData() } },
+        )
+        TextButton(onClick = { confirm = true }, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)) {
+            Text(stringResource(R.string.unreadable_start_empty), color = CtrlColors.Muted)
+        }
+    }
+    if (confirm) {
+        ConfirmDialog(
+            title = stringResource(R.string.unreadable_start_empty_title),
+            body = stringResource(R.string.unreadable_start_empty_body),
+            confirm = stringResource(R.string.unreadable_start_empty),
+            onDismiss = { confirm = false },
+        ) {
+            confirm = false
+            c.appScope.launch { c.startEmptyData() }
         }
     }
 }

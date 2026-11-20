@@ -8,6 +8,8 @@ import com.vknxworks.navictrl.data.api.Song
 import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.api.serverLyrics
 import com.vknxworks.navictrl.data.auth.SessionManager
+import com.vknxworks.navictrl.data.crypto.DataKeyStore
+import com.vknxworks.navictrl.data.crypto.SealedFile
 import com.vknxworks.navictrl.data.local.LocalServer
 import com.vknxworks.navictrl.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +29,7 @@ class LyricsRepository(
     http: OkHttpClient,
     private val sessions: SessionManager,
     private val settings: SettingsRepository,
+    private val keys: DataKeyStore,
 ) {
     private val root = File(context.cacheDir, "lyrics")
     private val lrclib = Lrclib(http, Lrclib.userAgent(BuildConfig.VERSION_NAME))
@@ -74,8 +77,34 @@ class LyricsRepository(
     private suspend fun read(file: File): CachedLyrics? = withContext(Dispatchers.IO) {
         lock.withLock {
             if (!file.isFile || file.length() > MAX_FILE) return@withLock null
-            runCatching { ApiJson.decodeFromString(CachedLyrics.serializer(), file.readText()) }.getOrNull()
+            val text = runCatching { readCached(file) }.getOrNull() ?: return@withLock null
+            runCatching { ApiJson.decodeFromString(CachedLyrics.serializer(), text) }.getOrNull()
         }
+    }
+
+    /**
+     * The text of a cache file, which is encrypted at rest with the app's data key. An entry from before
+     * encryption is read as it is and sealed now. This is only a cache: an encrypted entry that can't be
+     * opened (the key is gone) is deleted and counts as "not cached", so the lyrics are looked up again.
+     */
+    private fun readCached(file: File): String? {
+        val bytes = file.readBytes()
+        if (!SealedFile.isSealed(bytes)) {
+            val key = keys.get(create = true)
+            if (key != null) SealedFile.sealInPlace(key, file, File(file.parentFile, file.name + ".seal.tmp"))
+            return String(bytes, Charsets.UTF_8)
+        }
+        val key = keys.get(create = false)
+        val plain = if (key == null) null else try {
+            SealedFile.open(key, bytes)
+        } catch (e: Exception) {
+            null
+        }
+        if (plain == null) {
+            file.delete()
+            return null
+        }
+        return String(plain, Charsets.UTF_8)
     }
 
     private suspend fun write(file: File, entry: CachedLyrics) = withContext(Dispatchers.IO) {
@@ -83,7 +112,11 @@ class LyricsRepository(
             runCatching {
                 file.parentFile?.mkdirs()
                 val tmp = File(file.parentFile, file.name + ".tmp")
-                tmp.writeText(ApiJson.encodeToString(CachedLyrics.serializer(), entry))
+                val plain = ApiJson.encodeToString(CachedLyrics.serializer(), entry).toByteArray(Charsets.UTF_8)
+                // Encrypted when there's a data key; an ordinary file otherwise, as before.
+                val key = keys.get(create = true)
+                val sealed = if (key == null) null else SealedFile.sealChecked(key, plain)
+                tmp.writeBytes(sealed ?: plain)
                 if (!tmp.renameTo(file)) { tmp.copyTo(file, overwrite = true); tmp.delete() }
                 if (writes++ % 50 == 0) trim()
             }

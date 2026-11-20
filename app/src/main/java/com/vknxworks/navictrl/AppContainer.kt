@@ -11,6 +11,8 @@ import coil3.SingletonImageLoader
 import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.appDataStore
 import com.vknxworks.navictrl.data.auth.SessionManager
+import com.vknxworks.navictrl.data.crypto.DataKeyStore
+import com.vknxworks.navictrl.data.crypto.KeystoreWrapper
 import com.vknxworks.navictrl.data.download.DownloadRepository
 import com.vknxworks.navictrl.data.lyrics.LyricsRepository
 import com.vknxworks.navictrl.data.net.CleartextPolicy
@@ -30,7 +32,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -42,8 +47,15 @@ import java.util.concurrent.TimeUnit
 class AppContainer(val context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /**
+     * The key that encrypts the app's own files at rest (the download list, what's kept for music on this phone,
+     * the saved queue and cached lyrics). Making this reads nothing: the Keystore is first asked on a background
+     * thread, when one of those files is read or written.
+     */
+    val dataKeys = DataKeyStore(context.filesDir, KeystoreWrapper("navictrl_data_at_rest"))
+
     /** "Music on this phone": answers requests for the local library inside the app, before any network. */
-    val localServer = com.vknxworks.navictrl.data.local.LocalServer(context)
+    val localServer = com.vknxworks.navictrl.data.local.LocalServer(context, dataKeys)
 
     val http: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(localServer)
@@ -74,8 +86,38 @@ class AppContainer(val context: Context) {
 
     val sessions = SessionManager(context, http, vault, appScope)
     val stars = StarStore(context, sessions, appScope)
-    val downloads = DownloadRepository(context, appScope, sessions, settings, http)
-    val lyrics = LyricsRepository(context, http, sessions, settings)
+    val downloads = DownloadRepository(context, appScope, sessions, settings, http, dataKeys)
+    val lyrics = LyricsRepository(context, http, sessions, settings, dataKeys)
+
+    /**
+     * An encrypted file with your own data (the download list, or the favourites and playlists of music on this
+     * phone) can't be opened. Nothing is deleted or written over; the app shows what happened, with "Try again"
+     * and "Start empty".
+     */
+    val dataUnreadable: StateFlow<Boolean> =
+        combine(downloads.unreadable, localServer.unreadable) { a, b -> a || b }.stateIn(appScope, SharingStarted.Eagerly, false)
+
+    /** "Try again": asks the Keystore for the data key once more and reads the files again. */
+    suspend fun retryUnreadableData() = withContext(Dispatchers.IO) {
+        dataKeys.reset()
+        downloads.reload()
+        localServer.reloadState()
+    }
+
+    /**
+     * "Start empty": the files that can't be opened are renamed (`.unreadable`), not deleted, and start empty.
+     * A data key that's gone makes way for a new one (its file is kept as `data.key.unreadable`); a key that
+     * still works stays.
+     */
+    suspend fun startEmptyData() = withContext(Dispatchers.IO) {
+        downloads.setAside()
+        localServer.setStateAside()
+        if (!downloads.unreadable.value && !localServer.unreadable.value && dataKeys.get(create = false) == null) {
+            dataKeys.discard(keep = true)
+        }
+        downloads.reload()
+        localServer.reloadState()
+    }
     val music by lazy { MusicController(context, this) }
 
     private val _playlistEdits = MutableStateFlow(0)
@@ -113,7 +155,7 @@ class AppContainer(val context: Context) {
                     cache.keys.filter { it.startsWith(prefix) || !TAGGED_KEY.containsMatchIn(it) }.forEach(cache::removeResource)
                 }
             }
-            runCatching { MusicController.forgetSavedQueue(context, key) }
+            runCatching { MusicController.forgetSavedQueue(context, key, dataKeys) }
             runCatching { lyrics.forgetAccount(key) }
             runCatching {
                 SingletonImageLoader.get(context).let { loader ->
@@ -155,7 +197,7 @@ class AppContainer(val context: Context) {
         sessions.forgetAllAccounts()
         withContext(Dispatchers.IO) {
             runCatching { playbackCache?.let { cache -> cache.keys.toList().forEach(cache::removeResource) } }
-            keys.forEach { key -> runCatching { MusicController.forgetSavedQueue(context, key) } }
+            keys.forEach { key -> runCatching { MusicController.forgetSavedQueue(context, key, dataKeys) } }
             runCatching {
                 SingletonImageLoader.get(context).let { loader ->
                     loader.memoryCache?.clear()

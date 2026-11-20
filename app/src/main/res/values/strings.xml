@@ -420,4 +420,10 @@
     <string name="download_limit_used">%1$s of %2$s used</string>
     <string name="show_downloaded_only">Show downloaded songs only</string>
     <string name="show_all_songs">Show all songs</string>
+    <string name="unreadable_title">Can\'t open your saved data</string>
+    <string name="unreadable_body">The list of your downloads, and the favourites and playlists of music on this phone, are stored encrypted on this phone, and the key that opens them is missing from the phone\'s secure storage or no longer matches. Nothing has been deleted or changed. Try again first; restarting the phone can help too.</string>
+    <string name="unreadable_retry">Try again</string>
+    <string name="unreadable_start_empty">Start empty</string>
+    <string name="unreadable_start_empty_title">Start empty?</string>
+    <string name="unreadable_start_empty_body">Only do this if trying again doesn\'t help. What can\'t be opened is kept aside on this phone, not deleted, but NaviCtrl won\'t show it: the download list starts empty, and music on this phone starts without its favourites, ratings, play counts and playlists. Downloaded songs stay on the phone without being listed: download a song again to get it back in the list, or clear NaviCtrl\'s storage in Android\'s settings to free the space. Nothing changes on your server.</string>
 </resources>
