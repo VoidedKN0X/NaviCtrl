@@ -48,6 +48,13 @@ class AppContainer(val context: Context) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /**
+     * Made first on purpose: it starts reading the settings file on a background thread straight away, so that
+     * read runs while the main thread builds the HTTP client below, and [lockAtStart] (which still waits for
+     * the stored settings, so nothing sees defaults) usually has nothing left to wait for.
+     */
+    val settings = SettingsRepository(context, appScope)
+
+    /**
      * The key that encrypts the app's own files at rest (the download list, what's kept for music on this phone,
      * the saved queue and cached lyrics). Making this reads nothing: the Keystore is first asked on a background
      * thread, when one of those files is read or written.
@@ -75,8 +82,6 @@ class AppContainer(val context: Context) {
         // The Navidrome session header and the sign-in request never follow a redirect to another server.
         .addNetworkInterceptor(RedirectGuard.interceptor)
         .build()
-
-    val settings = SettingsRepository(context, appScope)
 
     /** The app lock's PIN, fingerprint key and the key that seals the saved passwords while locked. */
     val vault = LockVault(context, "navictrl")
