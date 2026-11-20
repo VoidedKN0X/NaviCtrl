@@ -11,9 +11,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
@@ -21,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.PlatformContext
 import coil3.compose.LocalPlatformContext
-import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.vknxworks.navictrl.data.api.SubsonicClient
 import com.vknxworks.navictrl.data.api.Song
@@ -67,14 +71,23 @@ fun ArtImage(
     } else {
         val context = LocalPlatformContext.current
         val request = remember(url) { artRequest(context, url).build() }
-        SubcomposeAsyncImage(
-            model = request,
-            contentDescription = null,
-            modifier = modifier,
-            contentScale = contentScale,
-            error = { fallback() },
-            loading = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer)) },
-        )
+        // A plain AsyncImage: the subcomposing variant is slow in lists and grids. The same plain colour shows
+        // while loading, and the same fallback takes the image's place when it can't be loaded.
+        var failed by remember(url) { mutableStateOf(false) }
+        if (failed) {
+            Box(modifier) { fallback() }
+        } else {
+            val loadingColor = MaterialTheme.colorScheme.surfaceContainer
+            val loading = remember(loadingColor) { ColorPainter(loadingColor) }
+            AsyncImage(
+                model = request,
+                contentDescription = null,
+                modifier = modifier,
+                placeholder = loading,
+                onError = { failed = true },
+                contentScale = contentScale,
+            )
+        }
     }
 }
 

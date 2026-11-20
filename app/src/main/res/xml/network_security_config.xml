@@ -11,4 +11,12 @@
             <certificates src="user" />
         </trust-anchors>
     </base-config>
+    <!-- LRCLIB (lyrics found online) is a fixed public host: https only, and only the phone's built-in
+         CAs, so a user-installed CA can't read or change lyric lookups. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">lrclib.net</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

@@ -4,6 +4,21 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Changes from the November 2026 code audit that are on `main` but not in a release yet (no version bump, so nothing was published). NaviCtrl has no home-screen widgets and no Quick Settings tiles, so there was nothing of that kind to remove.
+
+### Security
+
+- **Lyric lookups can't be intercepted with an installed certificate.** NaviCtrl trusts certificate authorities you install on the phone, so a server behind your own private CA works. That also applied to LRCLIB, the public lyrics database. Connections to `lrclib.net` now only accept the phone's built-in certificate authorities and can never be plain HTTP. Your own server is not affected. If your network inspects HTTPS with a certificate installed on the phone, online lyrics won't load there any more; lyrics from your server still do.
+
+### Changed
+
+- **Starting music no longer waits for the playback cache on the main thread.** The cache of streamed songs has to read its index from disk before the first song can start, and that happened on the main thread at the moment you tapped a song. It is now opened in the background right after the app starts. If you tap a song before that has finished, playback waits for it as before, so the player never runs without its cache. One small difference: the size chosen for **Keep played music on the phone** in Settings is now read when the app starts instead of when the first song plays, so a change to it always applies after NaviCtrl restarts.
+- **The mini player redraws less.** The bar above the tabs was redrawn completely twice a second while music played, because it followed the playback position. Now only its thin progress line follows the position; the title, artwork and buttons are redrawn when the song or the play state changes.
+- **Artwork is drawn in a lighter way.** Covers in song rows, album and artist grids, playlists, the queue and the player were each drawn through a slower kind of image view (Coil's `SubcomposeAsyncImage`) that the image library itself advises against in lists. They now use the plain image view. It should look the same: the same plain colour while a cover loads, and the same icon or name in its place when there is no cover or it can't be loaded. Not yet checked on a phone.
+- **Songs list:** rows that are still loading and rows that show a song are now reused separately while you scroll, which saves work during fast scrolling.
+
 ## v0.9.0 (2026-11-13)
 
 Lyrics from the internet when your server has none, and more control over downloads.

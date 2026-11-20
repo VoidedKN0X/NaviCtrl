@@ -76,6 +76,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import androidx.media3.common.Player
 import com.vknxworks.navictrl.MainActivity
 import com.vknxworks.navictrl.container
@@ -129,7 +131,10 @@ fun MiniPlayer(onOpen: () -> Unit) {
     val context = LocalContext.current
     val c = context.container
     val music = c.music
-    val s by music.state.collectAsStateWithLifecycle()
+    // Everything but the position: that changes twice a second while music plays, and this bar is on screen on
+    // every tab. Only the thin progress line below ([MiniProgress]) follows the position.
+    val steady = remember(music) { music.state.map { it.copy(positionMs = 0, bufferedMs = 0) }.distinctUntilChanged() }
+    val s by steady.collectAsStateWithLifecycle(initialValue = music.state.value.copy(positionMs = 0, bufferedMs = 0))
     LaunchedEffect(Unit) { music.connect() }
     LaunchedEffect(s.hasMedia) { if (s.hasMedia) (context as? MainActivity)?.ensureNotificationPermission() }
     val song = s.current ?: return
@@ -166,13 +171,20 @@ fun MiniPlayer(onOpen: () -> Unit) {
             Spacer(Modifier.width(4.dp))
             CtrlGhostButton(Icons.Filled.SkipNext, stringResource(R.string.next_song), onClick = { music.next() }, size = 44.dp, tint = CtrlColors.Text)
         }
-        val p = if (s.durationMs > 0) (s.positionMs.toFloat() / s.durationMs).coerceIn(0f, 1f) else 0f
-        Box(
-            Modifier.align(Alignment.BottomStart).padding(horizontal = 18.dp, vertical = 4.dp).fillMaxWidth().height(2.dp)
-                .clip(CtrlShapes.Dot).background(CtrlColors.ProgressTrack),
-        ) {
-            Box(Modifier.fillMaxWidth(p).height(2.dp).background(CtrlColors.Accent))
-        }
+        MiniProgress(music, Modifier.align(Alignment.BottomStart))
+    }
+}
+
+/** The thin progress line along the bottom of the mini player; the only part of it that follows the position. */
+@Composable
+private fun MiniProgress(music: MusicController, modifier: Modifier = Modifier) {
+    val s by music.state.collectAsStateWithLifecycle()
+    val p = if (s.durationMs > 0) (s.positionMs.toFloat() / s.durationMs).coerceIn(0f, 1f) else 0f
+    Box(
+        modifier.padding(horizontal = 18.dp, vertical = 4.dp).fillMaxWidth().height(2.dp)
+            .clip(CtrlShapes.Dot).background(CtrlColors.ProgressTrack),
+    ) {
+        Box(Modifier.fillMaxWidth(p).height(2.dp).background(CtrlColors.Accent))
     }
 }
 

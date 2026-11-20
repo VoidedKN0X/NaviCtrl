@@ -229,7 +229,8 @@ fun SongsScreen() {
                                 }
                             }
                         }
-                        items(total) { i ->
+                        // Rows still loading and song rows are kept apart, so a scrolled-away row is reused for its own kind.
+                        items(total, contentType = { i -> if (pager.peek(i) == null) "placeholder" else "song" }) { i ->
                             val song = pager.peek(i)
                             if (song == null) {
                                 LaunchedEffect(i / PAGE) { pager.ensure(i) }

@@ -88,6 +88,10 @@ class AppContainer(val context: Context) {
     /**
      * Streamed songs are kept on disk so replays and skips back don't hit the network.
      * Size is read once at startup; null when turned off.
+     *
+     * Opening it reads its index from disk, so [init] already does that on a background thread right after
+     * start. `lazy` is synchronised: whoever asks first while that is still running (the music service, on
+     * the main thread) waits for the same instance, and never sees a half-made cache or makes a second one.
      */
     val playbackCache: SimpleCache? by lazy {
         val mb = runBlocking { context.appDataStore.data.first()[intPreferencesKey("cache_mb")] } ?: 1024
@@ -182,6 +186,8 @@ class AppContainer(val context: Context) {
         appScope.launch {
             downloads.entries.map { downloads.busy() }.distinctUntilChanged().collect { busy -> if (!busy) sessions.mediaStopped() }
         }
+        // Open the playback cache off the main thread now, so starting music doesn't have to wait for it there.
+        appScope.launch(Dispatchers.IO) { runCatching { playbackCache } }
     }
 
     /** Client for the signed-in account. Screens are only shown while signed in. */
