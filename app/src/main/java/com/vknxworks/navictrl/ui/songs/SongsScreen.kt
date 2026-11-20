@@ -104,6 +104,19 @@ import androidx.compose.ui.res.pluralStringResource
 
 private const val PAGE = 200
 
+/** Pages of the songs list kept in memory at once (6,000 songs); the ones furthest from where the list is go first. */
+private const val KEPT_PAGES = 30
+
+/**
+ * Which of the [loaded] pages to let go so that at most [keep] stay: the ones furthest from page [around]
+ * (where the list is now). Never [around] itself while [keep] is at least 1.
+ */
+internal fun pagesToEvict(loaded: Collection<Int>, around: Int, keep: Int): List<Int> {
+    val extra = loaded.size - keep
+    if (extra <= 0) return emptyList()
+    return loaded.sortedWith(compareByDescending<Int> { kotlin.math.abs(it - around) }.thenBy { it }).take(extra)
+}
+
 /**
  * Every song in the library, fetched a page at a time as it scrolls into view, so the list can
  * jump anywhere (fast scroll) without loading the whole library first.
@@ -118,6 +131,9 @@ class SongPager(
         private set
     private val pages = mutableStateMapOf<Int, List<Song>>()
     private val inFlight = HashSet<Int>()
+
+    /** The page asked for last, by a row that came into view or a fast-scroll jump: where the list is now. */
+    private var lastWanted = 0
 
     init {
         load(0)
@@ -134,6 +150,10 @@ class SongPager(
                 pages[page] = items
                 total = count
                 error = null
+                // A long library scrolled from end to end would otherwise keep every page it passed. Pages far
+                // from where the list is now are dropped; their rows show as loading and fetch the page again
+                // when scrolled back to. Playing from a row and the fast-scroll jump go by index, not by these.
+                pagesToEvict(pages.keys.toList(), lastWanted, KEPT_PAGES).forEach { pages.remove(it) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -144,7 +164,10 @@ class SongPager(
         }
     }
 
-    fun ensure(index: Int) = load(index / PAGE)
+    fun ensure(index: Int) {
+        lastWanted = index / PAGE
+        load(index / PAGE)
+    }
 }
 
 @Composable
