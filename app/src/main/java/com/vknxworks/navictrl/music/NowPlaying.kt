@@ -194,12 +194,15 @@ fun NowPlayingScreen() {
     val c = context.container
     val music = c.music
     val nav = LocalNavigator.current
-    val s by music.state.collectAsStateWithLifecycle()
+    // Everything but the position, as in the mini player: the position changes twice a second while music plays,
+    // and only the seek bar with its times ([SeekSection]) and the lyrics follow it. The rest of this screen
+    // (artwork, titles, buttons, the queue) is no longer composed again for every step.
+    val steady = remember(music) { music.state.map { it.copy(positionMs = 0, bufferedMs = 0) }.distinctUntilChanged() }
+    val s by steady.collectAsStateWithLifecycle(initialValue = music.state.value.copy(positionMs = 0, bufferedMs = 0))
     val stars by c.stars.overrides.collectAsStateWithLifecycle()
     var panel by rememberSaveable { mutableStateOf<String?>(null) }
     var menu by remember { mutableStateOf(false) }
     var sleepSheet by remember { mutableStateOf(false) }
-    var scrub by remember { mutableStateOf<Long?>(null) }
     val song = s.current
     val art = song?.let { c.api.coverArtUrl(it.coverArt, 1200) }
 
@@ -260,22 +263,7 @@ fun NowPlayingScreen() {
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-                Column(Modifier.widthIn(max = 440.dp).fillMaxWidth()) {
-                    SeekBar(
-                        positionMs = scrub ?: s.positionMs,
-                        durationMs = s.durationMs,
-                        bufferedMs = s.bufferedMs,
-                        onScrub = { scrub = it },
-                        onSeek = { music.seekTo(it); scrub = null },
-                        wave = true,
-                        waveSeed = song.id.hashCode(),
-                    )
-                    Row(Modifier.fillMaxWidth()) {
-                        Text(formatClock(scrub ?: s.positionMs), style = CtrlType.Mono, color = CtrlColors.Muted)
-                        Spacer(Modifier.weight(1f))
-                        Text(formatClock(s.durationMs), style = CtrlType.Mono, color = CtrlColors.Muted)
-                    }
-                }
+                SeekSection(music, waveSeed = song.id.hashCode(), modifier = Modifier.widthIn(max = 440.dp).fillMaxWidth())
                 Spacer(Modifier.height(20.dp))
                 Row(
                     Modifier.widthIn(max = 440.dp).fillMaxWidth(),
@@ -334,7 +322,7 @@ fun NowPlayingScreen() {
                     ) {
                         PanelButton(Icons.AutoMirrored.Outlined.Subject, stringResource(R.string.lyrics)) { panel = "lyrics" }
                         PanelButton(Icons.AutoMirrored.Outlined.QueueMusic, stringResource(R.string.up_next)) { panel = "queue" }
-                        PanelButton(Icons.Outlined.Bedtime, sleepLabel(s) ?: stringResource(R.string.sleep), selected = sleepLabel(s) != null) { sleepSheet = true }
+                        SleepButton(s) { sleepSheet = true }
                     }
                 }
             }
@@ -346,7 +334,7 @@ fun NowPlayingScreen() {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PanelButton(Icons.AutoMirrored.Outlined.QueueMusic, stringResource(R.string.up_next), selected = panel != "lyrics") { panel = "queue" }
                         PanelButton(Icons.AutoMirrored.Outlined.Subject, stringResource(R.string.lyrics), selected = panel == "lyrics") { panel = "lyrics" }
-                        PanelButton(Icons.Outlined.Bedtime, sleepLabel(s) ?: stringResource(R.string.sleep), selected = sleepLabel(s) != null) { sleepSheet = true }
+                        SleepButton(s) { sleepSheet = true }
                     }
                     if (panel == "lyrics") LyricsView(s) else QueueList(s)
                 }
@@ -374,6 +362,58 @@ fun NowPlayingScreen() {
             ),
         )
     }
+}
+
+/** The seek bar and the two times under it: the part of the player that follows the position. */
+@Composable
+private fun SeekSection(music: MusicController, waveSeed: Int, modifier: Modifier = Modifier) {
+    val s by music.state.collectAsStateWithLifecycle()
+    var scrub by remember { mutableStateOf<Long?>(null) }
+    Column(modifier) {
+        SeekBar(
+            positionMs = scrub ?: s.positionMs,
+            durationMs = s.durationMs,
+            bufferedMs = s.bufferedMs,
+            onScrub = { scrub = it },
+            onSeek = { music.seekTo(it); scrub = null },
+            wave = true,
+            waveSeed = waveSeed,
+        )
+        Row(Modifier.fillMaxWidth()) {
+            Text(formatClock(scrub ?: s.positionMs), style = CtrlType.Mono, color = CtrlColors.Muted)
+            Spacer(Modifier.weight(1f))
+            Text(formatClock(s.durationMs), style = CtrlType.Mono, color = CtrlColors.Muted)
+        }
+    }
+}
+
+/**
+ * Goes up every second while a timed sleep is set. "x min left" counts down by itself, and the screen is no
+ * longer composed again twice a second by the position, so the two places that show it look at the clock again
+ * with this.
+ */
+@Composable
+private fun sleepTick(s: MusicState): androidx.compose.runtime.State<Int> {
+    val timed = s.sleepAtMs != null
+    return produceState(0, timed) {
+        if (timed) while (true) { kotlinx.coroutines.delay(1_000); value++ }
+    }
+}
+
+/** The sleep button under the player: "Sleep", or what's left of the timer. */
+@Composable
+private fun SleepButton(s: MusicState, onClick: () -> Unit) {
+    val tick by sleepTick(s)
+    val label = remember(s.sleepAtMs, s.sleepAtEndOfTrack, tick) { sleepLabel(s) }
+    PanelButton(Icons.Outlined.Bedtime, label ?: stringResource(R.string.sleep), selected = label != null, onClick = onClick)
+}
+
+/** The line at the top of the sleep sheet saying when the music pauses; nothing when no sleep is set. */
+@Composable
+private fun SleepRemaining(s: MusicState) {
+    val tick by sleepTick(s)
+    val label = remember(s.sleepAtMs, s.sleepAtEndOfTrack, tick) { sleepLabel(s) } ?: return
+    Text(stringResource(R.string.pausing_x, label), style = MaterialTheme.typography.bodyMedium, color = CtrlColors.AccentText, modifier = Modifier.padding(horizontal = 24.dp))
 }
 
 private fun sleepLabel(s: MusicState): String? = when {
@@ -416,9 +456,7 @@ private fun SleepSheet(s: MusicState, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = CtrlColors.Surface) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
             Text(stringResource(R.string.sleep_timer), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-            sleepLabel(s)?.let {
-                Text(stringResource(R.string.pausing_x, it), style = MaterialTheme.typography.bodyMedium, color = CtrlColors.AccentText, modifier = Modifier.padding(horizontal = 24.dp))
-            }
+            SleepRemaining(s)
             listOf(5, 10, 15, 30, 45, 60, 90).forEach { m ->
                 SheetOption(pluralStringResource(R.plurals.x_minutes, m, m)) { music.sleepIn(m); onDismiss() }
             }
@@ -592,7 +630,7 @@ private fun LyricsView(s: MusicState) {
                 stringResource(R.string.no_lyrics_for_this_song),
                 stringResource(if (settings.lyricsOnline && !local) R.string.lyrics_none_online else R.string.navidrome_reads_lyrics_from_the_files),
             )
-            else -> LyricLines(lyrics, s.positionMs) { c.music.seekTo(it) }
+            else -> SyncedLyricLines(lyrics, c.music)
         }
     }
 }
@@ -603,8 +641,19 @@ private fun LyricsView(s: MusicState) {
  * jumps there. Plain lyrics just scroll.
  */
 @Composable
-private fun LyricLines(lyrics: Lyrics, positionMs: Long, onSeek: (Long) -> Unit) {
-    val currentIndex = if (lyrics.synced) currentLyricIndex(lyrics.lines, positionMs) else -1
+private fun SyncedLyricLines(lyrics: Lyrics, music: MusicController) {
+    // Only the line being sung matters here: it changes every few seconds, the position twice a second.
+    val line = remember(music, lyrics) {
+        music.state.map { if (lyrics.synced) currentLyricIndex(lyrics.lines, it.positionMs) else -1 }.distinctUntilChanged()
+    }
+    val currentIndex by line.collectAsStateWithLifecycle(
+        initialValue = if (lyrics.synced) currentLyricIndex(lyrics.lines, music.state.value.positionMs) else -1,
+    )
+    LyricLines(lyrics, currentIndex) { music.seekTo(it) }
+}
+
+@Composable
+private fun LyricLines(lyrics: Lyrics, currentIndex: Int, onSeek: (Long) -> Unit) {
     val listState = rememberLazyListState()
     var userScrollAt by remember { mutableLongStateOf(0L) }
     LaunchedEffect(listState) {
