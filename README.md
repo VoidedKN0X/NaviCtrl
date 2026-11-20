@@ -55,7 +55,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 ## Is it safe to install?
 
 - **Open source.** All of NaviCtrl's code is in this repo, under the GPL-3.0 license. Anyone can read it.
-- **Built by GitHub, not on a personal computer.** Every release on the Releases page is built by [the build workflow](.github/workflows/build.yml) on GitHub Actions, straight from the code in this repo.
+- **Built by GitHub, not on a personal computer.** Every release on the Releases page is built by [the build workflow](.github/workflows/build.yml) on GitHub Actions, straight from the code in this repo. The signing key is kept away from the build: one job builds the APK without any secrets, and a separate job that runs no code from this repo signs it and checks the signature against the fingerprint below.
 - **Always signed with the same key.** Android refuses to install an update that's signed with a different key, so nobody else can publish an update over your copy. The [CtrlF-Droid repo](https://voidedkn0x.github.io/CtrlF-Droid/) only accepts APKs signed with this key too. The SHA-256 fingerprint of the signing certificate is:
 
   ```
