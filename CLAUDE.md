@@ -14,6 +14,19 @@ Gradle checks every library and plugin download against the sha256 checksums in 
 - All of this reads the disk and may ask the Keystore: never on the main thread (`MusicController` runs on the main thread, so its queue file work stays inside `withContext(Dispatchers.IO)`; `LocalServer` runs on the request threads).
 - `SealedFileTest` covers the format, the migration step, the key rules and `SealedStore` (`./gradlew :app:testDebugUnitTest`; CI doesn't run unit tests).
 
+## Playback extras added in 0.12
+
+- Parametric equalizer: `music/ParamEq.kt` (pure maths: bands, RBJ biquads, the settings text form; `ParamEqTest`) and `music/ParamEqProcessor.kt` (a Media3 `AudioProcessor` in the player's audio sink, built in `MusicService`). It is the app's own filter chain, separate from `AudioFx` (the phone's equalizer). With it off the audio is copied through unchanged.
+- "Load the next song ahead on mobile data": `MusicService.preloadNext` writes the whole next song into the playback cache with Media3's `CacheWriter`, only on mobile data, only while playing, one song at a time.
+- Share links: Subsonic `getShares`/`createShare`/`deleteShare` (`data/api/SubsonicApi.kt`); HTTP 501 means Navidrome's `EnableSharing` is off. Not offered for music on this phone.
+- Settings export/import: `data/settings/SettingsBackup.kt`. Never add accounts, addresses, passwords, the app lock or the privacy switches to it; an import must leave those alone (`SettingsBackupTest`).
+
+## Languages
+
+English (`values/strings.xml`) and Dutch (`values-nl/strings.xml`, Belgian Dutch, informal "je"). Android picks by the phone's language; there is no in-app switch. A new string needs both files.
+
+Genres, internet radio and a home tab were removed on the owner's request: don't add them back.
+
 ## Releasing
 
 - A release is published only when `versionName` in `app/build.gradle.kts` is bumped. Bump `versionCode` by 1 at the same time.
