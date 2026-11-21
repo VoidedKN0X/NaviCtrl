@@ -238,7 +238,7 @@ fun YouScreen() {
             )
             Spacer(Modifier.height(20.dp))
             Text(
-                "GOOGLE-FREE · TELEMETRY-FREE · ARM64",
+                stringResource(R.string.about_tagline),
                 style = CtrlType.Label.copy(letterSpacing = 0.12.em),
                 color = CtrlColors.Muted,
                 textAlign = TextAlign.Center,

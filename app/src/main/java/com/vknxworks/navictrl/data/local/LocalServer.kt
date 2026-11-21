@@ -110,6 +110,9 @@ class LocalServer(private val context: Context, private val keys: DataKeyStore) 
                 observing = true
             }
             val out = ArrayList<Track>()
+            // Shown for songs whose file has no album or artist tag, in the phone's language.
+            val unknownAlbum = context.getString(com.vknxworks.navictrl.R.string.unknown_album)
+            val unknownArtist = context.getString(com.vknxworks.navictrl.R.string.unknown_artist)
             val proj = arrayOf(
                 MediaStore.Audio.Media._ID, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ALBUM_ID,
                 MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.ALBUM_ARTIST,
@@ -129,9 +132,9 @@ class LocalServer(private val context: Context, private val keys: DataKeyStore) 
                         out += Track(
                             id = c.getLong(0),
                             title = c.getString(1)?.takeIf { it.isNotBlank() } ?: name.substringBeforeLast('.'),
-                            album = c.getString(2)?.takeIf { it.isNotBlank() && it != "<unknown>" } ?: UNKNOWN_ALBUM,
+                            album = c.getString(2)?.takeIf { it.isNotBlank() && it != "<unknown>" } ?: unknownAlbum,
                             albumId = c.getLong(3),
-                            artist = c.getString(4)?.takeIf { it.isNotBlank() && it != "<unknown>" } ?: UNKNOWN_ARTIST,
+                            artist = c.getString(4)?.takeIf { it.isNotBlank() && it != "<unknown>" } ?: unknownArtist,
                             artistId = c.getLong(5),
                             albumArtist = c.getString(6)?.takeIf { it.isNotBlank() && it != "<unknown>" },
                             track = rawTrack?.let { if (it >= 1000) it % 1000 else it }?.takeIf { it > 0 },
@@ -644,8 +647,6 @@ class LocalServer(private val context: Context, private val keys: DataKeyStore) 
         const val BASE_URL = "http://$HOST"
         const val USER = "this-phone"
         const val PASSWORD = "local"
-        private const val UNKNOWN_ALBUM = "Unknown album"
-        private const val UNKNOWN_ARTIST = "Unknown artist"
         private const val STATE_FILE = "local_library.json"
 
         fun isLocal(baseUrl: String?): Boolean = baseUrl?.let { Uri.parse(it).host.equals(HOST, ignoreCase = true) } == true
