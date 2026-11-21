@@ -23,12 +23,13 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Play queue sync between devices**: your queue, song and position are saved on your server, and NaviCtrl offers to continue a queue saved on another device or app (with where and when it was saved), or on request with **Resume from another device**
 - **Gapless playback**, **crossfade** (up to 12 seconds, skipped between songs that run on from the same album) and **ReplayGain** (track or album, with preamp and clipping prevention)
 - **Equalizer** with your phone's presets or your own band levels, and bass boost
+- **Parametric equalizer**: up to 10 bands of your own (peak, low shelf, high shelf) with frequency, gain and width, a preamp and a curve of the result; NaviCtrl's own filters, the same on every phone
 - **Downloads** of songs, albums and playlists for offline listening, original or converted (MP3, Opus or AAC at the bitrate you pick), with Wi-Fi only, a space limit, resume after a dropped connection, and a **Downloaded only** view in the Songs tab; plus a cache of played songs
 - **Scrobbling** to Last.fm and ListenBrainz through Navidrome
 - **Album and artist pages**, search, and **Add to playlist** from any song or album
 - **Share links**: make a public link to a song, album or playlist from its menu and send it with Android's share sheet; see, copy and delete your links under your profile picture (needs `EnableSharing` on your Navidrome server)
 - **Scan for new music** on your server from the app (admin accounts)
-- **Several servers and accounts**; streaming quality for Wi-Fi and mobile data
+- **Several servers and accounts**; streaming quality for Wi-Fi and mobile data, and optionally **loading the whole next song ahead on mobile data** so music carries on where reception drops
 - **App lock** with its own PIN and optional fingerprint unlock; your server password stays encrypted while the app is locked, and music and downloads that are already running carry on
 - **Hide in screenshots** and **Hide in recent apps**, two separate switches, both off by default
 

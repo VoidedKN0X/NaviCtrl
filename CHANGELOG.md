@@ -6,11 +6,13 @@ To publish a new version: bump `versionCode` and `versionName` in `app/build.gra
 
 ## Unreleased
 
-Built and checked by CI only: nothing here has been run on a phone yet.
+Not released yet. Built and checked by CI only: nothing here has been run on a phone.
 
 ### New
 
 - **Share links.** The menu of a song, an album and a playlist has a new **Share a link**. NaviCtrl asks your Navidrome server to make a public link (anyone who has it can listen in a browser, without an account) and opens Android's share sheet with it, so you can send it in any app. The link's description is the title, and the server decides how long it works (its default is a year). Under your profile picture, **Share links** lists every link on the server with its address, end date and number of visits; tap one to share it again, copy it, or delete it (after a confirmation: the link stops working for everyone, permanently). Sharing must be turned on on the server (`EnableSharing` in Navidrome's settings); when it's off NaviCtrl says so. Not offered for **Music on this phone**, which has no server. Checked against Navidrome's source (`getShares`, `createShare`, `deleteShare`); not yet run on a phone.
+- **Load the next song ahead on mobile data.** A new switch under **Settings > Streaming**, off by default. While a song plays on mobile data, NaviCtrl fetches the whole next song in the queue and keeps it in the played-music cache, so the music carries on through a tunnel or a stretch without reception instead of stopping after the 30 seconds gapless playback loads ahead. One song at a time, only for songs streamed from your server (downloads and music on this phone are files already), never on Wi-Fi, and it stops when you pause. It uses mobile data for songs you may end up skipping, and needs **Keep played music on the phone** to be on (the row says so when it's off). Not yet run on a phone.
+- **Parametric equalizer.** On the **Equalizer** page (Settings > Playback) there is a second equalizer below the phone's own. You add up to 10 bands yourself; each band is a **Peak** (a bell around one frequency), a **Low shelf** or a **High shelf**, with its own frequency (20 Hz to 20 kHz), gain (-15 to +15 dB in half-dB steps) and width (Q 0.2 to 10). A curve shows what all bands do together, changes are heard while you drag, and a **Preamp** (0 to -15 dB) makes room for boosts: when the curve goes above 0 dB, the page says by how much, because loud passages could distort. Unlike the existing equalizer, which is the phone's own and differs per phone, these are NaviCtrl's own filters inside the player, so they work the same on every phone and output, also on a phone that has no equalizer (that page used to show only a message there). Both can be on together. Off by default; with it off the sound passes through unchanged. The filter maths has unit tests; nothing was run on a phone, so listen for clicks or distortion when you try it.
 
 ## v0.11.0 (2026-11-21)
 

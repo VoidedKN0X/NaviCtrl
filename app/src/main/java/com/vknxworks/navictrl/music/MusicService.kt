@@ -10,9 +10,16 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import android.content.Context
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
@@ -55,6 +62,11 @@ class MusicService : MediaSessionService() {
     private var fadeIn = false
     private var lastItem: MediaItem? = null
 
+    // "Load the next song ahead on mobile data": the song being fetched into the playback cache, if any.
+    private var cacheSource: CacheDataSource.Factory? = null
+    private var preloadKey: String? = null
+    private var preloadWriter: CacheWriter? = null
+
     /** Whether the player is playing; the timers below sleep while it isn't instead of waking up all the time. */
     private val playing = MutableStateFlow(false)
 
@@ -63,14 +75,26 @@ class MusicService : MediaSessionService() {
         val c = container
         // Local files go straight to disk; streams go through the playback cache when it's on.
         val network: DataSource.Factory = OkHttpDataSource.Factory(c.http)
-        val remote: DataSource.Factory = c.playbackCache?.let { cache ->
+        val cached: CacheDataSource.Factory? = c.playbackCache?.let { cache ->
             CacheDataSource.Factory()
                 .setCache(cache)
                 .setUpstreamDataSourceFactory(network)
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-        } ?: network
+        }
+        cacheSource = cached
+        val remote: DataSource.Factory = cached ?: network
 
-        val player = ExoPlayer.Builder(this)
+        // The parametric equalizer works on the sound inside the player, before it reaches Android.
+        ParametricEq.apply(c.settings.settings.value)
+        val renderers = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink =
+                DefaultAudioSink.Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                    .setAudioProcessors(arrayOf<AudioProcessor>(ParamEqProcessor()))
+                    .build()
+        }
+        val player = ExoPlayer.Builder(this, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 true,
@@ -110,6 +134,7 @@ class MusicService : MediaSessionService() {
             override fun onEvents(player: Player, events: Player.Events) {
                 playing.value = player.isPlaying
                 updateRunning(player)
+                preloadNext(player)
             }
 
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
@@ -126,7 +151,9 @@ class MusicService : MediaSessionService() {
                 settingsNow = s
                 applyGapless(player)
                 AudioFx.apply(s)
+                ParametricEq.apply(s)
                 updateGain(player)
+                preloadNext(player)
             }
         }
 
@@ -166,6 +193,42 @@ class MusicService : MediaSessionService() {
         player.setPreloadConfiguration(
             if (settingsNow.gapless) ExoPlayer.PreloadConfiguration(PRELOAD_US) else ExoPlayer.PreloadConfiguration.DEFAULT,
         )
+    }
+
+    /**
+     * "Load the next song ahead on mobile data": while a song plays on mobile data, the whole next song in the
+     * queue is fetched into the playback cache, so the music carries on through a stretch without reception.
+     * Only streams from the server (downloads and music on this phone are files already), one song at a time,
+     * and never on Wi-Fi. A song that's already in the cache costs nothing: only what's missing is fetched.
+     */
+    private fun preloadNext(player: Player) {
+        val source = cacheSource
+        val next = player.nextMediaItemIndex
+        val item = if (source != null && settingsNow.preloadMobile && player.isPlaying && next != C.INDEX_UNSET) player.getMediaItemAt(next) else null
+        val config = item?.localConfiguration
+        val key = config?.customCacheKey
+        val scheme = config?.uri?.scheme
+        val wanted = source != null && config != null && key != null && (scheme == "http" || scheme == "https") &&
+            player.repeatMode != Player.REPEAT_MODE_ONE && container.isOnCellular()
+        if (!wanted) {
+            // Paused, off mobile data, switched off or nothing next: stop what's being fetched. What's there stays in the cache.
+            if (preloadKey != null) stopPreload()
+            return
+        }
+        if (key == preloadKey) return
+        stopPreload()
+        val writer = CacheWriter(source!!.createDataSource(), DataSpec.Builder().setUri(config!!.uri).setKey(key).build(), null, null)
+        preloadKey = key
+        preloadWriter = writer
+        // Blocking network and disk work: off the main thread. Errors (no reception, cancelled) just end it;
+        // the player then streams the song as usual.
+        scope.launch(Dispatchers.IO) { runCatching { writer.cache() } }
+    }
+
+    private fun stopPreload() {
+        runCatching { preloadWriter?.cancel() }
+        preloadWriter = null
+        preloadKey = null
     }
 
     /** ReplayGain for the current song: turned down with the player volume, raised with the loudness enhancer. */
@@ -338,6 +401,7 @@ class MusicService : MediaSessionService() {
         val s = session ?: return
         session = null
         // The timers stop first, so nothing touches the player once it's released.
+        stopPreload()
         scope.cancel()
         runCatching { s.player.release() }
         runCatching { s.release() }

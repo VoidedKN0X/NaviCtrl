@@ -87,6 +87,13 @@ data class AppSettings(
     val replayGainPreamp: Int = 0,
     /** Never raise a song so far that its loudest moment would clip. */
     val preventClipping: Boolean = true,
+    /** The parametric equalizer (the app's own filters, see ParamEq.kt) is on. */
+    val peqEnabled: Boolean = false,
+    /** Tenths of a dB taken off before the bands, 0 down to -150, to leave room for boosts. */
+    val peqPreamp: Int = 0,
+    val peqBands: List<com.vknxworks.navictrl.music.PeqBand> = emptyList(),
+    /** On mobile data, fetch the whole next song into the playback cache while the current one plays. */
+    val preloadMobile: Boolean = false,
     val eqEnabled: Boolean = false,
     /** Index of the phone's equalizer preset; -1 = your own band levels in [eqBands]. */
     val eqPreset: Int = -1,
@@ -127,6 +134,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val replayGain = stringPreferencesKey("replay_gain")
         val preamp = intPreferencesKey("replay_gain_preamp")
         val preventClipping = booleanPreferencesKey("prevent_clipping")
+        val preloadMobile = booleanPreferencesKey("preload_next_mobile")
+        val peqEnabled = booleanPreferencesKey("peq_enabled")
+        val peqPreamp = intPreferencesKey("peq_preamp")
+        val peqBands = stringPreferencesKey("peq_bands")
         val eqEnabled = booleanPreferencesKey("eq_enabled")
         val eqPreset = intPreferencesKey("eq_preset")
         val eqBands = stringPreferencesKey("eq_bands")
@@ -176,6 +187,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         replayGain = enumOr(this[K.replayGain], ReplayGainMode.OFF),
         replayGainPreamp = (this[K.preamp] ?: 0).coerceIn(-15, 15),
         preventClipping = this[K.preventClipping] ?: true,
+        preloadMobile = this[K.preloadMobile] ?: false,
+        peqEnabled = this[K.peqEnabled] ?: false,
+        peqPreamp = (this[K.peqPreamp] ?: 0).coerceIn(com.vknxworks.navictrl.music.PeqConfig.MIN_PREAMP_TENTHS, 0),
+        peqBands = com.vknxworks.navictrl.music.PeqBand.decode(this[K.peqBands]),
         eqEnabled = this[K.eqEnabled] ?: false,
         eqPreset = this[K.eqPreset] ?: -1,
         eqBands = this[K.eqBands]?.split(',')?.mapNotNull { it.trim().toIntOrNull() }.orEmpty(),
@@ -212,6 +227,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.replayGain] = s.replayGain.name
             p[K.preamp] = s.replayGainPreamp
             p[K.preventClipping] = s.preventClipping
+            p[K.preloadMobile] = s.preloadMobile
+            p[K.peqEnabled] = s.peqEnabled
+            p[K.peqPreamp] = s.peqPreamp
+            p[K.peqBands] = com.vknxworks.navictrl.music.PeqBand.encode(s.peqBands)
             p[K.eqEnabled] = s.eqEnabled
             p[K.eqPreset] = s.eqPreset
             p[K.eqBands] = s.eqBands.joinToString(",")

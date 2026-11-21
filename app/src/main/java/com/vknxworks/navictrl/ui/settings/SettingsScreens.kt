@@ -172,6 +172,11 @@ fun SettingsScreen() {
                 GroupChoice(stringResource(R.string.quality_on_mobile_data), STREAM_QUALITY, s.mobileBitrate) { v -> update { it.copy(mobileBitrate = v) } }
                 GroupChoice(stringResource(R.string.format_for_lower_quality), TranscodeFormat.entries.map { it to it.label }, s.format) { v -> update { it.copy(format = v) } }
                 GroupChoice(stringResource(R.string.keep_played_music_on_the_phone), CACHE_SIZES, s.cacheMb) { v -> update { it.copy(cacheMb = v) } }
+                GroupSwitch(
+                    stringResource(R.string.preload_mobile),
+                    stringResource(if (s.cacheMb > 0) R.string.preload_mobile_subtitle else R.string.preload_mobile_needs_cache),
+                    s.preloadMobile,
+                ) { v -> update { it.copy(preloadMobile = v) } }
             }
             Text(
                 stringResource(R.string.a_change_to_the_cache_size),

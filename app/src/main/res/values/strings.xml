@@ -450,4 +450,26 @@
         <item quantity="one">%1$d visit</item>
         <item quantity="other">%1$d visits</item>
     </plurals>
+    <!-- Loading the whole next song ahead on mobile data -->
+    <string name="preload_mobile">Load the next song ahead on mobile data</string>
+    <string name="preload_mobile_subtitle">While a song plays on mobile data, the whole next song is fetched and kept on the phone, so music carries on where reception drops. Uses mobile data for songs you may skip.</string>
+    <string name="preload_mobile_needs_cache">Needs Keep played music on the phone: choose a size above and restart NaviCtrl</string>
+    <!-- Parametric equalizer (the app's own filters) -->
+    <string name="peq">Parametric equalizer</string>
+    <string name="peq_use">Use the parametric equalizer</string>
+    <string name="peq_use_subtitle">Your own bands, each with its own frequency, gain and width</string>
+    <string name="peq_footer">NaviCtrl\'s own filters inside the player, so they work the same on every phone and on any output. Up to 10 bands. Can be used together with the phone\'s equalizer above.</string>
+    <string name="peq_preamp">Preamp</string>
+    <string name="peq_clip_warning">The curve goes %1$s dB above 0. Loud passages can distort: lower the preamp by that much.</string>
+    <string name="peq_add_band">Add a band</string>
+    <string name="peq_band_x">Band %1$d</string>
+    <string name="peq_band_summary">%1$s dB  ·  Q %2$s</string>
+    <string name="peq_type_peak">Peak</string>
+    <string name="peq_type_low_shelf">Low shelf</string>
+    <string name="peq_type_high_shelf">High shelf</string>
+    <string name="peq_frequency">Frequency</string>
+    <string name="peq_gain">Gain</string>
+    <string name="peq_width">Width</string>
+    <string name="peq_width_hint">A higher Q is narrower. For a shelf, Q sets how steep the step is (0.71 is the usual).</string>
+    <string name="peq_remove_band">Remove this band</string>
 </resources>
