@@ -177,7 +177,7 @@
     <string name="cancel">Annuler</string>
     <string name="you">Vous</string>
     <string name="selected">Sélectionné</string>
-    <string name="added_x">%1$s ajouté</string>
+    <string name="added_x">Ajouté : %1$s</string>
     <string name="popular">Populaires</string>
     <string name="show_less">Afficher moins</string>
     <string name="show_all_x">Afficher les %1$s</string>
