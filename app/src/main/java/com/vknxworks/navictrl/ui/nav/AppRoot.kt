@@ -329,6 +329,7 @@ private fun AppNavHost(navController: NavHostController) {
         composable<DownloadsRoute> { DownloadsScreen() }
         composable<SettingsRoute> { SettingsScreen() }
         composable<EqualizerRoute> { EqualizerScreen() }
+        composable<SharesRoute> { com.vknxworks.navictrl.ui.settings.SharesScreen() }
         composable<AccountsRoute> { AccountsScreen() }
         composable<AddAccountRoute> {
             val navigator = LocalNavigator.current

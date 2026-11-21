@@ -16,6 +16,7 @@ import kotlinx.serialization.json.contentOrNull
 @Serializable private class LyricsList(val structuredLyrics: List<StructuredLyrics> = emptyList())
 @Serializable private class LegacyLyrics(val value: String? = null)
 @Serializable private class Extension(val name: String = "")
+@Serializable private class ShareList(val share: List<Share> = emptyList())
 
 suspend fun SubsonicClient.ping(): JsonObject = call("ping")
 
@@ -162,6 +163,33 @@ suspend fun SubsonicClient.extensions(): Set<String> {
         emptySet()
     }
     return names.also { extensionNames = it }
+}
+
+/**
+ * Share links (Subsonic getShares / createShare / deleteShare). Navidrome only has them when its
+ * EnableSharing option is on; otherwise it answers HTTP 501, which is reported as "sharing is off".
+ */
+private suspend fun <T> sharing(block: suspend () -> T): T = try {
+    block()
+} catch (e: ApiException) {
+    if (e.code == 501) throw ApiException(com.vknxworks.navictrl.str(com.vknxworks.navictrl.R.string.share_off_on_server), 501) else throw e
+}
+
+/** Every share link the signed-in user can see, newest first. */
+suspend fun SubsonicClient.shares(): List<Share> =
+    sharing { get("getShares", "shares", ShareList.serializer()).share }
+
+/**
+ * Makes a public link to the albums, playlists or songs in [ids] (all of one kind). The server sets
+ * when it expires (its DefaultShareExpiration) because no expiry is sent.
+ */
+suspend fun SubsonicClient.createShare(ids: List<String>, description: String? = null): Share = sharing {
+    get("createShare", "shares", ShareList.serializer(), ids.map { "id" to it } + listOf("description" to description?.takeIf { it.isNotBlank() }))
+        .share.firstOrNull() ?: throw ApiException(com.vknxworks.navictrl.str(com.vknxworks.navictrl.R.string.share_failed))
+}
+
+suspend fun SubsonicClient.deleteShare(id: String) {
+    sharing { call("deleteShare", listOf("id" to id)) }
 }
 
 suspend fun SubsonicClient.scanStatus(): ScanStatus = get("getScanStatus", "scanStatus", ScanStatus.serializer())

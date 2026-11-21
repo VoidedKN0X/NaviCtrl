@@ -428,4 +428,26 @@
     <string name="unreadable_start_empty">Start empty</string>
     <string name="unreadable_start_empty_title">Start empty?</string>
     <string name="unreadable_start_empty_body">Only do this if trying again doesn\'t help. What can\'t be opened is kept aside on this phone, not deleted, but NaviCtrl won\'t show it: the download list starts empty, and music on this phone starts without its favourites, ratings, play counts and playlists. Downloaded songs stay on the phone without being listed: download a song again to get it back in the list, or clear NaviCtrl\'s storage in Android\'s settings to free the space. Nothing changes on your server.</string>
+    <!-- Share links (made on the server; needs Navidrome's EnableSharing) -->
+    <string name="share_link">Share a link</string>
+    <string name="share_links">Share links</string>
+    <string name="share_links_subtitle">Public links you made to albums, playlists and songs</string>
+    <string name="share_making">Making a link…</string>
+    <string name="share_failed">The server didn\'t return a link</string>
+    <string name="share_off_on_server">Sharing is turned off on your server. Turn on EnableSharing in Navidrome\'s settings to use share links.</string>
+    <string name="share_none">No share links</string>
+    <string name="share_none_body">Pick Share a link in the menu of a song, album or playlist. Anyone with the link can listen in a browser, without an account.</string>
+    <string name="share_send">Share again</string>
+    <string name="share_copy">Copy link</string>
+    <string name="share_delete">Delete link</string>
+    <string name="share_delete_title">Delete this link?</string>
+    <string name="share_delete_body">The link to %1$s stops working for everyone who has it. This can\'t be undone. Your music stays where it is.</string>
+    <string name="share_deleted">Link deleted</string>
+    <string name="share_no_expiry">No end date</string>
+    <string name="share_expires_x">Until %1$s</string>
+    <string name="share_expired_x">Ended %1$s</string>
+    <plurals name="share_visits">
+        <item quantity="one">%1$d visit</item>
+        <item quantity="other">%1$d visits</item>
+    </plurals>
 </resources>

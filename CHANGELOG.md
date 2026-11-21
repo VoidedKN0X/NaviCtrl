@@ -4,6 +4,14 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing here has been run on a phone yet.
+
+### New
+
+- **Share links.** The menu of a song, an album and a playlist has a new **Share a link**. NaviCtrl asks your Navidrome server to make a public link (anyone who has it can listen in a browser, without an account) and opens Android's share sheet with it, so you can send it in any app. The link's description is the title, and the server decides how long it works (its default is a year). Under your profile picture, **Share links** lists every link on the server with its address, end date and number of visits; tap one to share it again, copy it, or delete it (after a confirmation: the link stops working for everyone, permanently). Sharing must be turned on on the server (`EnableSharing` in Navidrome's settings); when it's off NaviCtrl says so. Not offered for **Music on this phone**, which has no server. Checked against Navidrome's source (`getShares`, `createShare`, `deleteShare`); not yet run on a phone.
+
 ## v0.11.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published. It is the first release built with the new build tools (Android Gradle Plugin 9, stricter code shrinking), so update over your installed version and check that your data and settings are still there.

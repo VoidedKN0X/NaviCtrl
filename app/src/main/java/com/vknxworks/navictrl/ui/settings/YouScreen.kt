@@ -57,6 +57,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.navictrl.BuildConfig
+import androidx.compose.material.icons.outlined.Share
 import com.vknxworks.navictrl.R
 import com.vknxworks.navictrl.container
 import com.vknxworks.navictrl.data.api.scanStatus
@@ -155,6 +156,15 @@ fun YouScreen() {
                     ).joinToString("  ·  ").ifEmpty { null },
                     icon = Icons.Outlined.Dns,
                 )
+                if (!acc.isLocal) {
+                    GroupRow(
+                        stringResource(R.string.share_links),
+                        stringResource(R.string.share_links_subtitle),
+                        icon = Icons.Outlined.Share,
+                        showChevron = true,
+                        onClick = { nav.navigate(com.vknxworks.navictrl.ui.nav.SharesRoute) },
+                    )
+                }
                 if (acc.isAdmin) {
                     GroupRow(
                         stringResource(R.string.scan_for_new_music),

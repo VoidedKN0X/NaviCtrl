@@ -116,7 +116,10 @@ class SubsonicClient(
             )
         }
         val root = runCatching { ApiJson.parseToJsonElement(body).jsonObject }.getOrNull()
-            ?: throw ApiException(if (resp.isSuccessful) str(R.string.this_doesn_t_look_like_a) else str(R.string.server_error_x, resp.code))
+            ?: throw ApiException(
+                if (resp.isSuccessful) str(R.string.this_doesn_t_look_like_a) else str(R.string.server_error_x, resp.code),
+                if (resp.isSuccessful) 0 else resp.code,
+            )
         val r = root["subsonic-response"] as? JsonObject ?: throw ApiException(str(R.string.this_doesn_t_look_like_a))
         if ((r["status"] as? JsonPrimitive)?.contentOrNull != "ok") {
             val err = r["error"] as? JsonObject

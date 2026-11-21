@@ -20,3 +20,4 @@ import kotlinx.serialization.Serializable
 @Serializable data object AccountsRoute
 @Serializable data object AddAccountRoute
 @Serializable data object EqualizerRoute
+@Serializable data object SharesRoute

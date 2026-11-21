@@ -258,3 +258,18 @@ enum class AlbumSort(val type: String, @StringRes val label: Int) {
     RANDOM("random", R.string.sort_random),
     STARRED("starred", R.string.favourites),
 }
+
+/** A public link to an album, playlist or song (Subsonic share), made on the server. */
+@Serializable
+data class Share(
+    val id: String,
+    /** The public address anyone can open in a browser. */
+    val url: String = "",
+    val description: String? = null,
+    val username: String? = null,
+    val created: String? = null,
+    val expires: String? = null,
+    val lastVisited: String? = null,
+    val visitCount: Int = 0,
+    val entry: List<Song> = emptyList(),
+)

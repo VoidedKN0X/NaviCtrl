@@ -40,6 +40,9 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material.icons.outlined.Share
+import com.vknxworks.navictrl.ui.components.canShare
+import com.vknxworks.navictrl.ui.components.shareLink
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -197,6 +200,7 @@ private fun PlaylistContent(p: Playlist, loader: Loader<Playlist>) {
             Column(Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
                 MenuRow(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { menu = false; c.music.playNext(songs) }
                 MenuRow(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { menu = false; c.music.enqueue(songs) }
+                if (c.canShare()) MenuRow(Icons.Outlined.Share, stringResource(R.string.share_link)) { menu = false; c.shareLink(context, listOf(p.id), p.name) }
                 if (mine) {
                     MenuRow(Icons.Filled.Edit, stringResource(R.string.rename)) { menu = false; renaming = true }
                     MenuRow(Icons.Outlined.Delete, stringResource(R.string.delete_playlist)) { menu = false; deleting = true }

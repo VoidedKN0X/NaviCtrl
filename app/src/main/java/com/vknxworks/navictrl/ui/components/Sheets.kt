@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
@@ -65,6 +66,7 @@ import com.vknxworks.navictrl.data.api.StarKind
 import com.vknxworks.navictrl.data.api.album
 import com.vknxworks.navictrl.data.api.coverArtUrl
 import com.vknxworks.navictrl.data.api.createPlaylist
+import com.vknxworks.navictrl.data.api.createShare
 import com.vknxworks.navictrl.data.api.deletePlaylist
 import com.vknxworks.navictrl.data.api.playlist
 import com.vknxworks.navictrl.data.api.playlists
@@ -87,6 +89,37 @@ data class SongAction(val label: String, val icon: ImageVector, val onClick: () 
 fun AppContainer.runTask(block: suspend () -> Unit) {
     appScope.launch(Dispatchers.Main) {
         runCatching { block() }.onFailure { Toast.makeText(context, it.friendlyMessage(), Toast.LENGTH_SHORT).show() }
+    }
+}
+
+/** True for a server account: share links are made by the server, so music on this phone has none. */
+fun AppContainer.canShare(): Boolean = sessions.active.value?.account?.isLocal == false
+
+/** Opens Android's share sheet with [url]. Leaving the app for it doesn't count as leaving for the app lock. */
+fun sendShareLink(context: android.content.Context, url: String, title: String?) {
+    val send = android.content.Intent(android.content.Intent.ACTION_SEND)
+        .setType("text/plain")
+        .putExtra(android.content.Intent.EXTRA_TEXT, url)
+    if (!title.isNullOrBlank()) send.putExtra(android.content.Intent.EXTRA_SUBJECT, title)
+    val chooser = android.content.Intent.createChooser(send, null)
+    if (context !is android.app.Activity) chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching {
+        com.vknxworks.navictrl.ui.lock.AppLock.expectReturn()
+        context.startActivity(chooser)
+    }
+}
+
+/**
+ * Makes a public link on the server to the album, playlist or songs in [ids] and hands it to Android's
+ * share sheet. [title] becomes the link's description on the server.
+ */
+fun AppContainer.shareLink(context: android.content.Context, ids: List<String>, title: String) {
+    if (ids.isEmpty()) return
+    Toast.makeText(context, str(R.string.share_making), Toast.LENGTH_SHORT).show()
+    runTask {
+        val share = api.createShare(ids, title)
+        if (share.url.isBlank()) throw com.vknxworks.navictrl.data.api.ApiException(str(R.string.share_failed))
+        sendShareLink(context, share.url, title)
     }
 }
 
@@ -125,7 +158,8 @@ private fun Song.techLine(): String = listOfNotNull(
 
 @Composable
 fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> = emptyList()) {
-    val c = LocalContext.current.container
+    val context = LocalContext.current
+    val c = context.container
     val nav = LocalNavigator.current
     val stars by c.stars.overrides.collectAsStateWithLifecycle()
     val offline by c.downloads.completedIds.collectAsStateWithLifecycle()
@@ -161,6 +195,7 @@ fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> 
             } else {
                 ActionItem(Icons.Filled.Download, stringResource(R.string.download)) { act { c.downloads.enqueue(listOf(song)) } }
             }
+            if (c.canShare()) ActionItem(Icons.Outlined.Share, stringResource(R.string.share_link)) { act { c.shareLink(context, listOf(song.id), listOfNotNull(song.title, song.artist).joinToString(" - ")) } }
             if (!song.albumId.isNullOrBlank()) ActionItem(Icons.Filled.Album, stringResource(R.string.go_to_album)) { act { nav.album(song.albumId) } }
             if (!song.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, stringResource(R.string.go_to_artist)) { act { nav.artist(song.artistId) } }
             extra.forEach { a -> ActionItem(a.icon, a.label) { act(a.onClick) } }
@@ -170,7 +205,8 @@ fun SongActionsSheet(song: Song, onDismiss: () -> Unit, extra: List<SongAction> 
 
 @Composable
 fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
-    val c = LocalContext.current.container
+    val context = LocalContext.current
+    val c = context.container
     val nav = LocalNavigator.current
     val stars by c.stars.overrides.collectAsStateWithLifecycle()
     var addTo by remember { mutableStateOf<List<Song>?>(null) }
@@ -204,6 +240,10 @@ fun AlbumActionsSheet(album: Album, onDismiss: () -> Unit) {
                 if (starred) stringResource(R.string.remove_from_favourites) else stringResource(R.string.add_to_favourites),
             ) { c.stars.set(StarKind.ALBUM, album.id, !starred); onDismiss() }
             ActionItem(Icons.Filled.Download, stringResource(R.string.download_album)) { withSongs { c.downloads.enqueue(it) } }
+            if (c.canShare()) ActionItem(Icons.Outlined.Share, stringResource(R.string.share_link)) {
+                onDismiss()
+                c.shareLink(context, listOf(album.id), listOfNotNull(album.name, album.artist).joinToString(" - "))
+            }
             if (!album.artistId.isNullOrBlank()) ActionItem(Icons.Filled.Person, stringResource(R.string.go_to_artist)) { onDismiss(); nav.artist(album.artistId) }
         }
     }
@@ -263,6 +303,10 @@ fun PlaylistActionsSheet(pl: Playlist, onDismiss: () -> Unit) {
             ActionItem(Icons.Filled.Shuffle, stringResource(R.string.shuffle)) { withSongs { c.music.shuffle(it) } }
             ActionItem(Icons.AutoMirrored.Filled.PlaylistPlay, stringResource(R.string.play_next)) { withSongs { c.music.playNext(it) } }
             ActionItem(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { withSongs { c.music.enqueue(it) } }
+            if (c.canShare()) ActionItem(Icons.Outlined.Share, stringResource(R.string.share_link)) {
+                onDismiss()
+                c.shareLink(context, listOf(pl.id), pl.name)
+            }
             if (mine) {
                 ActionItem(Icons.Filled.Edit, stringResource(R.string.rename)) { renaming = true }
                 ActionItem(Icons.Outlined.Delete, stringResource(R.string.delete_playlist)) { deleting = true }
