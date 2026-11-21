@@ -4,6 +4,12 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### New
+
+- **NaviCtrl in French and German, following the phone's language.** When your phone is set to French or German, every screen, message and notification of NaviCtrl now appears in that language (French with "vous", German with "du"), next to the English and Dutch it already had. NaviCtrl also now tells Android which languages it has, so Android's per-app language setting (Settings › Apps › NaviCtrl › Language) offers English, Dutch, French and German. Names of products and formats (Navidrome, Subsonic, ReplayGain, LRCLIB, Last.fm…) stay as they are. Translated by Claude, not yet checked by a native speaker or run on a phone.
+
 ## v0.12.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

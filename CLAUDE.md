@@ -23,7 +23,7 @@ Gradle checks every library and plugin download against the sha256 checksums in 
 
 ## Languages
 
-English (`values/strings.xml`) and Dutch (`values-nl/strings.xml`, Belgian Dutch, informal "je"). Android picks by the phone's language; there is no in-app switch. A new string needs both files.
+English (`values/strings.xml`), Dutch (`values-nl/strings.xml`, Belgian Dutch, informal "je"), French (`values-fr/strings.xml`, polite "vous") and German (`values-de/strings.xml`, informal "du"). Android picks by the phone's language; there is no in-app switch, and `res/xml/locales_config.xml` lists the four for Android's per-app language setting. A new string needs all four files.
 
 Genres, internet radio and a home tab were removed on the owner's request: don't add them back.
 
