@@ -454,4 +454,12 @@
     <string name="backup_restore_confirm">Importeren</string>
     <string name="backup_restored">Instellingen geïmporteerd</string>
     <string name="backup_restore_failed">De instellingen importeren is niet gelukt</string>
+    <string name="download">Downloaden</string>
+    <string name="albums">Albums</string>
+    <string name="playlists">Afspeellijsten</string>
+    <string name="downloads">Downloads</string>
+    <string name="server">Server</string>
+    <string name="crossfade">Crossfade</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="eq_presets">Presets</string>
 </resources>

@@ -4,6 +4,12 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Fixed
+
+- **Dutch labels that were missing.** "Download", "Playlists", "Albums", "Downloads", "Server", "Crossfade", "Equalizer" and "Presets" had no Dutch entry. They are now in the Dutch file: "Downloaden" and "Afspeellijsten", the others as Dutch already says them.
+
 ## v0.13.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.
