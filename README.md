@@ -30,6 +30,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Share links**: make a public link to a song, album or playlist from its menu and send it with Android's share sheet; see, copy and delete your links under your profile picture (needs `EnableSharing` on your Navidrome server)
 - **Scan for new music** on your server from the app (admin accounts)
 - **Several servers and accounts**; streaming quality for Wi-Fi and mobile data, and optionally **loading the whole next song ahead on mobile data** so music carries on where reception drops
+- **Export and import of settings** as a file (no accounts, passwords or lock settings in it)
 - **App lock** with its own PIN and optional fingerprint unlock; your server password stays encrypted while the app is locked, and music and downloads that are already running carry on
 - **Hide in screenshots** and **Hide in recent apps**, two separate switches, both off by default
 

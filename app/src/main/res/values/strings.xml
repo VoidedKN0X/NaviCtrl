@@ -472,4 +472,21 @@
     <string name="peq_width">Width</string>
     <string name="peq_width_hint">A higher Q is narrower. For a shelf, Q sets how steep the step is (0.71 is the usual).</string>
     <string name="peq_remove_band">Remove this band</string>
+    <!-- Settings export and import -->
+    <string name="backup_title">Export and import</string>
+    <string name="backup_footer">The file holds NaviCtrl\'s settings: quality, downloads, playback, both equalizers, lyrics, listening history, look and sort order. It has no accounts, server addresses or passwords, and nothing of the app lock, Lock again, Hide in screenshots or Hide in recent apps: an import leaves those as they are.</string>
+    <string name="backup_save">Export settings</string>
+    <string name="backup_save_sub">Save them as a file, for example in Downloads or a cloud folder</string>
+    <string name="backup_restore">Import settings</string>
+    <string name="backup_restore_sub">Load a settings file saved before</string>
+    <string name="backup_saved">Settings saved</string>
+    <string name="backup_save_failed">Couldn\'t save the file</string>
+    <string name="backup_read_failed">Couldn\'t read the file</string>
+    <string name="backup_not_valid">That isn\'t a NaviCtrl settings file</string>
+    <string name="backup_too_new">This file is from a newer NaviCtrl. Update the app first.</string>
+    <string name="backup_restore_title">Import these settings?</string>
+    <string name="backup_restore_body">Settings saved on %1$s with NaviCtrl %2$s replace the ones here: streaming and download quality, the size of the played-music cache, playback (gapless, crossfade, ReplayGain), both equalizers with their bands, lyrics lookup, listening history, queue sync, theme and sort order.\n\nYour accounts, passwords, downloads, the app lock and the privacy switches are not in the file and stay as they are. A different cache size takes effect after a restart.</string>
+    <string name="backup_restore_confirm">Import</string>
+    <string name="backup_restored">Settings imported</string>
+    <string name="backup_restore_failed">Couldn\'t import the settings</string>
 </resources>

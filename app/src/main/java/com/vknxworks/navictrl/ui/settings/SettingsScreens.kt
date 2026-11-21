@@ -204,6 +204,8 @@ fun SettingsScreen() {
                 GroupSwitch(stringResource(R.string.report_what_i_play), stringResource(R.string.updates_play_counts_recently_played_and), s.scrobble) { v -> update { it.copy(scrobble = v) } }
             }
 
+            BackupGroup()
+
         }
     }
 }
