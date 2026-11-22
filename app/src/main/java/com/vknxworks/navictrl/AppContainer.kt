@@ -125,6 +125,9 @@ class AppContainer(val context: Context) {
     }
     val music by lazy { MusicController(context, this) }
 
+    /** NaviCtrl is on screen. Set by the app's lifecycle observer. */
+    val foreground = kotlinx.coroutines.flow.MutableStateFlow(false)
+
     private val _playlistEdits = MutableStateFlow(0)
 
     /** Goes up after every playlist change made in the app, so playlist lists and pages already open reload. */

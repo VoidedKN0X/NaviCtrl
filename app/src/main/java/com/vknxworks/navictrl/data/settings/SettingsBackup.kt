@@ -133,7 +133,8 @@ object SettingsBackups {
 
     /**
      * [cur] with what the file has. A value the file doesn't have, or one outside what the settings offer,
-     * leaves the current one. The app lock and the other privacy settings are never touched.
+     * leaves the current one. The app lock and the other privacy settings are never touched, and online lyrics
+     * and scrobbling can only be switched off by a file, never on.
      */
     fun apply(cur: AppSettings, s: BackupSettings): AppSettings = cur.copy(
         wifiBitrate = s.wifiBitrate?.takeIf { it in BITRATES } ?: cur.wifiBitrate,
@@ -146,8 +147,10 @@ object SettingsBackups {
         downloadWifiOnly = s.downloadWifiOnly ?: cur.downloadWifiOnly,
         downloadLimitMb = s.downloadLimitMb?.takeIf { it in 0..(1024 * 1024) } ?: cur.downloadLimitMb,
         downloadedOnly = s.downloadedOnly ?: cur.downloadedOnly,
-        lyricsOnline = s.lyricsOnline ?: cur.lyricsOnline,
-        scrobble = s.scrobble ?: cur.scrobble,
+        // Privacy: a file can switch these off but never on. "Find lyrics online" sends what you play to
+        // lrclib.net, and scrobbling reports it to the server (which may pass it on to Last.fm or ListenBrainz).
+        lyricsOnline = cur.lyricsOnline && (s.lyricsOnline ?: true),
+        scrobble = cur.scrobble && (s.scrobble ?: true),
         queueSync = s.queueSync ?: cur.queueSync,
         theme = enumOr(s.theme, cur.theme),
         dynamicColor = s.dynamicColor ?: cur.dynamicColor,

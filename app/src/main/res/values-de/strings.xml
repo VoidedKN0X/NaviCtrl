@@ -65,7 +65,7 @@
     <string name="app_lock_subtitle">Beim Öffnen von NaviCtrl nach einer App-PIN (und optional deinem Fingerabdruck) fragen. Solange die App gesperrt ist, bleibt dein Serverpasswort mit der PIN verschlüsselt.</string>
     <string name="app_lock_footer">Bereits laufende Musik und laufende Downloads gehen weiter, während NaviCtrl gesperrt ist, mit ihren Steuerelementen in der Benachrichtigung und auf dem Sperrbildschirm. Sie behalten die nötige Anmeldung im Speicher, bis sie enden; alles Neue erfordert ein Entsperren.</string>
     <string name="lock_prompt_subtitle">Deine Navidrome-Musik</string>
-    <string name="lock_forgot_body">Die PIN kann nicht wiederhergestellt werden, da sie deine Serverpasswörter verschlüsselt. NaviCtrl entfernt alle Konten und löscht die Downloads, die gespielte Musik und die Cover auf diesem Handy. Auf deinem Navidrome-Server ändert sich nichts.</string>
+    <string name="lock_forgot_body">Die PIN kann nicht wiederhergestellt werden, da sie deine Serverpasswörter verschlüsselt. NaviCtrl entfernt alle Konten und löscht die Downloads, die gespielte Musik und die Cover auf diesem Handy. Auf deinem Navidrome-Server ändert sich nichts. Wenn dein Handy eine Displaysperre hat, bestätigst du zuerst damit.</string>
     <string name="lock_forgot_confirm">Konten entfernen und zurücksetzen</string>
     <string name="lock_migrate_intro">Die App-Sperre von NaviCtrl hat eine eigene PIN, getrennt von der deines Handys. Deine Serverpasswörter werden damit verschlüsselt, solange die App gesperrt ist.</string>
     <string name="lock_enable_intro">Mindestens %1$d Ziffern, anders als die PIN deines Handys. Wenn du sie vergisst, musst du dich erneut bei deinen Servern anmelden.</string>
@@ -476,4 +476,7 @@
     <string name="backup_restore_confirm">Importieren</string>
     <string name="backup_restored">Einstellungen importiert</string>
     <string name="backup_restore_failed">Einstellungen konnten nicht importiert werden</string>
+    <string name="lock_reset_prompt_title">App-Sperre von NaviCtrl zurücksetzen</string>
+    <string name="lock_reset_prompt_subtitle">Bestätige mit der Displaysperre deines Handys, dass du es bist</string>
+    <string name="lock_reset_prompt_failed">Displaysperre konnte nicht angezeigt werden</string>
 </resources>

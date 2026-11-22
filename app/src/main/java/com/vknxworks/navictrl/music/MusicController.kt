@@ -201,8 +201,9 @@ class MusicController(private val context: Context, private val c: AppContainer)
     private fun startPolling() {
         if (polling) return
         polling = true
+        // The play position for the screens, twice a second, only while NaviCtrl is on screen. Track, queue and
+        // play/pause changes arrive through onEvents, which rebuilds the whole state.
         scope.launch {
-            var ticks = 0
             while (true) {
                 if (controller?.isPlaying != true) {
                     // Nothing playing: sleep until something does, instead of waking up twice a second in the background.
@@ -210,12 +211,36 @@ class MusicController(private val context: Context, private val c: AppContainer)
                     delay(500)
                     continue
                 }
-                refresh()
-                // Every 30 seconds while playing, the server's copy of the queue gets the new position.
-                if (++ticks >= 60) { ticks = 0; saveQueueSoon() }
+                if (!c.foreground.value) {
+                    // Nobody looks at the position in the background: sleep until the app is back on screen.
+                    c.foreground.first { it }
+                    continue
+                }
+                refreshPosition()
                 delay(500)
             }
         }
+        // Every 5 minutes while playing, the saved queue (and the server's copy) get the new position. It's also
+        // saved on every track change, pause and queue change, and when the app goes to the background.
+        scope.launch {
+            while (true) {
+                _state.first { it.isPlaying }
+                delay(PERIODIC_SAVE_MS)
+                if (controller?.isPlaying == true) saveQueueSoon()
+            }
+        }
+    }
+
+    /** Only the moving parts (position, buffered, buffering), for the twice-a-second tick; the queue is built in [refresh]. */
+    private fun refreshPosition() {
+        val p = controller ?: return
+        val position = p.currentPosition.coerceAtLeast(0)
+        val buffered = p.bufferedPosition.coerceAtLeast(0)
+        val buffering = p.playbackState == Player.STATE_BUFFERING
+        val duration = p.duration.coerceAtLeast(0)
+        val now = _state.value
+        if (now.positionMs == position && now.bufferedMs == buffered && now.buffering == buffering && now.durationMs == duration) return
+        _state.value = now.copy(positionMs = position, bufferedMs = buffered, buffering = buffering, durationMs = duration)
     }
 
     private fun refresh() {
@@ -243,11 +268,13 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     // ---------- Media items ----------
 
-    private fun mediaItem(song: Song): MediaItem {
+    private fun mediaItem(song: Song): MediaItem = mediaItemWith(song, c.settings.settings.value)
+
+    /** [s]: the settings to stream with (the stored ones when the app may have just started; see [restoreQueue]). */
+    private fun mediaItemWith(song: Song, s: com.vknxworks.navictrl.data.settings.AppSettings): MediaItem {
         known[song.id] = song
         val client = c.api
         val local = c.downloads.completedFile(song.id)
-        val s = c.settings.settings.value
         val kbps = if (c.isOnCellular()) s.mobileBitrate else s.wifiBitrate
         val uri = local?.let { Uri.fromFile(it).toString() }
             // Music on this phone plays the file itself: no transcoding, no playback cache.
@@ -608,7 +635,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
     val deviceName: String = "${SubsonicClientName} (${android.os.Build.MODEL.trim().ifBlank { "Android" }.take(40)})"
 
     private suspend fun syncToServer(accountKey: String, ids: List<String>, index: Int, positionMs: Long) {
-        if (!c.settings.settings.value.queueSync || !touched || ids.isEmpty()) return
+        if (!c.settings.stored.first().queueSync || !touched || ids.isEmpty()) return
         // The check at start failed (offline): what you've started playing here since then wins.
         if (remoteCheckedFor != accountKey && _remoteOffer.value == null && startCheckFor == accountKey) remoteCheckedFor = accountKey
         if (remoteCheckedFor != accountKey || _remoteOffer.value != null) return
@@ -701,7 +728,10 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val key = c.sessions.active.value?.account?.key ?: return
         val saved = withContext(Dispatchers.IO) { readSavedQueue(savedQueueFile, c.dataKeys) } ?: return
         if (saved.accountKey != key || saved.songs.isEmpty()) return
-        mc.setMediaItems(saved.songs.map(::mediaItem), saved.index.coerceIn(0, saved.songs.lastIndex), saved.positionMs)
+        // Right after a cold start (playback resumed from Bluetooth or the car) the settings may not be read yet:
+        // stream at your chosen quality, not the defaults.
+        val settings = c.settings.stored.first()
+        mc.setMediaItems(saved.songs.map { mediaItemWith(it, settings) }, saved.index.coerceIn(0, saved.songs.lastIndex), saved.positionMs)
         mc.prepare()
         if (autoplay) mc.play()
     }
@@ -715,7 +745,7 @@ class MusicController(private val context: Context, private val c: AppContainer)
         val key = c.sessions.active.value?.account?.key
         if (key != null && key != startCheckFor) {
             startCheckFor = key
-            if (c.settings.settings.value.queueSync) checkRemote(manual = false) else remoteCheckedFor = key
+            if (c.settings.stored.first().queueSync) checkRemote(manual = false) else remoteCheckedFor = key
         }
     }
 
@@ -723,6 +753,8 @@ class MusicController(private val context: Context, private val c: AppContainer)
 
     companion object {
         private const val QUEUE_FILE = "queue.json"
+        /** How often the queue is saved while music plays, on top of the saves on track change, pause and leaving. */
+        private const val PERIODIC_SAVE_MS = 5 * 60_000L
         private const val SubsonicClientName = com.vknxworks.navictrl.data.api.SubsonicClient.CLIENT
 
         /** One at a time: reading (which may seal an older file) and saving the queue file. */

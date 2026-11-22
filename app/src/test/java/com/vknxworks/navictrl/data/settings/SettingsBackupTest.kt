@@ -49,6 +49,23 @@ class SettingsBackupTest {
         assertTrue(after.hideRecents)
     }
 
+    @Test fun onlineLyricsAndScrobblingCanBeSwitchedOffButNotOn() {
+        val off = SettingsBackups.parse(SettingsBackups.export(AppSettings(lyricsOnline = false, scrobble = false), "1.0.0", "now")).settings
+        val on = SettingsBackups.parse(SettingsBackups.export(AppSettings(lyricsOnline = true, scrobble = true), "1.0.0", "now")).settings
+
+        val turnedOff = SettingsBackups.apply(AppSettings(lyricsOnline = true, scrobble = true), off)
+        assertFalse(turnedOff.lyricsOnline)
+        assertFalse(turnedOff.scrobble)
+
+        val stayOff = SettingsBackups.apply(AppSettings(lyricsOnline = false, scrobble = false), on)
+        assertFalse(stayOff.lyricsOnline)
+        assertFalse(stayOff.scrobble)
+
+        val stayOn = SettingsBackups.apply(AppSettings(lyricsOnline = true, scrobble = true), on)
+        assertTrue(stayOn.lyricsOnline)
+        assertTrue(stayOn.scrobble)
+    }
+
     @Test fun valuesTheSettingsDoNotOfferAreLeftOut() {
         val odd = BackupSettings(wifiBitrate = 12345, format = "FLAC", crossfadeSec = 99, replayGainPreamp = 40, theme = "PINK", peqPreamp = 50)
         assertEquals(mine, SettingsBackups.apply(mine, odd))

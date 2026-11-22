@@ -258,7 +258,9 @@ class DownloadRepository(
     private class LimitReached(message: String) : Exception(message)
 
     private suspend fun fetch(client: SubsonicClient, accountKey: String, song: Song, onProgress: suspend (Float) -> Unit): File = withContext(Dispatchers.IO) {
-        val s = settings.settings.value
+        // The stored settings: a download can start the app cold, before the settings are read (the defaults
+        // would ignore your download quality and size limit).
+        val s = settings.stored.first()
         val kbps = s.downloadBitrate
         val format = s.downloadFormat.param
         val ext = safeExtension(if (kbps > 0) format else song.suffix)

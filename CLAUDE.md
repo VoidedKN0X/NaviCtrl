@@ -19,7 +19,7 @@ Gradle checks every library and plugin download against the sha256 checksums in 
 - Parametric equalizer: `music/ParamEq.kt` (pure maths: bands, RBJ biquads, the settings text form; `ParamEqTest`) and `music/ParamEqProcessor.kt` (a Media3 `AudioProcessor` in the player's audio sink, built in `MusicService`). It is the app's own filter chain, separate from `AudioFx` (the phone's equalizer). With it off the audio is copied through unchanged.
 - "Load the next song ahead on mobile data": `MusicService.preloadNext` writes the whole next song into the playback cache with Media3's `CacheWriter`, only on mobile data, only while playing, one song at a time.
 - Share links: Subsonic `getShares`/`createShare`/`deleteShare` (`data/api/SubsonicApi.kt`); HTTP 501 means Navidrome's `EnableSharing` is off. Not offered for music on this phone.
-- Settings export/import: `data/settings/SettingsBackup.kt`. Never add accounts, addresses, passwords, the app lock or the privacy switches to it; an import must leave those alone (`SettingsBackupTest`).
+- Settings export/import: `data/settings/SettingsBackup.kt`. Never add accounts, addresses, passwords, the app lock or the privacy switches to it; an import must leave those alone (`SettingsBackupTest`). Online lyrics and scrobbling are in the file but an import can only switch them off, never on.
 
 ## Languages
 

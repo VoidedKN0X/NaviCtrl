@@ -104,7 +104,14 @@ fun SharesScreen() {
                 }
                 SheetRow(Icons.Outlined.ContentCopy, stringResource(R.string.share_copy)) {
                     picked = null
-                    context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(str(R.string.share_link), share.url))
+                    // Anyone with the link can stream the shared songs without signing in: keep it out of
+                    // clipboard previews and keyboards' clipboard history.
+                    val clip = ClipData.newPlainText(str(R.string.share_link), share.url).apply {
+                        description.extras = android.os.PersistableBundle().apply {
+                            putBoolean(android.content.ClipDescription.EXTRA_IS_SENSITIVE, true)
+                        }
+                    }
+                    context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(clip)
                 }
                 SheetRow(Icons.Outlined.Delete, stringResource(R.string.share_delete)) {
                     picked = null

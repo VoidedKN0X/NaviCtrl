@@ -318,9 +318,13 @@ class MusicService : MediaSessionService() {
 
     private fun send(id: String, submission: Boolean) {
         val c = container
-        if (!c.settings.settings.value.scrobble) return
         val client = c.sessions.active.value?.client ?: return
-        c.appScope.launch { runCatching { client.scrobble(id, submission) } }
+        c.appScope.launch {
+            // The stored setting, not the placeholder default: playback resumed from Bluetooth or the car can start
+            // NaviCtrl cold, before the settings are read, and must not scrobble when that's switched off.
+            if (!c.settings.stored.first().scrobble) return@launch
+            runCatching { client.scrobble(id, submission) }
+        }
     }
 
     /**

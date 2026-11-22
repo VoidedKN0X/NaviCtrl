@@ -67,7 +67,7 @@
     <string name="app_lock_subtitle">Ask for an app PIN (and optionally your fingerprint) when opening NaviCtrl. While locked, your server password stays encrypted with the PIN.</string>
     <string name="app_lock_footer">Music that\'s already playing and downloads in progress carry on while NaviCtrl is locked, with their controls in the notification and on the lock screen. They keep the sign-in they need in memory until they stop; anything new needs an unlock.</string>
     <string name="lock_prompt_subtitle">Your Navidrome music</string>
-    <string name="lock_forgot_body">The PIN can\'t be recovered, because it encrypts your server passwords. NaviCtrl will remove every account, and delete the downloads, played music and artwork kept on this phone. Nothing changes on your Navidrome server.</string>
+    <string name="lock_forgot_body">The PIN can\'t be recovered, because it encrypts your server passwords. NaviCtrl will remove every account, and delete the downloads, played music and artwork kept on this phone. Nothing changes on your Navidrome server. If your phone has a screen lock, you\'ll confirm with it first.</string>
     <string name="lock_forgot_confirm">Remove accounts and reset</string>
     <string name="lock_migrate_intro">NaviCtrl\'s app lock has its own PIN, separate from your phone\'s. Your server passwords are encrypted with it while the app is locked.</string>
     <string name="lock_enable_intro">At least %1$d digits, different from your phone\'s PIN. If you forget it, the only way back in is to sign in to your servers again.</string>
@@ -491,4 +491,7 @@
     <string name="backup_restore_confirm">Import</string>
     <string name="backup_restored">Settings imported</string>
     <string name="backup_restore_failed">Couldn\'t import the settings</string>
+    <string name="lock_reset_prompt_title">Reset NaviCtrl\'s app lock</string>
+    <string name="lock_reset_prompt_subtitle">Use your phone\'s screen lock to confirm it\'s you</string>
+    <string name="lock_reset_prompt_failed">Couldn\'t show the screen lock prompt</string>
 </resources>

@@ -60,7 +60,7 @@
     <string name="app_lock_subtitle">Vraagt een pincode voor de app (en als je wilt je vingerafdruk) wanneer je NaviCtrl opent. Zolang de app vergrendeld is, blijft het wachtwoord van je server versleuteld met de pincode.</string>
     <string name="app_lock_footer">Muziek die al speelt en downloads die bezig zijn, lopen door terwijl NaviCtrl vergrendeld is, met hun bediening in de melding en op het vergrendelscherm. Ze houden de aanmelding die ze nodig hebben in het geheugen tot ze stoppen; voor alles wat nieuw is, moet je ontgrendelen.</string>
     <string name="lock_prompt_subtitle">Je Navidrome-muziek</string>
-    <string name="lock_forgot_body">De pincode kan niet hersteld worden, want ze versleutelt de wachtwoorden van je servers. NaviCtrl verwijdert elk account en wist de downloads, de afgespeelde muziek en de hoezen die op deze telefoon bewaard zijn. Op je Navidrome-server verandert er niets.</string>
+    <string name="lock_forgot_body">De pincode kan niet hersteld worden, want ze versleutelt de wachtwoorden van je servers. NaviCtrl verwijdert elk account en wist de downloads, de afgespeelde muziek en de hoezen die op deze telefoon bewaard zijn. Op je Navidrome-server verandert er niets. Heeft je telefoon een schermvergrendeling, dan bevestig je eerst daarmee.</string>
     <string name="lock_forgot_confirm">Accounts verwijderen en resetten</string>
     <string name="lock_migrate_intro">De app-vergrendeling van NaviCtrl heeft een eigen pincode, los van die van je telefoon. Je serverwachtwoorden zijn ermee versleuteld zolang de app vergrendeld is.</string>
     <string name="lock_enable_intro">Minstens %1$d cijfers, anders dan de pincode van je telefoon. Als je ze vergeet, kom je er alleen weer in door je opnieuw aan te melden bij je servers.</string>
@@ -462,4 +462,7 @@
     <string name="crossfade">Crossfade</string>
     <string name="equalizer">Equalizer</string>
     <string name="eq_presets">Presets</string>
+    <string name="lock_reset_prompt_title">App-vergrendeling van NaviCtrl resetten</string>
+    <string name="lock_reset_prompt_subtitle">Bevestig met de schermvergrendeling van je telefoon dat jij het bent</string>
+    <string name="lock_reset_prompt_failed">De schermvergrendeling kon niet getoond worden</string>
 </resources>

@@ -65,7 +65,7 @@
     <string name="app_lock_subtitle">Demander un code PIN (et éventuellement votre empreinte) à l\'ouverture de NaviCtrl. Tant que l\'app est verrouillée, le mot de passe de votre serveur reste chiffré avec le code PIN.</string>
     <string name="app_lock_footer">La musique en cours de lecture et les téléchargements en cours continuent pendant que NaviCtrl est verrouillé, avec leurs commandes dans la notification et sur l\'écran de verrouillage. Ils gardent en mémoire la connexion dont ils ont besoin jusqu\'à leur arrêt ; toute nouvelle action nécessite un déverrouillage.</string>
     <string name="lock_prompt_subtitle">Votre musique Navidrome</string>
-    <string name="lock_forgot_body">Le code PIN ne peut pas être récupéré, car il chiffre les mots de passe de vos serveurs. NaviCtrl supprimera tous les comptes, ainsi que les téléchargements, la musique écoutée et les pochettes conservées sur ce téléphone. Rien ne change sur votre serveur Navidrome.</string>
+    <string name="lock_forgot_body">Le code PIN ne peut pas être récupéré, car il chiffre les mots de passe de vos serveurs. NaviCtrl supprimera tous les comptes, ainsi que les téléchargements, la musique écoutée et les pochettes conservées sur ce téléphone. Rien ne change sur votre serveur Navidrome. Si votre téléphone a un verrouillage d\'écran, vous le confirmerez d\'abord avec celui-ci.</string>
     <string name="lock_forgot_confirm">Supprimer les comptes et réinitialiser</string>
     <string name="lock_migrate_intro">Le verrouillage de NaviCtrl a son propre code PIN, distinct de celui du téléphone. Les mots de passe de vos serveurs sont chiffrés avec celui-ci tant que l\'app est verrouillée.</string>
     <string name="lock_enable_intro">Au moins %1$d chiffres, différent du code PIN du téléphone. Si vous l\'oubliez, la seule solution est de vous reconnecter à vos serveurs.</string>
@@ -476,4 +476,7 @@
     <string name="backup_restore_confirm">Importer</string>
     <string name="backup_restored">Paramètres importés</string>
     <string name="backup_restore_failed">Impossible d\'importer les paramètres</string>
+    <string name="lock_reset_prompt_title">Réinitialiser le verrouillage de NaviCtrl</string>
+    <string name="lock_reset_prompt_subtitle">Utilisez le verrouillage d\'écran de votre téléphone pour confirmer votre identité</string>
+    <string name="lock_reset_prompt_failed">Impossible d\'afficher le verrouillage d\'écran</string>
 </resources>

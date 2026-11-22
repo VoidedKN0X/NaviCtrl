@@ -4,6 +4,25 @@ What changed in each NaviCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing here has been run on a phone yet.
+
+### Changed
+
+- **Less battery and mobile data while music plays.** While a song played, NaviCtrl rewrote its saved queue (up to 2000 songs, encrypted) and sent the whole queue to your Navidrome server every 30 seconds; on mobile data that woke the radio twice a minute for your whole listening session. It now does this every 5 minutes, on top of the saves that already happened on every song change, pause, queue change and when you leave the app. The only difference you could notice: after a crash, or when you continue on another device without pausing here first, the position can be up to 5 minutes old instead of 30 seconds.
+- **The music screens no longer rebuild the whole queue twice a second.** The state behind the player screens was rebuilt from the whole queue (thousands of songs with an endless queue) twice a second, also with the screen off and NaviCtrl in the background. Now only the play position is updated, only while NaviCtrl is on screen; the song, queue and play/pause state still change the moment they change. You shouldn't notice anything apart from the battery.
+- **Restoring a settings file can no longer switch online lyrics or scrobbling on.** **Find lyrics online (LRCLIB)** and **Report what I play** were taken from the file whichever way they went. A file can now only switch them off; if you want them on, switch them on by hand.
+
+### Fixed
+
+- **Settings are read before NaviCtrl acts on them after a cold start.** When playback was resumed from Bluetooth or the car while NaviCtrl wasn't running, or a download started the app in the background, a few things could use the default settings for a moment instead of yours: the first song could be reported to your server (scrobbled) with **Report what I play** switched off, the restored queue streamed at the default quality, a download used the default quality and ignored your size limit, and the play queue sync setting was checked before it was read. All of these now wait for your saved settings.
+
+### Security
+
+- **Copied share links are marked as private.** A share link lets anyone who has it stream the shared songs without signing in. Copying one now marks it as sensitive, so Android shows dots instead of the link in its copy preview and keyboards leave it out of their clipboard history.
+- **"Forgot PIN?" now asks for your phone's screen lock first.** Resetting removes your accounts, downloads and played music, so it's no longer open to anyone who picks up your unlocked phone: after you confirm, NaviCtrl asks for your phone's own PIN, pattern, password or fingerprint before it resets. If your phone has no screen lock, the reset works as before, with just the confirmation.
+
 ## v0.13.1 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.
